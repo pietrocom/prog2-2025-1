@@ -1,4 +1,8 @@
 #include "vina.h"
 #include "utils.h"
-#include "lz/lz.h"
 
+int main () {
+    
+
+    return 0;
+}

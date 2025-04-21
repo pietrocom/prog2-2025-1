@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "utils.h"
+#include "fprio.h"
 
 // ---- Defines ----
 
@@ -23,6 +25,11 @@ struct arquivo {
     int offset;              
 };
 
+struct diretorio {
+    struct arquivo* membros;
+    int qtd_membros;
+    int capacidade;
+};
 
 // ---- Funcoes ----
 
