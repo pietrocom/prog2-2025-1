@@ -30,7 +30,7 @@ struct lista_t *lista_destroi(struct lista_t *lst) {
 	return NULL;
 }
 
-int lista_insere(struct lista_t *lst, int item, int pos) {
+int lista_insere(struct lista_t *lst, void *item, int pos) {
 	if (lst == NULL)
 		return -1;
 
@@ -38,7 +38,7 @@ int lista_insere(struct lista_t *lst, int item, int pos) {
 	if (!novo) 
 		return -1;
 
-	novo->valor = item;
+	novo->item = item;
 
 	// Caso a lista esteja vazia
 	if (lst->prim == NULL) {
@@ -90,7 +90,7 @@ int lista_retira(struct lista_t *lst, int *item, int pos) {
 	struct item_t *aux;
 	// Retira do final
 	if (pos == -1) {
-		*item = lst->ult->valor;
+		*item = lst->ult->item;
 		aux = lst->ult;
 		lst->ult = aux->ant;
 		if (lst->ult) lst->ult->prox = NULL;
@@ -99,7 +99,7 @@ int lista_retira(struct lista_t *lst, int *item, int pos) {
 	// Retira do inicio
 	else if (pos == 0) {
 		aux = lst->prim;
-		*item = aux->valor;
+		*item = aux->item;
 		lst->prim = aux->prox;
 		if (lst->prim) lst->prim->ant = NULL;
 		else lst->ult = NULL;

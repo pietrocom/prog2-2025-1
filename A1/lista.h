@@ -9,7 +9,7 @@
 // estrutura de um item da lista
 struct item_t
 {
-  int valor ;			// valor do item
+  void *item ;			// ponteiro para o item
   struct item_t *ant ;		// item anterior
   struct item_t *prox ;	// próximo item
 } ;
@@ -36,21 +36,17 @@ struct lista_t *lista_destroi (struct lista_t *lst);
 // Insere o item na lista na posição indicada;
 // se a posição for além do fim da lista ou for -1, insere no fim.
 // Retorno: número de itens na lista após a operação ou -1 em erro.
-int lista_insere (struct lista_t *lst, int item, int pos);
+int lista_insere (struct lista_t *lst, void *item, int pos);
 
 // Retira o item da lista da posição indicada.
 // se a posição for além do fim da lista ou for -1, retira do fim.
 // Retorno: número de itens na lista após a operação ou -1 em erro.
-int lista_retira (struct lista_t *lst, int *item, int pos);
+void *lista_retira (struct lista_t *lst, void *item, int pos);
 
 // Informa o valor do item na posição indicada, sem retirá-lo.
 // se a posição for além do fim da lista ou for -1, consulta do fim.
 // Retorno: número de itens na lista ou -1 em erro.
-int lista_consulta (struct lista_t *lst, int *item, int pos);
-
-// Informa a posição da 1ª ocorrência do valor indicado na lista.
-// Retorno: posição do valor ou -1 se não encontrar ou erro.
-int lista_procura (struct lista_t *lst, int valor);
+int lista_consulta (struct lista_t *lst, void *item, int pos);
 
 // Informa o tamanho da lista (o número de itens presentes nela).
 // Retorno: número de itens na lista ou -1 em erro.
