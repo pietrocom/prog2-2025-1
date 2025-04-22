@@ -10,7 +10,6 @@
 // ---- Defines ----
 
 #define NOME_MAX 100
-#define DATA_MAX 20
 
 
 // ---- Structs ----
@@ -20,7 +19,7 @@ struct arquivo {
     int uid;       
     int tam_or;          
     int tam_comp;         
-    char data_mod[DATA_MAX]; 
+    FILE *arq;
     int ordem;              
     int offset;              
 };
