@@ -16,17 +16,17 @@
 struct arquivo {
     char nome[NOME_MAX];    
     int uid;       
-    int tam_or;          
-    int tam_comp;         
+    unsigned long tam_or;          
+    unsigned long tam_comp;         
     FILE *arq;
     int ordem; 
     unsigned long offset;       
 };
 
 struct diretorio {
+    int qtd_membros;
     // Vetor de ponteiros para structs no diretorio
     struct arquivo **membros;
-    int qtd_membros;
 };
 
 // ---- Funcoes ----
@@ -45,8 +45,12 @@ struct diretorio * cria_diretorio ();
 // Desaloca struct diretorio.
 void destroi_diretorio (struct diretorio * diretorio);
 
-// Insere metadados do arquivo no diretorio.
+// Acessa o archiver e extrai informacoes do diretorio.
+// Retorno: 0 em caso de sucesso e -1 c.c.
+int inicia_diretorio (struct diretorio * diretorio, char * file);
+
+// Insere metadados do arquivo no final do diretorio.
 // Retorno: 0 caso sucesso e -1 c.c.
-int insere_s_arquivo (struct diretorio * diretorio, struct arquivo * arq, FILE * file);
+int insere_s_arquivo (struct diretorio * diretorio, struct arquivo * arq, char * file);
 
 #endif

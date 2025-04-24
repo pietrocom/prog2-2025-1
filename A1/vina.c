@@ -31,6 +31,22 @@ void destroi_diretorio (struct diretorio * diretorio) {
     free(diretorio);
 }
 
+int inicia_diretorio (struct diretorio * diretorio, char * file) {
+    if (!diretorio || !file)
+        return -1;
+    
+    int qtd_membros = 0;
+    FILE * file_pt = fopen(file, "rb");
+    if (!file_pt)
+        return -1;
+    // Ler o primeiro byte do arquivo
+    fread(&qtd_membros, sizeof(int), 1, file_pt);
+
+    
+
+    return 0;
+}
+
 int insere_s_arquivo (struct diretorio * diretorio, struct arquivo * arq, FILE * file) {
     if (!diretorio || !file || !arq)
         return -1;
