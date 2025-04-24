@@ -3,7 +3,7 @@
 
 // ---- DEFINES ----
 
-#define CAPACIDADE_DIR 10
+#define CAPACIDADE_DIR 20
 
 
 // ---- INCLUDES ----
@@ -16,19 +16,8 @@
 
 // ---- FUNCOES ----
 
-// Aloca arquivo
-struct arquivo * cria_arquivo ();
-
-// Desaloca arquivo
-void destroi_arquivo (struct arquivo * file);
-
-// Aloca diretorio
-struct diretorio * cria_diretorio ();
-
-// Desaloca diretorio
-void destroi_diretorio (struct diretorio * diretorio);
-
-// Insere metadados do arquivo na lista
-void insere_arquivo (struct diretorio * diretorio, struct arquivo * file);
+// Move os bytes contidos entre inicio e fim dentro de file deslocamento bytes.
+// Retorno: 0 para sucesso ou -1 para erro de operacao.
+int move (unsigned long inicio, unsigned long fim, long deslocamento, FILE * file);
 
 #endif

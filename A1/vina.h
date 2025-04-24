@@ -9,7 +9,8 @@
 
 // ---- Defines ----
 
-#define NOME_MAX 100
+#define NOME_MAX 512
+#define CAPACIDADE_DIR 20
 
 
 // ---- Structs ----
@@ -20,18 +21,32 @@ struct arquivo {
     int tam_or;          
     int tam_comp;         
     FILE *arq;
-    int ordem;              
-    int offset;              
+    int ordem; 
+    unsigned long offset;       
 };
 
 struct diretorio {
+    // Vetor de structs no diretorio
     struct arquivo* membros;
     int qtd_membros;
-    int capacidade;
+    int capacidade = CAPACIDADE_DIR;
 };
 
 // ---- Funcoes ----
 
+// Aloca arquivo
+struct arquivo * cria_s_arquivo ();
 
+// Desaloca arquivo
+void destroi_s_arquivo (struct arquivo * file);
+
+// Aloca diretorio
+struct diretorio * cria_diretorio ();
+
+// Desaloca diretorio
+void destroi_diretorio (struct diretorio * diretorio);
+
+// Insere metadados do arquivo na lista
+void insere_arquivo (struct diretorio * diretorio, struct arquivo * arq, FILE * file);
 
 #endif
