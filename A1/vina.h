@@ -9,7 +9,6 @@
 // ---- Defines ----
 
 #define NOME_MAX 512
-#define CAPACIDADE_DIR 20
 
 
 // ---- Structs ----
@@ -25,27 +24,29 @@ struct arquivo {
 };
 
 struct diretorio {
-    // Vetor de structs no diretorio
-    struct arquivo* membros;
+    // Vetor de ponteiros para structs no diretorio
+    struct arquivo **membros;
     int qtd_membros;
-    int capacidade;
 };
 
 // ---- Funcoes ----
 
-// Aloca arquivo
+// Aloca struct arquivo.
+// Retorno: a struct ou NULL em caso de erro.
 struct arquivo * cria_s_arquivo ();
 
-// Desaloca arquivo
+// Desaloca struct arquivo.
 void destroi_s_arquivo (struct arquivo * file);
 
-// Aloca diretorio
+// Aloca struct diretorio.
+// Retorno: a struct ou NULL em caso de erro.
 struct diretorio * cria_diretorio ();
 
-// Desaloca diretorio
+// Desaloca struct diretorio.
 void destroi_diretorio (struct diretorio * diretorio);
 
-// Insere metadados do arquivo na lista
-void insere_arquivo (struct diretorio * diretorio, struct arquivo * arq, FILE * file);
+// Insere metadados do arquivo no diretorio.
+// Retorno: 0 caso sucesso e -1 c.c.
+int insere_s_arquivo (struct diretorio * diretorio, struct arquivo * arq, FILE * file);
 
 #endif

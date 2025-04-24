@@ -15,7 +15,8 @@
 
 // ---- FUNCOES ----
 
-// Move os bytes contidos entre inicio e fim dentro de file deslocamento bytes.
+// O arquivo ja deve estar aberto.
+// Move os bytes contidos entre inicio e fim, dentro de file, deslocamento bytes.
 // Retorno: 0 para sucesso ou -1 para erro de operacao.
 int move (unsigned long inicio, unsigned long fim, long deslocamento, FILE * file);
 

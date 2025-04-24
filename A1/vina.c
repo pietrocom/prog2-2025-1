@@ -19,21 +19,30 @@ struct diretorio * cria_diretorio () {
     if (!diretorio)
         return NULL;
 
-    diretorio->capacidade = CAPACIDADE_DIR;
     diretorio->qtd_membros = 0;
-    // Cria um vetor de ponteiros para arquivos
-    diretorio->membros = malloc(sizeof(struct arquivo) * CAPACIDADE_DIR);
+    // Vetor inicializado como vazio
+    diretorio->membros = NULL;
 
     return diretorio;
 }
 
 void destroi_diretorio (struct diretorio * diretorio) {
+    // Desalocar cada struct arquivo do vetor
     free(diretorio);
 }
 
-void insere_arquivo (struct diretorio * diretorio, struct arquivo * arq, FILE * file) {
-    if (!diretorio || !file)
-        return;
+int insere_s_arquivo (struct diretorio * diretorio, struct arquivo * arq, FILE * file) {
+    if (!diretorio || !file || !arq)
+        return -1;
 
+    // Aloca espaco para o novo membro
+    diretorio->membros[diretorio->qtd_membros] = malloc(sizeof(struct arquivo))
+    if (!diretorio->membros[diretorio->qtd_membros])
+        return -1;
     
+    diretorio->membros[diretorio->qtd_membros] = arq;
+
+    diretorio->qtd_membros++;
+
+    return 0;
 }
