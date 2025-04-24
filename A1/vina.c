@@ -28,7 +28,6 @@ struct diretorio * cria_diretorio () {
 }
 
 void destroi_diretorio (struct diretorio * diretorio) {
-    fprio_destroi(diretorio->fila);
     free(diretorio);
 }
 

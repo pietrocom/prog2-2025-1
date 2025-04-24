@@ -9,7 +9,6 @@
 // ---- INCLUDES ----
 
 #include "vina.h"
-#include "fprio.h"
 #include <sys/stat.h>
 #include <unistd.h>
 

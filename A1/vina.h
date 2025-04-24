@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "utils.h"
-#include "fprio.h"
 
 // ---- Defines ----
 
@@ -29,7 +28,7 @@ struct diretorio {
     // Vetor de structs no diretorio
     struct arquivo* membros;
     int qtd_membros;
-    int capacidade = CAPACIDADE_DIR;
+    int capacidade;
 };
 
 // ---- Funcoes ----
