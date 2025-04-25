@@ -18,7 +18,6 @@ struct arquivo {
     int uid;       
     unsigned long tam_or;          
     unsigned long tam_comp;         
-    FILE *arq;
     int ordem; 
     unsigned long offset;       
 };
@@ -30,6 +29,10 @@ struct diretorio {
 };
 
 // ---- Funcoes ----
+
+// Cria e retorna um ponteiro para um arquivo.vc de nome file,
+// ou NULL em caso de erro.
+FILE * cria_arquivo (char * file);
 
 // Aloca struct arquivo.
 // Retorno: a struct ou NULL em caso de erro.
@@ -48,9 +51,5 @@ void destroi_diretorio (struct diretorio * diretorio);
 // Acessa o archiver e extrai informacoes do diretorio.
 // Retorno: 0 em caso de sucesso e -1 c.c.
 int inicia_diretorio (struct diretorio * diretorio, char * file);
-
-// Insere metadados do arquivo no final do diretorio.
-// Retorno: 0 caso sucesso e -1 c.c.
-int insere_s_arquivo (struct diretorio * diretorio, struct arquivo * arq, char * file);
 
 #endif
