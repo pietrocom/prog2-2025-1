@@ -1,15 +1,15 @@
 #include "opt_aux.h"
 
-int insere_membro_arq(FILE * membro_pt, FILE * archive_pt, struct diretorio * diretorio, unsigned long tam, int pos) {
+int insere_membro_arq (FILE * membro_pt, FILE * archive_pt, struct diretorio * diretorio, unsigned long tam, int pos) {
     if (!membro_pt || ! archive_pt || !diretorio)
         return -1;
 
     char * buffer = malloc(tam);
-    if (fread(buffer, tam, 1, membro_pt) != 0)
+    if (fread(buffer, tam, 1, membro_pt) != tam)
         return -1;
-    if (fseek(membro_pt, (long int)diretorio->membros[pos]->offset, SEEK_SET) != 0)
+    if (fseek(archive_pt, (long int)diretorio->membros[pos]->offset, SEEK_SET) != 0)
         return -1;
-    if (fwrite(buffer, tam, 1, archive_pt) != 0)
+    if (fwrite(buffer, tam, 1, archive_pt) != tam)
         return -1;
 
     free(buffer);
@@ -40,7 +40,7 @@ int ip_mem_existe (struct diretorio * diretorio, char * membro, char * archive, 
     novo_arq = inicia_valores_arquivo(novo_arq, membro);
 
     // Calcula a diferenca de tamanho dos arquivos existentes
-    long dif_tam = diretorio->membros[pos]->tam_or - novo_arq->tam_or;
+    long dif_tam = novo_arq->tam_or - diretorio->membros[pos]->tam_or;
     
     if (dif_tam >= 0) {
         // Move, do fim ate pos, todos os membros a frente dif_tam bytes
