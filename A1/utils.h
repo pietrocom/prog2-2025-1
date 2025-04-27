@@ -8,9 +8,17 @@
 
 // ---- INCLUDES ----
 
-#include "vina.h"
+#include "types.h"
 #include <sys/stat.h>
 #include <unistd.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+
+// ---- DECLARACOES AVANCADAS ----
+struct arquivo; 
+struct diretorio;
 
 
 // ---- FUNCOES ----
@@ -24,9 +32,22 @@ struct arquivo * inicia_valores_arquivo (struct arquivo * arquivo, char * nome);
 // Retorno: 0 para sucesso ou -1 para erro de operacao.
 int move (unsigned long inicio, unsigned long fim, long deslocamento, FILE * file);
 
+// Move, membro por membro todos os membros a frente de pos. 
+// Projetada para que nao sobrescreva informacao.
+// A funcao nao eh na verdade iterativa, mas o nome reflete seu comportamento.
+// Retorno: 0 em caso de sucesso ou -1 c.c.
+int move_recursivo (struct diretorio * diretorio, FILE * archive_pt, int pos, long deslocamento);
+
 // Insere a struct arquivo na posicao desejada do vetor de membros.
 // Caso pos == -1, insere no final do vetor. 
 // Retorno: 0 para sucesso ou -1 para erro de insercao.
 int insere_s_arquivo (struct diretorio * diretorio, struct arquivo * arquivo, int pos);
+
+// Passa por cada elemento do vetor e atualiza offset e ordem.
+void atualiza_metadados (struct diretorio * diretorio);
+
+// Escreve as informacoes contidas no diretorio no archiver.
+// Retorno: 0 em caso de sucesso ou -1 c.c.
+int escreve_s_diretorio (struct diretorio * diretorio, FILE * archive_pt);
 
 #endif

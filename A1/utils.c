@@ -49,6 +49,26 @@ int move (unsigned long inicio, unsigned long fim, long deslocamento, FILE * fil
     return 0;
 }
 
+int move_recursivo (struct diretorio * diretorio, FILE * archive_pt, int pos, long deslocamento) {
+    if (!diretorio || !archive_pt)
+        return -1;
+
+    // Cuida para que nao haja sobrescrita de informacao
+    if (deslocamento >= 0) {
+        // Move, do fim ate pos, todos os membros a frente dif_tam bytes
+        for (int i = diretorio->qtd_membros; i > pos; i--) 
+            if (move(diretorio->membros[i]->offset, diretorio->membros[i]->offset + diretorio->membros[i]->tam_or, deslocamento, archive_pt) == -1)
+                return -1;
+    }
+    else {
+        // Move, de pos ate o fim, todos os membros a frente de dif_tam bytes
+        for (int i = pos; i < diretorio->qtd_membros; i++) 
+            if (move(diretorio->membros[i]->offset, diretorio->membros[i]->offset + diretorio->membros[i]->tam_or, deslocamento, archive_pt) == -1)
+                return -1;
+    }
+
+    return 0;
+}
 
 int insere_s_arquivo (struct diretorio * diretorio, struct arquivo * arquivo, int pos) {
     if (!diretorio || !arquivo)
@@ -75,6 +95,29 @@ int insere_s_arquivo (struct diretorio * diretorio, struct arquivo * arquivo, in
     diretorio->membros[pos] = arquivo;
     arquivo->ordem = pos;
     diretorio->qtd_membros++;
+
+    return 0;
+}
+
+void atualiza_metadados (struct diretorio * diretorio) {
+    unsigned long offset = sizeof(int) + sizeof(struct arquivo) * diretorio->qtd_membros;
+    for (int i = 0; i < diretorio->qtd_membros; i++) {
+        diretorio->membros[i]->offset = offset;
+        offset += diretorio->membros[i]->tam_or;
+        diretorio->membros[i]->ordem = i;
+    }
+}
+
+int escreve_s_diretorio (struct diretorio * diretorio, FILE * archive_pt) {
+    if (!diretorio || !archive_pt)
+        return -1;
+
+    // Posiciona o ponteiro no inicio do arquivo
+    fseek(archive_pt, 0, SEEK_SET);
+    fwrite(&diretorio->qtd_membros, sizeof(int), 1, archive_pt);
+    for (int i = 0; i < diretorio->qtd_membros; i++) {
+        fwrite(diretorio->membros[i], sizeof(struct arquivo), 1, archive_pt);
+    }
 
     return 0;
 }

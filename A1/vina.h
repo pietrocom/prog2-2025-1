@@ -5,32 +5,17 @@
 #ifndef VINA_H
 #define VINA_H
 
+
+// ---- INCLUDES ----
+
+#include <sys/stat.h>
+#include <unistd.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+#include <stdlib.h>
 #include "utils.h"
+#include "types.h"
 
-// ---- Defines ----
-
-#define NOME_MAX 512
-
-
-// ---- Structs ----
-
-struct arquivo {
-    char nome[NOME_MAX];    
-    int uid;       
-    unsigned long tam_or;          
-    unsigned long tam_comp;         
-    int ordem; 
-    unsigned long offset;       
-};
-
-struct diretorio {
-    int qtd_membros;
-    // Vetor de ponteiros para structs no diretorio
-    struct arquivo **membros;
-};
 
 // ---- Funcoes ----
 

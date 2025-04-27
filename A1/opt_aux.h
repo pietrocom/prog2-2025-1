@@ -3,12 +3,18 @@
 #ifndef OPT_AUX_H
 #define OPT_AUX_H
 
+#include "types.h"
 #include "utils.h"
+#include "vina.h"
+#include <sys/stat.h>
+#include <unistd.h>
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
 // Insere os dados, de tamanho tam, do membro no archiver.
 // Retorno: 0 em caso de sucesso e -1 c.c.
-int insere_membro_arq(FILE * membro_pt, FILE * archive_pt, struct diretorio * diretorio, unsigned long tam, int pos);
+int insere_membro_arq (FILE * membro_pt, FILE * archive_pt, struct diretorio * diretorio, unsigned long tam, int pos);
 
 // Funcao que trata do caso do membro ja existir no archive.
 // Retorno: 0 em caso de sucesso e -1 c.c.

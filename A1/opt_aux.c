@@ -42,31 +42,24 @@ int ip_mem_existe (struct diretorio * diretorio, char * membro, char * archive, 
     // Calcula a diferenca de tamanho dos arquivos existentes
     long dif_tam = novo_arq->tam_or - diretorio->membros[pos]->tam_or;
     
-    if (dif_tam >= 0) {
-        // Move, do fim ate pos, todos os membros a frente dif_tam bytes
-        for (int i = diretorio->qtd_membros; i > pos; i--) 
-            if (move(diretorio->membros[i]->offset, diretorio->membros[i]->offset + diretorio->membros[i]->tam_or, dif_tam, archive_pt) == -1)
-                return -1;
-    }
-    else {
-        // Move, de pos ate o fim, todos os membros a frente de dif_tam bytes
-        for (int i = pos; i < diretorio->qtd_membros; i++) 
-            if (move(diretorio->membros[i]->offset, diretorio->membros[i]->offset + diretorio->membros[i]->tam_or, dif_tam, archive_pt) == -1)
-                return -1;
-    }
+    // Move todos os membros a frente de pos dif_tam bytes para frente 
+    move_recursivo(diretorio, archive_pt, pos, dif_tam);
 
     // Insere os dados do membro no archiver
     insere_membro_arq(membro_pt, archive_pt, diretorio, novo_arq->tam_or, pos);
 
-    // Atualiza os metadados dos arquivos
+    // Move todos os membros sizeof struct arquivo para frente 
+    move_recursivo(diretorio, archive_pt, diretorio->membros[0]->offset, sizeof(struct arquivo));
+
+    // Atualiza a struct arquivo
     destroi_s_arquivo(diretorio->membros[pos]);
     diretorio->membros[pos] = novo_arq;
-    unsigned long offset = sizeof(int);
-    for (int i = 0; i < diretorio->qtd_membros; i++) {
-        diretorio->membros[i]->offset = offset;
-        offset += diretorio->membros[i]->tam_or;
-        diretorio->membros[i]->ordem = i;
-    }
+
+    // Atualiza metadados dos arquivos 
+    atualiza_metadados(diretorio);
+
+    // Escreve no archiver a struct diretorio
+    escreve_s_diretorio(diretorio, archive_pt);
 
     fclose(membro_pt);
     fclose(archive_pt);

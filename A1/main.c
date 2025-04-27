@@ -1,6 +1,7 @@
 #include "vina.h"
 #include "utils.h"
 #include "options.h"
+#include "opt_aux.h"
 
 int main (int argc, char *argv[]) {
     
@@ -18,7 +19,8 @@ int main (int argc, char *argv[]) {
     if ( (strcmp(opcao, "-ip") == 0) || (strcmp(opcao, "-p") == 0) ) {
         for (int i = 3; i < argc; i++) {
             char *membro = argv[i];
-            if (ip(diretorio, membro, archive))
+            if (ip(diretorio, membro, archive) == -1)
+                return -1;
         }
     }
 
@@ -55,6 +57,8 @@ int main (int argc, char *argv[]) {
     else {
         // erro na escrita do comando
     }
+
+    destroi_diretorio(diretorio);
 
     return 0;
 }
