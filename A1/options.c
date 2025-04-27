@@ -8,7 +8,7 @@ int ip (struct diretorio * diretorio, char * membro, char * archive) {
     for (int i = 0; i < diretorio->qtd_membros; i++)
         if (strcmp(membro, diretorio->membros[i]->nome) == 0)
             // Trata do caso de o membro ja existir
-            return ip_mem_igual(struct diretorio * diretorio, char * membro, char * archive, i);
+            return ip_mem_existe(struct diretorio * diretorio, char * membro, char * archive, i);
 
     // Se nao, insere no final do vetor e do arquivo
     if (insere_s_arquivo(diretorio, cria_s_arquivo(), -1) == -1)
