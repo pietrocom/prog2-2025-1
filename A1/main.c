@@ -1,5 +1,6 @@
 #include "vina.h"
 #include "utils.h"
+#include "options.h"
 
 int main (int argc, char *argv[]) {
     
@@ -10,15 +11,18 @@ int main (int argc, char *argv[]) {
     if (!diretorio)
         return -1;
 
-    inicia_diretorio(diretorio, archive);
+    // Diretorio preenchido com metadados dos arquivos
+    if (inicia_diretorio(diretorio, archive) == -1)
+        return -1;
 
-    if (strcmp(opcao, "-ip") == 0) {
+    if ( (strcmp(opcao, "-ip") == 0) || (strcmp(opcao, "-p") == 0) ) {
         for (int i = 3; i < argc; i++) {
             char *membro = argv[i];
+            if (ip(diretorio, membro, archive))
         }
     }
 
-    else if (strcmp(opcao, "-ic") == 0) {
+    else if ( (strcmp(opcao, "-ic") == 0) || (strcmp(opcao, "-i") == 0) ) {
         for (int i = 3; i < argc; i++) {
             char *membro = argv[i];
         }
@@ -46,6 +50,10 @@ int main (int argc, char *argv[]) {
         for (int i = 3; i < argc; i++) {
             char *membro = argv[i];
         }
+    }
+
+    else {
+        // erro na escrita do comando
     }
 
     return 0;

@@ -1,3 +1,7 @@
+// Pietro Comin - GRR20241955
+// Trata das operacoes iniciais para que se possa realizar
+// as opcoes no archiver.
+
 #ifndef VINA_H
 #define VINA_H
 

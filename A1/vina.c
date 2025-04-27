@@ -8,6 +8,7 @@ FILE * cria_arquivo (char * file) {
         return NULL;
     
     int qtd_membros = 0;
+    // Inicia o primeiro int do arquivo (qtd_membros) com 0
     if ( fwrite(&qtd_membros, sizeof(int), 1, file_pt) != 1 ) {
         fclose(file_pt);
         return NULL; // Erro na escrita
