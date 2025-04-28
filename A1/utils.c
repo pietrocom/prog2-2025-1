@@ -146,7 +146,7 @@ int comprime_arquivo (char * file_name, FILE * file_pt, struct arquivo * arquivo
     return 0;
 }
 
-void print_arquivo_info(struct arquivo *arq) {
+void imprime_arquivo_info(struct arquivo *arq) {
     if (!arq) {
         printf("Arquivo NULL\n");
         return;
