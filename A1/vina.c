@@ -1,6 +1,11 @@
 #include "vina.h"
+
+#include <sys/stat.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 #include "utils.h"
-#include "lz/lz.h"
 
 FILE * cria_arquivo (char * file) {
     FILE * file_pt = fopen(file, "a+b");
@@ -43,7 +48,7 @@ struct arquivo * inicia_s_arquivo (struct arquivo * arquivo, char * nome) {
 
     arquivo->uid = st.st_uid;
     arquivo->tam_or = st.st_size;
-    arquivo->tam_comp = st.st_size; // Sem compressao inicialmente
+    arquivo->tam_comp = st.st_size; // Recebe mesmo tamanho do original 
     arquivo->ordem = -1;            // Sera definido na insercao
     arquivo->offset = 0;            // Sera calculado depois
     arquivo->mod_time = st.st_mtime;
@@ -82,7 +87,7 @@ int insere_s_arquivo (struct diretorio * diretorio, struct arquivo * arquivo, in
 
 void atualiza_metadados (struct diretorio * diretorio) {
     unsigned long offset = sizeof(int) + sizeof(struct arquivo) * diretorio->qtd_membros;
-    
+
     for (int i = 0; i < diretorio->qtd_membros; i++) {
         diretorio->membros[i]->offset = offset;
         offset += diretorio->membros[i]->tam_or;

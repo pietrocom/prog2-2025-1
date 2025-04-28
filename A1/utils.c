@@ -1,5 +1,13 @@
 #include "utils.h"
 
+#include "vina.h"
+#include "lz/lz.h"
+#include <sys/stat.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
 int move (unsigned long inicio, unsigned long fim, long deslocamento, FILE * file) {
     if (!file || inicio >= fim)
         return -1;
@@ -86,12 +94,12 @@ int insere_membro_arq (FILE * membro_pt, FILE * archive_pt, struct diretorio * d
     return 0;
 }
 
-char * comprime_arquivo (char * file_name, FILE * file_pt, struct arquivo * arquivo) {
+int comprime_arquivo (char * file_name, FILE * file_pt, struct arquivo * arquivo) {
     if (!file_pt || !arquivo || !file_name)
         return -1;
 
     // Le o conteudo
-    char * buffer_in = calloc(arquivo->tam_or, 1);
+    unsigned char * buffer_in = calloc(arquivo->tam_or, 1);
     if (!buffer_in)
         return -1;
     if (fseek(file_pt, 0, SEEK_SET) != 0)
@@ -100,7 +108,7 @@ char * comprime_arquivo (char * file_name, FILE * file_pt, struct arquivo * arqu
         return -1;
 
     // Buffer de saida 1% + 1 bytes maior que o de entrada (minimo exigido eh 0.4% + 1)
-    char * buffer_out = calloc(arquivo->tam_or / 100 + arquivo->tam_or + 1, 1);
+    unsigned char * buffer_out = calloc(arquivo->tam_or / 100 + arquivo->tam_or + 1, 1);
     if (!buffer_out) {
         free(buffer_in);
         return -1;

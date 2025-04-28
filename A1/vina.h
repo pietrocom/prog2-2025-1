@@ -8,13 +8,8 @@
 
 // ---- INCLUDES ----
 
-#include <sys/stat.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include "utils.h"
 #include "types.h"
+#include <stdio.h>
 
 
 // ---- FUNCOES DE ARQUIVO E STRUCT ARQUIVO ----

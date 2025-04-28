@@ -1,5 +1,15 @@
 #include "options.h"
 
+#include <sys/stat.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include "lz/lz.h"
+#include "aux.h"
+#include "vina.h"
+#include "utils.h"
+
 
 int ip (struct diretorio * diretorio, char * membro, char * archive) {
     if (!membro || !archive || !diretorio)
@@ -67,7 +77,7 @@ int ic (struct diretorio * diretorio, char * membro, char * archive) {
     for (pos = 0; pos < diretorio->qtd_membros; pos++)
         if (strcmp(membro, diretorio->membros[pos]->nome) == 0)
             // Trata do caso de o membro ja existir
-            return ip_existe(diretorio, membro, archive, pos);
+            return ic_existe(diretorio, membro, archive, pos);
          
     // Abre o membro
     FILE *membro_pt = fopen(membro, "rb");
@@ -98,7 +108,8 @@ int ic (struct diretorio * diretorio, char * membro, char * archive) {
     }
 
     // Comprime o arquivo e atualiza metadados
-    membro = comprime_arquivo(membro, membro_pt, novo_arq);
+    if (comprime_arquivo(membro, membro_pt, novo_arq) == -1)
+        return -1;
 
     // Insere os dados do membro no archiver - Offset atualizado
     insere_membro_arq(membro_pt, archive_pt, diretorio, novo_arq, novo_arq->tam_comp, -1);

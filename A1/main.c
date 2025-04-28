@@ -2,6 +2,7 @@
 #include "utils.h"
 #include "options.h"
 #include "aux.h"
+#include <string.h>
 
 // Função auxiliar para imprimir informações de um arquivo
 void print_arquivo_info(struct arquivo *arq) {
@@ -13,7 +14,7 @@ void print_arquivo_info(struct arquivo *arq) {
     printf("Nome: %s\n", arq->nome);
     printf("UID: %d\n", arq->uid);
     printf("Tamanho original: %lu\n", arq->tam_or);
-    printf("Tamanho comprimido: %lu\n", arq->tam_comp);
+    printf("Tamanho comprimido: %u\n", arq->tam_comp);
     printf("Ordem: %d\n", arq->ordem);
     printf("Offset: %lu\n", arq->offset);
     printf("Mod time: %ld\n", arq->mod_time);
@@ -240,6 +241,8 @@ int main (int argc, char *argv[]) {
     else if ( (strcmp(opcao, "-ic") == 0) || (strcmp(opcao, "-i") == 0) ) {
         for (int i = 3; i < argc; i++) {
             char *membro = argv[i];
+            if (ic(diretorio, membro, archive) == -1)
+                return -1;
         }
     }
 

@@ -3,15 +3,8 @@
 #ifndef OPTIONS_H
 #define OPTIONS_H
 
-#include <sys/stat.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include "aux.h"
-#include "vina.h"
 #include "types.h"
-#include "utils.h"
+#include <stdio.h>
 
 // Funcao que trata da opcao -ip.
 // Retorno: 0 em caso de sucesso e -1 c.c.

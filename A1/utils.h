@@ -9,12 +9,7 @@
 // ---- INCLUDES ----
 
 #include "types.h"
-#include "vina.h"
-#include <sys/stat.h>
-#include <unistd.h>
 #include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 
 
 // ---- FUNCOES ----
