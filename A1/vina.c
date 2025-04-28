@@ -3,16 +3,16 @@
 #include "lz/lz.h"
 
 FILE * cria_arquivo (char * file) {
-    FILE * file_pt = fopen(file, "wb");
+    FILE * file_pt = fopen(file, "a+b");
     if (!file_pt)
         return NULL;
     
+    unsigned long tamanho = ftell(file_pt);
+
     int qtd_membros = 0;
     // Inicia o primeiro int do arquivo (qtd_membros) com 0
-    if ( fwrite(&qtd_membros, sizeof(int), 1, file_pt) != 1 ) {
-        fclose(file_pt);
-        return NULL; // Erro na escrita
-    }
+    if (tamanho == 0) 
+        fwrite(&qtd_membros, sizeof(int), 1, file_pt);
 
     return file_pt;
 }
@@ -22,7 +22,71 @@ struct arquivo * cria_s_arquivo () {
     if (!file)
         return NULL;
     
+    file->uid = -1;
+    file->ordem = -1;
+
     return file;
+}
+
+struct arquivo * inicia_s_arquivo (struct arquivo * arquivo, char * nome) {
+    if (!arquivo || !nome)
+        return NULL;
+
+    // Preenche os dados basicos do arquivo
+    strncpy(arquivo->nome, nome, NOME_MAX);
+    arquivo->nome[NOME_MAX - 1] = '\0';
+    
+    // Obtem informacoes do arquivo no sistema de arquivos
+    struct stat st;
+    if (stat(nome, &st) != 0)
+        return NULL;
+
+    arquivo->uid = st.st_uid;
+    arquivo->tam_or = st.st_size;
+    arquivo->tam_comp = st.st_size; // Sem compressao inicialmente
+    arquivo->ordem = -1;            // Sera definido na insercao
+    arquivo->offset = 0;            // Sera calculado depois
+    arquivo->mod_time = st.st_mtime;
+
+    return arquivo;
+}
+
+int insere_s_arquivo (struct diretorio * diretorio, struct arquivo * arquivo, int pos) {
+    if (!diretorio || !arquivo)
+        return -1;
+
+    // Se posicao for -1, insere no final
+    if (pos == -1)
+        pos = diretorio->qtd_membros;
+
+    // Realoca o vetor de membros
+    struct arquivo **novo = realloc(diretorio->membros, (diretorio->qtd_membros + 1) * sizeof(struct arquivo *));
+    if (!novo)
+        return -1;
+
+    diretorio->membros = novo;
+
+    // Desloca os elementos para abrir espaco
+    for (int i = diretorio->qtd_membros; i > pos; i--) {
+        diretorio->membros[i] = diretorio->membros[i-1];
+        diretorio->membros[i]->ordem = i; // Atualiza a ordem
+    }
+
+    // Insere o novo arquivo e atualiza contador
+    diretorio->membros[pos] = arquivo;
+    arquivo->ordem = pos;
+    diretorio->qtd_membros++;
+
+    return 0;
+}
+
+void atualiza_metadados (struct diretorio * diretorio) {
+    unsigned long offset = sizeof(int) + sizeof(struct arquivo) * diretorio->qtd_membros;
+    for (int i = 0; i < diretorio->qtd_membros; i++) {
+        diretorio->membros[i]->offset = offset;
+        offset += diretorio->membros[i]->tam_or;
+        diretorio->membros[i]->ordem = i;
+    }
 }
 
 void destroi_s_arquivo (struct arquivo * file) {
@@ -67,6 +131,7 @@ int inicia_diretorio (struct diretorio * diretorio, char * file) {
     }
 
     // Ler o primeiro inteiro do arquivo
+    fseek(file_pt, 0, SEEK_SET);
     fread(&qtd_membros, sizeof(int), 1, file_pt);
     diretorio->qtd_membros = qtd_membros;
 
@@ -90,9 +155,27 @@ int inicia_diretorio (struct diretorio * diretorio, char * file) {
         fseek(file_pt, sizeof(struct arquivo) * i + sizeof(int), SEEK_SET);
         // Cada ponteiro aponta para sua respectiva struct arquivo 
         fread(diretorio->membros[i], sizeof(struct arquivo), 1, file_pt);
+        // Garantia de seguranca
+        diretorio->membros[i]->nome[NOME_MAX - 1] = '\0';
     }
 
     fclose(file_pt);
+
+    return 0;
+}
+
+int escreve_s_diretorio (struct diretorio * diretorio, FILE * archive_pt) {
+    if (!diretorio || !archive_pt)
+        return -1;
+
+    // Posiciona o ponteiro no inicio do arquivo
+    rewind(archive_pt);
+    if (fwrite(&diretorio->qtd_membros, sizeof(int), 1, archive_pt) != 1)
+        return -1;
+
+    for (int i = 0; i < diretorio->qtd_membros; i++) {
+        fwrite(diretorio->membros[i], sizeof(struct arquivo), 1, archive_pt);
+    }
 
     return 0;
 }

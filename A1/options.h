@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "opt_aux.h"
+#include "aux.h"
 #include "vina.h"
 #include "types.h"
 #include "utils.h"

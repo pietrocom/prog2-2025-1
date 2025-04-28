@@ -4,7 +4,12 @@
 
 // ---- Defines ----
 
-#define NOME_MAX 512
+#define NOME_MAX 1024
+
+
+// ---- Includes ----
+
+#include <time.h>
 
 
 // ---- Structs ----
@@ -15,7 +20,8 @@ struct arquivo {
     unsigned long tam_or;          
     unsigned long tam_comp;         
     int ordem; 
-    unsigned long offset;       
+    unsigned long offset;
+    time_t mod_time;
 };
 
 struct diretorio {

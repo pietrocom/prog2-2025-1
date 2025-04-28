@@ -1,21 +1,4 @@
-#include "opt_aux.h"
-
-int insere_membro_arq (FILE * membro_pt, FILE * archive_pt, struct diretorio * diretorio, unsigned long tam, int pos) {
-    if (!membro_pt || ! archive_pt || !diretorio)
-        return -1;
-
-    char * buffer = malloc(tam);
-    if (fread(buffer, tam, 1, membro_pt) != tam)
-        return -1;
-    if (fseek(archive_pt, (long int)diretorio->membros[pos]->offset, SEEK_SET) != 0)
-        return -1;
-    if (fwrite(buffer, tam, 1, archive_pt) != tam)
-        return -1;
-
-    free(buffer);
-
-    return 0;
-}
+#include "aux.h"
 
 int ip_mem_existe (struct diretorio * diretorio, char * membro, char * archive, int pos) {
     if (!diretorio || !membro || !archive)
@@ -35,9 +18,19 @@ int ip_mem_existe (struct diretorio * diretorio, char * membro, char * archive, 
 
     // Cria uma struct com os dados do novo arquivo
     struct arquivo *novo_arq = cria_s_arquivo();
-    if (!novo_arq)
+    if (!novo_arq) {
+        fclose(membro_pt);
+        fclose(archive_pt);
         return -1;
-    novo_arq = inicia_valores_arquivo(novo_arq, membro);
+    }
+    
+    novo_arq = inicia_s_arquivo(novo_arq, membro);
+    if (!novo_arq) {
+        fclose(membro_pt);
+        fclose(archive_pt);
+        destroi_s_arquivo(novo_arq);
+        return -1;
+    }
 
     // Calcula a diferenca de tamanho dos arquivos existentes
     long dif_tam = novo_arq->tam_or - diretorio->membros[pos]->tam_or;
@@ -48,11 +41,10 @@ int ip_mem_existe (struct diretorio * diretorio, char * membro, char * archive, 
     // Insere os dados do membro no archiver
     insere_membro_arq(membro_pt, archive_pt, diretorio, novo_arq->tam_or, pos);
 
-    // Move todos os membros sizeof struct arquivo para frente 
-    move_recursivo(diretorio, archive_pt, diretorio->membros[0]->offset, sizeof(struct arquivo));
-
-    // Atualiza a struct arquivo
+    // Libera o arquivo antigo antes de substituir
     destroi_s_arquivo(diretorio->membros[pos]);
+    
+    // Atualiza o vetor de ponteiros para struct arquivo
     diretorio->membros[pos] = novo_arq;
 
     // Atualiza metadados dos arquivos 

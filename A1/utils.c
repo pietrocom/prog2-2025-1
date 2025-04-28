@@ -1,26 +1,5 @@
 #include "utils.h"
 
-struct arquivo * inicia_valores_arquivo (struct arquivo * arquivo, char * nome) {
-    if (!arquivo || !nome)
-        return NULL;
-
-    // Preenche os dados basicos do arquivo
-    strncpy(arquivo->nome, nome, NOME_MAX);
-    
-    // Obtem informacoes do arquivo no sistema de arquivos
-    struct stat st;
-    if (stat(nome, &st) != 0)
-        return NULL;
-
-    arquivo->uid = st.st_uid;
-    arquivo->tam_or = st.st_size;
-    arquivo->tam_comp = st.st_size; // Sem compressao inicialmente
-    arquivo->ordem = -1; // Sera definido na insercao
-    arquivo->offset = 0; // Sera calculado depois
-
-    return arquivo;
-}
-
 int move (unsigned long inicio, unsigned long fim, long deslocamento, FILE * file) {
     if (!file || inicio >= fim)
         return -1;
@@ -33,17 +12,11 @@ int move (unsigned long inicio, unsigned long fim, long deslocamento, FILE * fil
 
     // Le o bloco original
     fseek(file, inicio, SEEK_SET);
-    if (fread(buffer, 1, tamanho, file) != tamanho) {
-        free(buffer);
-        return -1;
-    }
+    fread(buffer, 1, tamanho, file);
 
     // Escreve na nova posicao
     fseek(file, inicio + deslocamento, SEEK_SET);
-    if (fwrite(buffer, 1, tamanho, file) != tamanho) {
-        free(buffer);
-        return -1;
-    }
+    fwrite(buffer, 1, tamanho, file);
 
     free(buffer);
     return 0;
@@ -55,69 +28,38 @@ int move_recursivo (struct diretorio * diretorio, FILE * archive_pt, int pos, lo
 
     // Cuida para que nao haja sobrescrita de informacao
     if (deslocamento >= 0) {
-        // Move, do fim ate pos, todos os membros a frente dif_tam bytes
-        for (int i = diretorio->qtd_membros; i > pos; i--) 
+        // Move, do fim ate pos, todos os membros a frente deslocamento bytes
+        for (int i = diretorio->qtd_membros - 1; i > pos; i--) {
             if (move(diretorio->membros[i]->offset, diretorio->membros[i]->offset + diretorio->membros[i]->tam_or, deslocamento, archive_pt) == -1)
                 return -1;
+            diretorio->membros[i]->offset += deslocamento;
+        }
     }
     else {
-        // Move, de pos ate o fim, todos os membros a frente de dif_tam bytes
-        for (int i = pos; i < diretorio->qtd_membros; i++) 
+        // Move, de pos ate o fim, todos os membros a frente deslocamento bytes
+        for (int i = pos; i < diretorio->qtd_membros; i++) {
             if (move(diretorio->membros[i]->offset, diretorio->membros[i]->offset + diretorio->membros[i]->tam_or, deslocamento, archive_pt) == -1)
                 return -1;
+            diretorio->membros[i]->offset += deslocamento;
+        }
     }
 
     return 0;
 }
 
-int insere_s_arquivo (struct diretorio * diretorio, struct arquivo * arquivo, int pos) {
-    if (!diretorio || !arquivo)
+int insere_membro_arq (FILE * membro_pt, FILE * archive_pt, struct diretorio * diretorio, unsigned long tam, int pos) {
+    if (!membro_pt || ! archive_pt || !diretorio)
         return -1;
 
-    // Se posicao for -1, insere no final
-    if (pos == -1)
-        pos = diretorio->qtd_membros;
-
-    // Realoca o vetor de membros
-    struct arquivo **novo = realloc(diretorio->membros, (diretorio->qtd_membros + 1) * sizeof(struct arquivo *));
-    if (!novo)
+    char * buffer = malloc(tam);
+    if (fread(buffer, tam, 1, membro_pt) != 1)
+        return -1;
+    if (fseek(archive_pt, (long int)diretorio->membros[pos]->offset, SEEK_SET) != 0)
+        return -1;
+    if (fwrite(buffer, tam, 1, archive_pt) != 1)
         return -1;
 
-    diretorio->membros = novo;
-
-    // Desloca os elementos para abrir espaco
-    for (int i = diretorio->qtd_membros; i > pos; i--) {
-        diretorio->membros[i] = diretorio->membros[i-1];
-        diretorio->membros[i]->ordem = i; // Atualiza a ordem
-    }
-
-    // Insere o novo arquivo e atualiza contador
-    diretorio->membros[pos] = arquivo;
-    arquivo->ordem = pos;
-    diretorio->qtd_membros++;
-
-    return 0;
-}
-
-void atualiza_metadados (struct diretorio * diretorio) {
-    unsigned long offset = sizeof(int) + sizeof(struct arquivo) * diretorio->qtd_membros;
-    for (int i = 0; i < diretorio->qtd_membros; i++) {
-        diretorio->membros[i]->offset = offset;
-        offset += diretorio->membros[i]->tam_or;
-        diretorio->membros[i]->ordem = i;
-    }
-}
-
-int escreve_s_diretorio (struct diretorio * diretorio, FILE * archive_pt) {
-    if (!diretorio || !archive_pt)
-        return -1;
-
-    // Posiciona o ponteiro no inicio do arquivo
-    fseek(archive_pt, 0, SEEK_SET);
-    fwrite(&diretorio->qtd_membros, sizeof(int), 1, archive_pt);
-    for (int i = 0; i < diretorio->qtd_membros; i++) {
-        fwrite(diretorio->membros[i], sizeof(struct arquivo), 1, archive_pt);
-    }
+    free(buffer);
 
     return 0;
 }

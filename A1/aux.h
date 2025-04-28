@@ -1,7 +1,7 @@
 // Trata de funcoes auxiliares das funcoes de operacoes.
 
-#ifndef OPT_AUX_H
-#define OPT_AUX_H
+#ifndef AUX_H
+#define AUX_H
 
 #include "types.h"
 #include "utils.h"
@@ -12,9 +12,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-// Insere os dados, de tamanho tam, do membro no archiver.
-// Retorno: 0 em caso de sucesso e -1 c.c.
-int insere_membro_arq (FILE * membro_pt, FILE * archive_pt, struct diretorio * diretorio, unsigned long tam, int pos);
 
 // Funcao que trata do caso do membro ja existir no archive.
 // Retorno: 0 em caso de sucesso e -1 c.c.
