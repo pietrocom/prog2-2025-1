@@ -85,6 +85,7 @@ int insere_membro_arq (FILE * membro_pt, FILE * archive_pt, struct diretorio * d
         arquivo->offset = ftell(archive_pt);
 
     // Escreve o conteudo
+    prinft("%p", buffer);
     if (fwrite(buffer, tam, 1, archive_pt) != 1)
         return -1;
 
@@ -143,4 +144,26 @@ int comprime_arquivo (char * file_name, FILE * file_pt, struct arquivo * arquivo
     free(buffer_out);
 
     return 0;
+}
+
+void print_arquivo_info(struct arquivo *arq) {
+    if (!arq) {
+        printf("Arquivo NULL\n");
+        return;
+    }
+
+    printf("Nome: %s\n", arq->nome);
+    printf("UID: %d\n", arq->uid);
+    printf("Tamanho original: %lu bytes\n", arq->tam_or);
+    printf("Tamanho comprimido: %d bytes\n", arq->tam_comp);
+    printf("Ordem: %d\n", arq->ordem);
+    printf("Offset: %lu\n", arq->offset);
+    
+    // Formatação da data
+    if (arq->mod_time != 0) {
+        printf("Mod time: %s", ctime(&arq->mod_time)); 
+    } else {
+        printf("Mod time: (não definido)\n");
+    }
+    printf("-----------------\n");
 }

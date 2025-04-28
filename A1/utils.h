@@ -34,4 +34,7 @@ int insere_membro_arq (FILE * membro_pt, FILE * archive_pt, struct diretorio * d
 // Retorno: 0 em caso de sucesso e -1 c.c.
 int comprime_arquivo (char * file_name, FILE * file_pt, struct arquivo * arquivo);
 
+// Imprime os metadados da struct arquivo passada.
+void imprime_arquivo_info (struct arquivo * arquivo);
+
 #endif
