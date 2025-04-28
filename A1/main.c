@@ -198,6 +198,7 @@ void test_archiver() {
     remove(archive_name);
 }
 
+/*
 int main() {
     printf("=== INICIANDO TESTES ===\n");
     
@@ -213,8 +214,8 @@ int main() {
     printf("=== TESTES CONCLUÍDOS ===\n");
     return 0;
 }
+*/
 
-/*
 int main (int argc, char *argv[]) {
     
     char *opcao = argv[1];
@@ -274,4 +275,4 @@ int main (int argc, char *argv[]) {
 
     return 0;
 }
-*/
+

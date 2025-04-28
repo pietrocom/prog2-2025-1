@@ -82,6 +82,7 @@ int insere_s_arquivo (struct diretorio * diretorio, struct arquivo * arquivo, in
 
 void atualiza_metadados (struct diretorio * diretorio) {
     unsigned long offset = sizeof(int) + sizeof(struct arquivo) * diretorio->qtd_membros;
+    
     for (int i = 0; i < diretorio->qtd_membros; i++) {
         diretorio->membros[i]->offset = offset;
         offset += diretorio->membros[i]->tam_or;

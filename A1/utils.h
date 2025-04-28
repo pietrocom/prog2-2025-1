@@ -9,6 +9,7 @@
 // ---- INCLUDES ----
 
 #include "types.h"
+#include "vina.h"
 #include <sys/stat.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -30,7 +31,8 @@ int move (unsigned long inicio, unsigned long fim, long deslocamento, FILE * fil
 int move_recursivo (struct diretorio * diretorio, FILE * archive_pt, int pos, long deslocamento);
 
 // Insere os dados, de tamanho tam, do membro, em pos, no archiver.
+// Se a struct arquivo for passada, atualiza seu offset.
 // Retorno: 0 em caso de sucesso e -1 c.c.
-int insere_membro_arq (FILE * membro_pt, FILE * archive_pt, struct diretorio * diretorio, unsigned long tam, int pos);
+int insere_membro_arq (FILE * membro_pt, FILE * archive_pt, struct diretorio * diretorio, struct arquivo * arquivo, unsigned long tam, int pos);
 
 #endif

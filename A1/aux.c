@@ -1,6 +1,6 @@
 #include "aux.h"
 
-int ip_mem_existe (struct diretorio * diretorio, char * membro, char * archive, int pos) {
+int ip_existe (struct diretorio * diretorio, char * membro, char * archive, int pos) {
     if (!diretorio || !membro || !archive)
         return -1;
      
@@ -39,7 +39,7 @@ int ip_mem_existe (struct diretorio * diretorio, char * membro, char * archive, 
     move_recursivo(diretorio, archive_pt, pos, dif_tam);
 
     // Insere os dados do membro no archiver
-    insere_membro_arq(membro_pt, archive_pt, diretorio, novo_arq->tam_or, pos);
+    insere_membro_arq(membro_pt, archive_pt, diretorio, NULL, novo_arq->tam_or, pos);
 
     // Libera o arquivo antigo antes de substituir
     destroi_s_arquivo(diretorio->membros[pos]);
