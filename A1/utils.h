@@ -35,4 +35,8 @@ int move_recursivo (struct diretorio * diretorio, FILE * archive_pt, int pos, lo
 // Retorno: 0 em caso de sucesso e -1 c.c.
 int insere_membro_arq (FILE * membro_pt, FILE * archive_pt, struct diretorio * diretorio, struct arquivo * arquivo, unsigned long tam, int pos);
 
+// Comprime um arquivo e muda campo de tam_comp da struct.
+// Retorno: 0 em caso de sucesso e -1 c.c.
+int comprime_arquivo (char * file_name, FILE * file_pt, struct arquivo * arquivo);
+
 #endif

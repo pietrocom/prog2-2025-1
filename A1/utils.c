@@ -57,6 +57,8 @@ int insere_membro_arq (FILE * membro_pt, FILE * archive_pt, struct diretorio * d
     char * buffer = calloc(tam, 1);
     if (!buffer)
         return -1;
+    if (fseek(membro_pt, 0, SEEK_SET) != 0)
+        return -1;
     if (fread(buffer, tam, 1, membro_pt) != 1)
         return -1;
 
@@ -80,6 +82,57 @@ int insere_membro_arq (FILE * membro_pt, FILE * archive_pt, struct diretorio * d
 
     fflush(archive_pt);
     free(buffer);
+
+    return 0;
+}
+
+char * comprime_arquivo (char * file_name, FILE * file_pt, struct arquivo * arquivo) {
+    if (!file_pt || !arquivo || !file_name)
+        return -1;
+
+    // Le o conteudo
+    char * buffer_in = calloc(arquivo->tam_or, 1);
+    if (!buffer_in)
+        return -1;
+    if (fseek(file_pt, 0, SEEK_SET) != 0)
+        return -1;
+    if (fread(buffer_in, arquivo->tam_or, 1, file_pt) != 1)
+        return -1;
+
+    // Buffer de saida 1% + 1 bytes maior que o de entrada (minimo exigido eh 0.4% + 1)
+    char * buffer_out = calloc(arquivo->tam_or / 100 + arquivo->tam_or + 1, 1);
+    if (!buffer_out) {
+        free(buffer_in);
+        return -1;
+    }
+
+    int tam_comp = LZ_Compress(buffer_in, buffer_out, arquivo->tam_or);
+
+    // Atualiza tamanho do arquivo que esta compactado
+    arquivo->tam_comp = tam_comp;
+
+    // Escreve no arquivo o buffer_out
+    file_pt = freopen(file_name, "wb", file_pt);
+
+    if (!file_pt) {
+        free(buffer_in);
+        free(buffer_out);
+        return -1;
+    }
+
+    fwrite(buffer_out, arquivo->tam_comp, 1, file_pt);
+
+    // Reabre o arquivo no modo de leitura e edicao correto
+    file_pt = freopen(file_name, "rb", file_pt);
+
+    if (!file_pt) {
+        free(buffer_in);
+        free(buffer_out);
+        return -1;
+    }
+
+    free(buffer_in);
+    free(buffer_out);
 
     return 0;
 }

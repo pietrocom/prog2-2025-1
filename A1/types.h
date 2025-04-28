@@ -18,7 +18,7 @@ struct arquivo {
     char nome[NOME_MAX];    
     int uid;       
     unsigned long tam_or;          
-    unsigned long tam_comp;         
+    int tam_comp;         
     int ordem; 
     unsigned long offset;
     time_t mod_time;
