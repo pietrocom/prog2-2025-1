@@ -84,8 +84,6 @@ int insere_membro_arq (FILE * membro_pt, FILE * archive_pt, struct diretorio * d
     if (arquivo)
         arquivo->offset = ftell(archive_pt);
 
-    // Escreve o conteudo
-    prinft("%p", buffer);
     if (fwrite(buffer, tam, 1, archive_pt) != 1)
         return -1;
 

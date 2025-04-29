@@ -52,7 +52,7 @@ int ip (struct diretorio * diretorio, char * membro, char * archive) {
 
     // Insere os dados do membro no archiver - Offset atualizado
     insere_membro_arq(membro_pt, archive_pt, diretorio, novo_arq, novo_arq->tam_or, -1);
-    
+
     // Atualiza o vetor de ponteiros para struct arquivo - qtd_membros atualizada
     insere_s_arquivo(diretorio, novo_arq, pos);
 
@@ -61,9 +61,6 @@ int ip (struct diretorio * diretorio, char * membro, char * archive) {
 
     // Escreve no archiver a struct diretorio
     escreve_s_diretorio(diretorio, archive_pt);
-
-    // Trunca o archive
-    truncate_file(archive_pt, diretorio);
 
     fclose(membro_pt);
     fclose(archive_pt);
@@ -125,9 +122,6 @@ int ic (struct diretorio * diretorio, char * membro, char * archive) {
 
     // Escreve no archiver a struct diretorio
     escreve_s_diretorio(diretorio, archive_pt);
-
-    // Trunca o archive
-    truncate_file(archive_pt, diretorio);
 
     fclose(membro_pt);
     fclose(archive_pt);

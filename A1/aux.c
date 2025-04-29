@@ -40,8 +40,11 @@ int ip_existe (struct diretorio * diretorio, char * membro, char * archive, int 
     }
 
     // Calcula a diferenca de tamanho dos arquivos existentes
-    // Usa tam_comp pois o membro em pos pode estar comprimido
-    long dif_tam = novo_arq->tam_or - diretorio->membros[pos]->tam_comp;
+    long dif_tam;
+    if (diretorio->membros[pos]->tam_comp == 0)
+        dif_tam = novo_arq->tam_or - diretorio->membros[pos]->tam_or;
+    else 
+        dif_tam = novo_arq->tam_or - diretorio->membros[pos]->tam_comp;
     
     // Move todos os membros a frente de pos dif_tam bytes para frente 
     move_recursivo(diretorio, archive_pt, pos, dif_tam);
@@ -108,7 +111,10 @@ int ic_existe (struct diretorio * diretorio, char * membro, char * archive, int 
 
     // Calcula a diferenca de tamanho dos arquivos existentes
     long dif_tam;
-    dif_tam = novo_arq->tam_comp - diretorio->membros[pos]->tam_comp;
+    if (diretorio->membros[pos]->tam_comp == 0)
+        dif_tam = novo_arq->tam_comp - diretorio->membros[pos]->tam_or;
+    else 
+        dif_tam = novo_arq->tam_comp - diretorio->membros[pos]->tam_comp;
     
     // Move todos os membros a frente de pos dif_tam bytes 
     move_recursivo(diretorio, archive_pt, pos, dif_tam);

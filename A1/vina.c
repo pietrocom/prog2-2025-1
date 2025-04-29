@@ -46,12 +46,12 @@ struct arquivo * inicia_s_arquivo (struct arquivo * arquivo, char * nome) {
     if (stat(nome, &st) != 0)
         return NULL;
 
-        arquivo->uid = st.st_uid;
-        arquivo->tam_or = (unsigned long)st.st_size;
-        arquivo->tam_comp = 0;
-        arquivo->ordem = -1;                    // Sera definido nas modificacoes
-        arquivo->offset = 0;                    // Sera definido nas modificacoes
-        arquivo->mod_time = st.st_mtime;
+    arquivo->uid = st.st_uid;
+    arquivo->tam_or = (unsigned long)st.st_size;
+    arquivo->tam_comp = 0;
+    arquivo->ordem = -1;                    // Sera definido nas modificacoes
+    arquivo->offset = 0;                    // Sera definido nas modificacoes
+    arquivo->mod_time = st.st_mtime;
 
     return arquivo;
 }
