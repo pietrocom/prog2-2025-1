@@ -187,3 +187,17 @@ void truncate_file (FILE * file_pt, struct diretorio * diretorio) {
     // Reposiciona o ponteiro
     rewind(file_pt);
 }
+
+void troca_pos (struct diretorio * diretorio, int pos_1, int pos_2) {
+    struct arquivo * aux = diretorio->membros[pos_1];
+    diretorio->membros[pos_1] = diretorio->membros[pos_2];
+    diretorio->membros[pos_2] = aux;
+}
+
+void move_inicio (struct diretorio * diretorio, int pos) {
+    struct arquivo * aux = diretorio->membros[pos];
+    for (int i = pos - 1; i <= 0; i--) 
+        diretorio->membros[i + 1] = diretorio->membros[i];
+        
+    diretorio->membros[0] = aux;
+}

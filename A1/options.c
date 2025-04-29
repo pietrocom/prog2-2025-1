@@ -128,3 +128,44 @@ int ic (struct diretorio * diretorio, char * membro, char * archive) {
 
     return 0;
 }
+
+int m (struct diretorio * diretorio, char * membro, char * target, char * archive) {
+    if (!diretorio || !membro || !archive)
+        return -1;
+
+    // Confere se o membro existe e extrai sua posicao se sim
+    int pos_mem;
+    for (pos_mem = 0; pos_mem < diretorio->qtd_membros; pos_mem++)
+        if (strcmp(membro, diretorio->membros[pos_mem]->nome) == 0)
+            break;
+    if (pos_mem == diretorio->qtd_membros) {
+        printf("Erro: membro nao existe!\n")
+        return -1;
+    }
+
+    // Confere se o target existe e extrai sua posicao se sim
+    int pos_tar;
+    for (pos_tar = 0; pos_tar < diretorio->qtd_membros; pos_tar++)
+        if (strcmp(membro, diretorio->membros[pos_tar]->nome) == 0)
+            break;
+    if ( (pos_tar == diretorio->qtd_membros) && (target) ) {
+        printf("Erro: membro nao existe!\n")
+        return -1;
+    }
+    // Trata a possibilidade de ser NULL
+    if (!target)
+        pos_tar = 0;
+    
+    // Abre o archiver para atualizacao
+    FILE *archive_pt = fopen(archive, "r+b");
+    if (!archive_pt) {
+        return -1;
+    }
+
+
+    if (!target)
+        move_inicio (diretorio, pos_mem);
+    else
+        // Troca no vetor as posicoes das structs
+        troca_pos (diretorio, pos_mem, pos_tar);
+}

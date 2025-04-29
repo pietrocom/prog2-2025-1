@@ -10,7 +10,7 @@
 int ip_existe (struct diretorio * diretorio, char * membro, char * archive, int pos) {
     if (!diretorio || !membro || !archive)
         return -1;
-     
+
     // Abre o membro
     FILE *membro_pt = fopen(membro, "rb");
     if (!membro_pt)
