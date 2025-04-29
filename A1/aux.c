@@ -61,6 +61,9 @@ int ip_existe (struct diretorio * diretorio, char * membro, char * archive, int 
     // Escreve no archiver a struct diretorio
     escreve_s_diretorio(diretorio, archive_pt);
 
+    // Trunca o archive
+    truncate_file(archive_pt, diretorio);
+
     fclose(membro_pt);
     fclose(archive_pt);
 
@@ -124,6 +127,9 @@ int ic_existe (struct diretorio * diretorio, char * membro, char * archive, int 
 
     // Escreve no archiver a struct diretorio
     escreve_s_diretorio(diretorio, archive_pt);
+
+    // Trunca o archive
+    truncate_file(archive_pt, diretorio);
 
     fclose(membro_pt);
     fclose(archive_pt);

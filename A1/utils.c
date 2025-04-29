@@ -167,3 +167,25 @@ void imprime_arquivo_info(struct arquivo *arq) {
     }
     printf("-----------------\n");
 }
+
+void truncate_file (FILE * file_pt, struct diretorio * diretorio) {
+    if (!file_pt || !diretorio)
+        return;
+
+    // Esvazia o buffer de saida
+    fflush(file_pt);
+
+    // Ultimo membro do diretorio
+    struct arquivo * aux = diretorio->membros[diretorio->qtd_membros - 1];
+
+    off_t len;
+    if (aux->tam_comp == 0)
+        len = (off_t)(aux->tam_or + aux->offset);
+    else 
+        len = (off_t)(aux->tam_comp + aux->offset);
+    
+    ftruncate(fileno(file_pt), len);
+
+    // Reposiciona o ponteiro
+    rewind(file_pt);
+}
