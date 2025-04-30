@@ -139,7 +139,7 @@ int m (struct diretorio * diretorio, char * membro, char * target, char * archiv
         if (strcmp(membro, diretorio->membros[pos_mem]->nome) == 0)
             break;
     if (pos_mem == diretorio->qtd_membros) {
-        printf("Erro: membro nao existe!\n")
+        printf("Erro: membro nao existe!\n");
         return -1;
     }
 
@@ -149,7 +149,7 @@ int m (struct diretorio * diretorio, char * membro, char * target, char * archiv
         if (strcmp(membro, diretorio->membros[pos_tar]->nome) == 0)
             break;
     if ( (pos_tar == diretorio->qtd_membros) && (target) ) {
-        printf("Erro: membro nao existe!\n")
+        printf("Erro: membro nao existe!\n");
         return -1;
     }
     // Trata a possibilidade de ser NULL

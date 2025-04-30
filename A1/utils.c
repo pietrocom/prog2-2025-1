@@ -44,7 +44,7 @@ int move_recursivo (struct diretorio * diretorio, FILE * archive_pt, int pos, lo
     }
     else {
         // Move, de pos ate fim, todos os membros a frente deslocamento bytes
-        for (int i = pos; i < diretorio->qtd_membros; i++) {
+        for (int i = pos + 1; i < diretorio->qtd_membros; i++) {
             if (move(diretorio->membros[i]->offset, diretorio->membros[i]->offset + diretorio->membros[i]->tam_or, deslocamento, archive_pt) == -1)
                 return -1;
         }
