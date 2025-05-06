@@ -14,7 +14,7 @@ SRCS := $(wildcard $(SRC_DIR)/*.c) $(wildcard $(SRC_DIR)/lz/*.c)
 # Arquivos objeto
 OBJS := $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRCS))
 # Executavel final
-TARGET := $(LOGIN_DIR)/vina
+TARGET := $(LOGIN_DIR)/vinac
 
 # Regra padrao
 all: $(TARGET)
