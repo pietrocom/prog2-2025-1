@@ -7,8 +7,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-// Verificar!!!!!
-
 int ip_existe (struct diretorio * diretorio, char * membro, char * archive, int pos, struct arquivo * novo_arq) {
     if (!diretorio || !membro || !archive)
         return -1;
@@ -44,26 +42,10 @@ int ip_existe (struct diretorio * diretorio, char * membro, char * archive, int 
     }
 
     // Calcula a diferenca de tamanho dos arquivos existentes
-    long dif_tam;
-    if (diretorio->membros[pos]->tam_comp == 0) {
-        // Ambos originais
-        if (novo_arq->tam_comp == 0)
-            dif_tam = novo_arq->tam_or - diretorio->membros[pos]->tam_or;
-        // Novo arquivo comprimido
-        else 
-            dif_tam = novo_arq->tam_comp - diretorio->membros[pos]->tam_or; 
-    }
-    else {
-        // Arquivo do vetor comprimido
-        if (novo_arq->tam_comp == 0)
-            dif_tam = novo_arq->tam_or - diretorio->membros[pos]->tam_comp;
-        // Ambos comprimidos
-        else
-            dif_tam = novo_arq->tam_comp - diretorio->membros[pos]->tam_comp;
-    }
+    long dif_tam = dif_tam(diretorio->membros[pos], novo_arq);
     
     // Move todos os membros a frente de pos dif_tam bytes para frente 
-    move_recursivo(diretorio, archive_pt, pos, dif_tam);
+    move_recursivo(diretorio, archive_pt, pos, dif_tam, -1);
 
     // Insere os dados do membro no archiver
     if (novo_arq->tam_comp == 0)

@@ -19,11 +19,11 @@
 // Retorno: 0 para sucesso ou -1 para erro de operacao.
 int move (unsigned long inicio, unsigned long fim, long deslocamento, FILE * file);
 
-// Move, membro por membro todos os membros a frente de pos, alterando o offset.
+// Move, membro por membro todos os membros a frente de pos e antes de fim, alterando o offset.
 // Projetada para que nao sobrescreva informacao.
 // A funcao nao eh na verdade iterativa, mas o nome reflete seu comportamento.
 // Retorno: 0 em caso de sucesso ou -1 c.c.
-int move_recursivo (struct diretorio * diretorio, FILE * archive_pt, int pos, long deslocamento);
+int move_recursivo (struct diretorio * diretorio, FILE * archive_pt, int pos, long deslocamento, int fim);
 
 // Insere os dados, de tamanho tam, do membro, em pos, no archiver.
 // Se a struct arquivo for passada, atualiza seu offset.
@@ -45,5 +45,9 @@ void troca_pos (struct diretorio * diretorio, int pos_1, int pos_2);
 
 // Move um membro para o inicio do vetor, movendo o restante para o lado.
 void move_inicio (struct diretorio * diretorio, int pos);
+
+// Calcula e retorna a diferenca de tamanho de dois arquivos diferentes.
+// Confere se algum dos dois esta compactado ou nao.
+long dif_tam (struct arquivo * arq1, struct arquivo * arq2);
 
 #endif

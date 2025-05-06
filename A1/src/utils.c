@@ -30,23 +30,34 @@ int move (unsigned long inicio, unsigned long fim, long deslocamento, FILE * fil
     return 0;
 }
 
-int move_recursivo (struct diretorio * diretorio, FILE * archive_pt, int pos, long deslocamento) {
+int move_recursivo (struct diretorio * diretorio, FILE * archive_pt, int pos, long deslocamento, int fim) {
     if (!diretorio || !archive_pt)
         return -1;
+
+    if (fim == -1)
+        fim = diretorio->qtd_membros;
 
     // Cuida para que nao haja sobrescrita de informacao
     if (deslocamento >= 0) {
         // Move, do fim ate pos, todos os membros a frente deslocamento bytes
-        for (int i = diretorio->qtd_membros - 1; i >= pos; i--) {
-            if (move(diretorio->membros[i]->offset, diretorio->membros[i]->offset + diretorio->membros[i]->tam_or, deslocamento, archive_pt) == -1)
-                return -1;
+        for (int i = fim - 1; i >= pos; i--) {
+            if (diretorio->membros[i]->tam_comp == 0)
+                if (move(diretorio->membros[i]->offset, diretorio->membros[i]->offset + diretorio->membros[i]->tam_or, deslocamento, archive_pt) == -1)
+                    return -1;
+            else 
+                if (move(diretorio->membros[i]->offset, diretorio->membros[i]->offset + diretorio->membros[i]->tam_comp, deslocamento, archive_pt) == -1)
+                    return -1;
         }
     }
     else {
         // Move, de pos ate fim, todos os membros a frente deslocamento bytes
-        for (int i = pos + 1; i < diretorio->qtd_membros; i++) {
-            if (move(diretorio->membros[i]->offset, diretorio->membros[i]->offset + diretorio->membros[i]->tam_or, deslocamento, archive_pt) == -1)
-                return -1;
+        for (int i = pos + 1; i < fim; i++) {
+            if (diretorio->membros[i]->tam_comp == 0)    
+                if (move(diretorio->membros[i]->offset, diretorio->membros[i]->offset + diretorio->membros[i]->tam_or, deslocamento, archive_pt) == -1)
+                    return -1;
+            else 
+                if (move(diretorio->membros[i]->offset, diretorio->membros[i]->offset + diretorio->membros[i]->tam_comp, deslocamento, archive_pt) == -1)
+                    return -1;
         }
     }
 
@@ -200,4 +211,26 @@ void move_inicio (struct diretorio * diretorio, int pos) {
         diretorio->membros[i + 1] = diretorio->membros[i];
         
     diretorio->membros[0] = aux;
+}
+
+long dif_tam (struct arquivo * arq1, struct arquivo * arq2) {
+    long dif_tam;
+    if (arq1->tam_comp == 0) {
+        // Ambos originais
+        if (arq2->tam_comp == 0)
+            dif_tam = arq2->tam_or - arq1->tam_or;
+        // Novo arquivo comprimido
+        else 
+            dif_tam = arq2->tam_comp - arq1->tam_or; 
+    }
+    else {
+        // Arquivo do vetor comprimido
+        if (arq1->tam_comp == 0)
+            dif_tam = arq2->tam_or - arq1->tam_comp;
+        // Ambos comprimidos
+        else
+            dif_tam = arq2->tam_comp - arq1->tam_comp;
+    }
+
+    return dif_tam;
 }
