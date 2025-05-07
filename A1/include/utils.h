@@ -40,8 +40,8 @@ void imprime_arquivo_info (struct arquivo * arquivo);
 // Deixa somente os bytes necessarios de um arquivo.vc.
 void truncate_file (FILE * file_pt, struct diretorio * diretorio);
 
-// Troca as posicoes de duas structs no vetor.
-void troca_pos (struct diretorio * diretorio, int pos_1, int pos_2);
+// Move um elemento do vetor, indicado por pos_1, para imediatamente depois de pos_2.
+void move_elemento (struct diretorio * diretorio, int pos_1, int pos_2);
 
 // Move um membro para o inicio do vetor, movendo o restante para o lado.
 void move_inicio (struct diretorio * diretorio, int pos);

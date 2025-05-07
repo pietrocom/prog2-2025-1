@@ -122,17 +122,16 @@ int m (struct diretorio * diretorio, char * membro, char * target, char * archiv
     }
 
     // Confere se o target existe e extrai sua posicao se sim
-    int pos_tar;
-    for (pos_tar = 0; pos_tar < diretorio->qtd_membros; pos_tar++)
-        if (strcmp(membro, diretorio->membros[pos_tar]->nome) == 0)
-            break;
-    if ( (pos_tar == diretorio->qtd_membros) && (target) ) {
-        printf("Erro: membro nao existe!\n");
-        return -1;
+    int pos_tar = -1;
+    if (target) {
+        for (pos_tar = 0; pos_tar < diretorio->qtd_membros; pos_tar++)
+            if (strcmp(target, diretorio->membros[pos_tar]->nome) == 0)
+                break;
+        if (pos_tar == diretorio->qtd_membros) {
+            printf("Erro: target nao existe!\n");
+            return -1;
+        }
     }
-    // Trata a possibilidade de ser NULL
-    if (!target)
-        pos_tar = 0;
 
     // Abre o archiver para atualizacao
     FILE *archive_pt = fopen(archive, "r+b");
@@ -142,57 +141,64 @@ int m (struct diretorio * diretorio, char * membro, char * target, char * archiv
 
     // Define structs auxiliares para operacoes
     struct arquivo * membro_s = diretorio->membros[pos_mem];
-    struct arquivo * target_s = diretorio->membros[pos_tar];
-    // Remaneja os membros para troca
-    if (pos_mem > pos_tar) {
-        membro_s = diretorio->membros[pos_tar];
-        target_s = diretorio->membros[pos_mem];
+    struct arquivo * target_s; 
+    if (target)
+        target_s = diretorio->membros[pos_tar];
+    else 
+        target_s = NULL;
+    // Define os tamanhos corretos (compactado ou nao)
+    unsigned long tam_mem;
+    unsigned long tam_tar;
+    if (membro_s->tam_comp == 0)
+        tam_mem = membro_s->tam_or;
+    else 
+        tam_mem = membro_s->tam_comp;
+    if (target) {
+        if (target_s->tam_comp == 0)
+            tam_tar = target_s->tam_or;
+        else
+            tam_tar = target_s->tam_comp;
     }
-
-    // Encontra a diferenca de tamanho
-    long dif_tam = diff_tam(membro_s, target_s);
-
-    // Aloca um buffer para fazer a operacao
-    char * buffer;
-    if (target_s->tam_comp == 0)
-        buffer = malloc(target_s->tam_or);
     else
-        buffer = malloc(target_s->tam_comp);
+        tam_tar = 0;
+
+    // Aloca um buffer para o membro
+    char * buffer;
+    buffer = malloc(tam_mem);
     if (!buffer) {
         fclose(archive_pt);
         return -1;
     }
 
-    // Le o conteudo do target e armazena no buffer
-    fseek(archive_pt, target_s->offset, SEEK_SET);
-    if (target_s->tam_comp == 0) 
-        fread(buffer, target_s->tam_or, 1, archive_pt);
-    else
-        fread(buffer, target_s->tam_comp, 1, archive_pt);
-
-    // Move o membro para o seu lugar
-    if (target_s->tam_comp == 0)
-        move(membro_s->offset, membro_s->offset + membro_s->tam_or, dif_tam, archive_pt);
-    else 
-        move(membro_s->offset, membro_s->offset + membro_s->tam_comp, dif_tam, archive_pt);
-
-    // Move todos os membros entre membro e target dif_tam bytes
-    if (move_recursivo(diretorio, archive_pt, pos_mem, dif_tam, pos_tar) == -1)
-        return -1;
-
-    // Escreve o conteudo de target na posicao de membro
+    // Le o conteudo do membro e armazena no buffer
     fseek(archive_pt, membro_s->offset, SEEK_SET);
-    if (target_s->tam_comp == 0) 
-        fwrite(buffer, target_s->tam_or, 1, archive_pt);
-    else
-        fwrite(buffer, target_s->tam_comp, 1, archive_pt);
+    fread(buffer, tam_mem, 1, archive_pt);
 
-    // Se for posicao 0
-    if (!target)
-        move_inicio (diretorio, pos_mem);
+    // Move todos os membros para dar espaço para o membro
+    if (pos_tar >= pos_mem) {
+        if (move_recursivo(diretorio, archive_pt, pos_mem, -tam_mem, pos_tar) == -1)
+            return -1;
+    }
     else
-        // Troca no vetor as posicoes das structs
-        troca_pos (diretorio, pos_mem, pos_tar);
+        if (move_recursivo(diretorio, archive_pt, pos_mem, tam_mem, pos_tar) == -1)
+            return -1;
+
+    // Escreve o membro no seu lugar
+    if (target) {
+        if (pos_tar > pos_mem)
+            fseek(archive_pt, diretorio->membros[pos_tar]->offset + tam_tar - tam_mem, SEEK_SET);
+        else
+            fseek(archive_pt, diretorio->membros[pos_tar]->offset + tam_tar, SEEK_SET);
+    }
+    else
+        fseek(archive_pt, sizeof(struct arquivo) * diretorio->qtd_membros, SEEK_SET);
+    fwrite(buffer, tam_mem, 1, archive_pt);
+
+    // Move o elemento de pos_mem para imediatamente depois de pos_tar
+    if (!target)
+        move_inicio(diretorio, pos_mem);
+    else 
+        move_elemento(diretorio, pos_mem, pos_tar);
 
     atualiza_metadados(diretorio);
 

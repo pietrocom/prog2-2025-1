@@ -39,7 +39,7 @@ int move_recursivo (struct diretorio * diretorio, FILE * archive_pt, int pos, lo
 
     // Cuida para que nao haja sobrescrita de informacao
     if (deslocamento >= 0) {
-        // Move, do fim ate pos, todos os membros a frente deslocamento bytes
+        // Move, de fim ate pos, todos os membros a frente deslocamento bytes
         for (int i = fim - 1; i >= pos; i--) {
             if (diretorio->membros[i]->tam_comp == 0) {
                 if (move(diretorio->membros[i]->offset, diretorio->membros[i]->offset + diretorio->membros[i]->tam_or, deslocamento, archive_pt) == -1)
@@ -203,17 +203,30 @@ void truncate_file (FILE * file_pt, struct diretorio * diretorio) {
     rewind(file_pt);
 }
 
-void troca_pos (struct diretorio * diretorio, int pos_1, int pos_2) {
+void move_elemento (struct diretorio * diretorio, int pos_1, int pos_2) {
     struct arquivo * aux = diretorio->membros[pos_1];
-    diretorio->membros[pos_1] = diretorio->membros[pos_2];
-    diretorio->membros[pos_2] = aux;
+    if (pos_1 < pos_2) {
+        for (int i = pos_1; i < pos_2; i++) {
+            diretorio->membros[i] = diretorio->membros[i + 1];
+        }
+        diretorio->membros[pos_2] = aux;
+    }   
+    else {
+        for (int i = pos_1; i > pos_2 + 1; i--) {
+            diretorio->membros[i] = diretorio->membros[i - 1];
+        }
+        diretorio->membros[pos_2 + 1] = aux;
+    }
 }
 
 void move_inicio (struct diretorio * diretorio, int pos) {
-    struct arquivo * aux = diretorio->membros[pos];
-    for (int i = pos - 1; i <= 0; i--) 
-        diretorio->membros[i + 1] = diretorio->membros[i];
-        
+    struct arquivo *aux = diretorio->membros[pos];
+    
+    // Move os elementos uma posição para tras
+    for (int i = pos; i > 0; i--) {
+        diretorio->membros[i] = diretorio->membros[i-1];
+    }
+    
     diretorio->membros[0] = aux;
 }
 

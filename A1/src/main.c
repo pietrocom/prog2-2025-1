@@ -35,12 +35,10 @@ int main (int argc, char *argv[]) {
     }
 
     else if (strcmp(opcao, "-m") == 0) {
-        for (int i = 3; i < argc; i++) {
-            char *membro = argv[3];
-            char *target = argv[4];
-            if (m(diretorio, membro, target, archive) == -1)
-                return -1;
-        }
+        char *membro = argv[3];
+        char *target = argv[4];
+        if (m(diretorio, membro, target, archive) == -1)
+            return -1;
     }
 
     else if (strcmp(opcao, "-x") == 0) {
