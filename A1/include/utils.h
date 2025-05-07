@@ -48,6 +48,6 @@ void move_inicio (struct diretorio * diretorio, int pos);
 
 // Calcula e retorna a diferenca de tamanho de dois arquivos diferentes.
 // Confere se algum dos dois esta compactado ou nao.
-long dif_tam (struct arquivo * arq1, struct arquivo * arq2);
+long diff_tam (struct arquivo * arq1, struct arquivo * arq2);
 
 #endif

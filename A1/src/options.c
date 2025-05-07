@@ -62,7 +62,7 @@ int ip (struct diretorio * diretorio, char * membro, char * archive, struct arqu
     insere_s_arquivo(diretorio, novo_arq, pos);
 
     // Move todos os membros sizeof(struct arquivo) para frente - Offset atualizado
-    move_recursivo(diretorio, archive_pt, 0, sizeof(struct arquivo, -1));
+    move_recursivo(diretorio, archive_pt, 0, sizeof(struct arquivo), -1);
 
     // Escreve no archiver a struct diretorio
     escreve_s_diretorio(diretorio, archive_pt);
@@ -150,7 +150,7 @@ int m (struct diretorio * diretorio, char * membro, char * target, char * archiv
     }
 
     // Encontra a diferenca de tamanho
-    long dif_tam = dif_tam(pos_mem, pos_tar);
+    long dif_tam = diff_tam(membro_s, target_s);
 
     // Aloca um buffer para fazer a operacao
     char * buffer;
@@ -160,7 +160,7 @@ int m (struct diretorio * diretorio, char * membro, char * target, char * archiv
         buffer = malloc(target_s->tam_comp);
     if (!buffer) {
         fclose(archive_pt);
-        return -1
+        return -1;
     }
 
     // Le o conteudo do target e armazena no buffer
@@ -198,4 +198,6 @@ int m (struct diretorio * diretorio, char * membro, char * target, char * archiv
 
     fclose(archive_pt);
     free(buffer);
+
+    return 0;
 }

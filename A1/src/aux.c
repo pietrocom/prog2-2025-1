@@ -42,7 +42,7 @@ int ip_existe (struct diretorio * diretorio, char * membro, char * archive, int 
     }
 
     // Calcula a diferenca de tamanho dos arquivos existentes
-    long dif_tam = dif_tam(diretorio->membros[pos], novo_arq);
+    long dif_tam = diff_tam(diretorio->membros[pos], novo_arq);
     
     // Move todos os membros a frente de pos dif_tam bytes para frente 
     move_recursivo(diretorio, archive_pt, pos, dif_tam, -1);

@@ -41,23 +41,27 @@ int move_recursivo (struct diretorio * diretorio, FILE * archive_pt, int pos, lo
     if (deslocamento >= 0) {
         // Move, do fim ate pos, todos os membros a frente deslocamento bytes
         for (int i = fim - 1; i >= pos; i--) {
-            if (diretorio->membros[i]->tam_comp == 0)
+            if (diretorio->membros[i]->tam_comp == 0) {
                 if (move(diretorio->membros[i]->offset, diretorio->membros[i]->offset + diretorio->membros[i]->tam_or, deslocamento, archive_pt) == -1)
                     return -1;
-            else 
+            }
+            else {
                 if (move(diretorio->membros[i]->offset, diretorio->membros[i]->offset + diretorio->membros[i]->tam_comp, deslocamento, archive_pt) == -1)
                     return -1;
+            }
         }
     }
     else {
         // Move, de pos ate fim, todos os membros a frente deslocamento bytes
         for (int i = pos + 1; i < fim; i++) {
-            if (diretorio->membros[i]->tam_comp == 0)    
+            if (diretorio->membros[i]->tam_comp == 0) {
                 if (move(diretorio->membros[i]->offset, diretorio->membros[i]->offset + diretorio->membros[i]->tam_or, deslocamento, archive_pt) == -1)
                     return -1;
-            else 
+            }
+            else {
                 if (move(diretorio->membros[i]->offset, diretorio->membros[i]->offset + diretorio->membros[i]->tam_comp, deslocamento, archive_pt) == -1)
                     return -1;
+            }
         }
     }
 
@@ -213,7 +217,7 @@ void move_inicio (struct diretorio * diretorio, int pos) {
     diretorio->membros[0] = aux;
 }
 
-long dif_tam (struct arquivo * arq1, struct arquivo * arq2) {
+long diff_tam (struct arquivo * arq1, struct arquivo * arq2) {
     long dif_tam;
     if (arq1->tam_comp == 0) {
         // Ambos originais
