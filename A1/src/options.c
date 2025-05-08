@@ -176,31 +176,30 @@ int m (struct diretorio * diretorio, char * membro, char * target, char * archiv
 
     // Move todos os membros para dar espaço para o membro
     if (pos_tar >= pos_mem) {
-        if (move_recursivo(diretorio, archive_pt, pos_mem, -tam_mem, pos_tar) == -1)
+        if (move_recursivo(diretorio, archive_pt, pos_mem, -tam_mem, pos_tar + 1) == -1)
             return -1;
     }
     else
-        if (move_recursivo(diretorio, archive_pt, pos_mem, tam_mem, pos_tar) == -1)
+        if (move_recursivo(diretorio, archive_pt, pos_mem, tam_mem, pos_tar + 1) == -1)
             return -1;
 
     // Escreve o membro no seu lugar
-    if (target) {
-        if (pos_tar > pos_mem)
-            fseek(archive_pt, diretorio->membros[pos_tar]->offset + tam_tar - tam_mem, SEEK_SET);
-        else
-            fseek(archive_pt, diretorio->membros[pos_tar]->offset + tam_tar, SEEK_SET);
-    }
+    if (pos_tar > pos_mem)
+        fseek(archive_pt, diretorio->membros[pos_tar]->offset + tam_tar - tam_mem, SEEK_SET);
     else
-        fseek(archive_pt, sizeof(struct arquivo) * diretorio->qtd_membros, SEEK_SET);
+        fseek(archive_pt, diretorio->membros[pos_tar]->offset + tam_tar, SEEK_SET);
     fwrite(buffer, tam_mem, 1, archive_pt);
 
     // Move o elemento de pos_mem para imediatamente depois de pos_tar
-    if (!target)
-        move_inicio(diretorio, pos_mem);
-    else 
+    if (target)
         move_elemento(diretorio, pos_mem, pos_tar);
+    else 
+        move_inicio(diretorio, pos_mem);
 
     atualiza_metadados(diretorio);
+
+    // Escreve no archiver a struct diretorio
+    escreve_s_diretorio(diretorio, archive_pt);
 
     fclose(archive_pt);
     free(buffer);
