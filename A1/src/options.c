@@ -180,7 +180,7 @@ int m (struct diretorio * diretorio, char * membro, char * target, char * archiv
             return -1;
     }
     else
-        if (move_recursivo(diretorio, archive_pt, pos_mem, tam_mem, pos_tar + 1) == -1)
+        if (move_recursivo(diretorio, archive_pt, pos_tar, tam_mem, pos_mem + 1) == -1)
             return -1;
 
     // Escreve o membro no seu lugar
@@ -200,6 +200,9 @@ int m (struct diretorio * diretorio, char * membro, char * target, char * archiv
 
     // Escreve no archiver a struct diretorio
     escreve_s_diretorio(diretorio, archive_pt);
+
+    // Trunca o arquivo 
+    truncate_file(archive_pt, diretorio);
 
     fclose(archive_pt);
     free(buffer);
