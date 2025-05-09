@@ -261,6 +261,7 @@ int x (struct diretorio * diretorio, char * membro, char * archive) {
         inicio = 0;
         fim = diretorio->qtd_membros;
     }
+    
     // Loop para remocao do(s) membro(s)
     for (int i = inicio; i < fim; i++) {
         // Usar-se-a uma struct auxiliar
