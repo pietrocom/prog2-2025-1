@@ -221,3 +221,88 @@ int m (struct diretorio * diretorio, char * membro, char * target, char * archiv
 
     return 0;
 }
+
+int x (struct diretorio * diretorio, char * membro, char * archive) {
+    if (!diretorio || !archive)
+        return -1;
+
+    int pos_mem;
+
+    // Extrai todos os membros
+    if (!membro) {
+        pos_mem = -1;
+    }
+
+    // Confere se o membro existe e extrai sua posicao se sim
+    else {
+        for (pos_mem = 0; pos_mem < diretorio->qtd_membros; pos_mem++)
+            if (strcmp(membro, diretorio->membros[pos_mem]->nome) == 0)
+                break;
+        if (pos_mem == diretorio->qtd_membros) {
+            printf("Erro: membro nao existe!\n");
+            return -1;
+        }
+    }
+
+    // Abre o archiver para atualizacao
+    FILE *archive_pt = fopen(archive, "r+b");
+    if (!archive_pt) {
+        return -1;
+    }
+
+    // Logica para remocao de um ou todos
+    int inicio;
+    int fim;
+    if (pos_mem != -1) {
+        inicio = pos_mem;
+        fim = pos_mem + 1;
+    }
+    else {
+        inicio = 0;
+        fim = diretorio->qtd_membros;
+    }
+    // Loop para remocao do(s) membro(s)
+    for (int i = inicio; i < fim; i++) {
+        // Usar-se-a uma struct auxiliar
+        struct arquivo * membro_s = diretorio->membros[i];
+
+        // Define um tamanho para caso o membro esteja comprimido ou nao
+        unsigned long tam;
+        if (diretorio->membros[i]->tam_comp == 0)
+            tam = diretorio->membros[i]->tam_or;
+        else 
+            tam = diretorio->membros[i]->tam_comp;
+
+        // Aloca um buffer para operar sobre o membro
+        char * buffer = calloc(tam, 1);
+        if (!buffer) {
+            fclose(archive_pt);
+            return -1;
+        }
+
+        // Le o conteudo do membro e armazena no buffer
+        fseek(archive_pt, membro_s->offset, SEEK_SET);
+        fread(buffer, tam, 1, archive_pt);
+
+        // Move os arquivos para frente do membro em questao para tras
+        move_recursivo(diretorio, archive_pt, i, -tam, diretorio->qtd_membros);
+
+        // Retira o membro do vetor de structs 
+        retira_elemento(diretorio, pos_mem);
+
+        // Move todos os membros sizeof(struct arquivo) para tras
+        move_recursivo(diretorio, archive_pt, 0, -(sizeof(struct arquivo)), diretorio->qtd_membros);
+
+        // Atualiza os offsets
+        atualiza_metadados(diretorio);
+
+        // Trunca o archive
+        truncate_file(archive_pt);
+
+        free(buffer);
+    }
+
+    fclose(archive_pt);
+
+    return 0;
+}

@@ -159,7 +159,58 @@ int comprime_arquivo (char * file_name, FILE * file_pt, struct arquivo * arquivo
     return 0;
 }
 
-void imprime_arquivo_info(struct arquivo *arq) {
+int descomprime_arquivo (char * file_name, FILE * file_pt, struct arquivo * arquivo) {
+    if (!file_pt || !arquivo || !file_name)
+        return -1;
+
+    // Le o conteudo
+    unsigned char * buffer_in = calloc(arquivo->tam_comp, 1);
+    if (!buffer_in)
+        return -1;
+    if (fseek(file_pt, 0, SEEK_SET) != 0)
+        return -1;
+    if (fread(buffer_in, arquivo->tam_comp, 1, file_pt) != 1)
+        return -1;
+
+    // Buffer de saida 
+    unsigned char * buffer_out = calloc(arquivo->tam_or, 1);
+    if (!buffer_out) {
+        free(buffer_in);
+        return -1;
+    }
+
+    LZ_Uncompress(buffer_in, buffer_out, arquivo->tam_comp);
+
+    // Atualiza tamanho do arquivo que estava compactado
+    arquivo->tam_comp = 0;
+
+    // Escreve no arquivo o buffer_out
+    file_pt = freopen(file_name, "wb", file_pt);
+
+    if (!file_pt) {
+        free(buffer_in);
+        free(buffer_out);
+        return -1;
+    }
+
+    fwrite(buffer_out, arquivo->tam_or, 1, file_pt);
+
+    // Reabre o arquivo no modo de leitura e edicao correto
+    file_pt = freopen(file_name, "rb", file_pt);
+
+    if (!file_pt) {
+        free(buffer_in);
+        free(buffer_out);
+        return -1;
+    }
+
+    free(buffer_in);
+    free(buffer_out);
+
+    return 0;
+}
+
+void imprime_arquivo_info (struct arquivo *arq) {
     if (!arq) {
         printf("Arquivo NULL\n");
         return;
@@ -222,12 +273,24 @@ void move_elemento (struct diretorio * diretorio, int pos_1, int pos_2) {
 void move_inicio (struct diretorio * diretorio, int pos) {
     struct arquivo *aux = diretorio->membros[pos];
     
-    // Move os elementos uma posição para tras
+    // Move os elementos uma posicao para frente
     for (int i = pos; i > 0; i--) {
         diretorio->membros[i] = diretorio->membros[i-1];
     }
     
     diretorio->membros[0] = aux;
+}
+
+void retira_elemento (struct diretorio * diretorio, int pos) {
+    struct arquivo *aux = diretorio->membros[pos];
+
+    // Move todos os elementos uma posicao para tras a partir de pos
+    for (int i = pos; i < diretorio->qtd_membros - 1; i++) {
+        diretorio->membros[i] = diretorio->membros[i + 1];
+    }
+
+    destroi_s_arquivo(diretorio->membros[diretorio->qtd_membros - 1]);
+    diretorio->qtd_membros--;
 }
 
 long diff_tam (struct arquivo * arq1, struct arquivo * arq2) {

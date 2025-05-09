@@ -34,6 +34,10 @@ int insere_membro_arq (FILE * membro_pt, FILE * archive_pt, struct diretorio * d
 // Retorno: 0 em caso de sucesso e -1 c.c.
 int comprime_arquivo (char * file_name, FILE * file_pt, struct arquivo * arquivo);
 
+// Descomprime um arquivo e muda o campo de tam_comp para zero.
+// Retorno: 0 em caso de sucesso e -1 c.c.
+int descomprime_arquivo (char * file_name, FILE * file_pt, struct arquivo * arquivo);
+
 // Imprime os metadados da struct arquivo passada.
 void imprime_arquivo_info (struct arquivo * arquivo);
 
@@ -45,6 +49,9 @@ void move_elemento (struct diretorio * diretorio, int pos_1, int pos_2);
 
 // Move um membro para o inicio do vetor, movendo o restante para o lado.
 void move_inicio (struct diretorio * diretorio, int pos);
+
+// Retira o elemento indicado e rearranja os outros corretamente.
+void retira_elemento (struct diretorio * diretorio, int pos);
 
 // Calcula e retorna a diferenca de tamanho de dois arquivos diferentes.
 // Confere se algum dos dois esta compactado ou nao.
