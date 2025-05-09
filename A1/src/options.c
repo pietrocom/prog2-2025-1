@@ -122,8 +122,10 @@ int m (struct diretorio * diretorio, char * membro, char * target, char * archiv
     }
 
     // Confere se o target existe e extrai sua posicao se sim
-    int pos_tar = -1;
-    if (target) {
+    int pos_tar;
+    if (strcmp(target, "NULL") == 0)
+        pos_tar = -1;
+    else {
         for (pos_tar = 0; pos_tar < diretorio->qtd_membros; pos_tar++)
             if (strcmp(target, diretorio->membros[pos_tar]->nome) == 0)
                 break;
@@ -131,6 +133,11 @@ int m (struct diretorio * diretorio, char * membro, char * target, char * archiv
             printf("Erro: target nao existe!\n");
             return -1;
         }
+    }
+
+    if ( (pos_mem == pos_tar) || ((pos_mem == 0) && (pos_tar == -1)) ) {
+        printf("Aviso: membro não movimentado!\n");
+        return 0;
     }
 
     // Abre o archiver para atualizacao
@@ -142,7 +149,7 @@ int m (struct diretorio * diretorio, char * membro, char * target, char * archiv
     // Define structs auxiliares para operacoes
     struct arquivo * membro_s = diretorio->membros[pos_mem];
     struct arquivo * target_s; 
-    if (target)
+    if (pos_tar > -1)
         target_s = diretorio->membros[pos_tar];
     else 
         target_s = NULL;
@@ -153,7 +160,7 @@ int m (struct diretorio * diretorio, char * membro, char * target, char * archiv
         tam_mem = membro_s->tam_or;
     else 
         tam_mem = membro_s->tam_comp;
-    if (target) {
+    if (target_s) {
         if (target_s->tam_comp == 0)
             tam_tar = target_s->tam_or;
         else
@@ -179,6 +186,11 @@ int m (struct diretorio * diretorio, char * membro, char * target, char * archiv
         if (move_recursivo(diretorio, archive_pt, pos_mem, -tam_mem, pos_tar + 1) == -1)
             return -1;
     }
+    else if (pos_tar == -1) {
+        pos_tar++;
+        if (move_recursivo(diretorio, archive_pt, pos_tar, tam_mem, pos_mem) == -1)
+            return -1;
+    }
     else
         if (move_recursivo(diretorio, archive_pt, pos_tar, tam_mem, pos_mem + 1) == -1)
             return -1;
@@ -191,7 +203,7 @@ int m (struct diretorio * diretorio, char * membro, char * target, char * archiv
     fwrite(buffer, tam_mem, 1, archive_pt);
 
     // Move o elemento de pos_mem para imediatamente depois de pos_tar
-    if (target)
+    if (target_s)
         move_elemento(diretorio, pos_mem, pos_tar);
     else 
         move_inicio(diretorio, pos_mem);
