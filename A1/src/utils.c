@@ -134,7 +134,7 @@ int comprime_arquivo (char * file_name, FILE * file_pt, struct arquivo * arquivo
     if ((unsigned long)tam_comp >= arquivo->tam_or) {
         free(buffer_in);
         free(buffer_out);
-        printf("Arquivo nao comprimido!\n");
+        printf("Arquivo nao foi comprimido!\n");
         return 0;
     }
 
@@ -247,6 +247,20 @@ void truncate_file (FILE * file_pt, struct diretorio * diretorio) {
     // Esvazia o buffer de saida
     fflush(file_pt);
 
+    if (diretorio->qtd_membros == 0) {
+        // Caso não haja membros, trunca para conter apenas o sizeof(int) com zero
+        ftruncate(fileno(file_pt), sizeof(int));
+        
+        // Escreve o zero no início do arquivo
+        rewind(file_pt);
+        int zero = 0;
+        fwrite(&zero, sizeof(int), 1, file_pt);
+        
+        // Reposiciona o ponteiro
+        rewind(file_pt);
+        return;
+    }
+
     // Ultimo membro do diretorio
     struct arquivo * aux = diretorio->membros[diretorio->qtd_membros - 1];
 
@@ -289,15 +303,19 @@ void move_inicio (struct diretorio * diretorio, int pos) {
     diretorio->membros[0] = aux;
 }
 
-void retira_elemento (struct diretorio * diretorio, int pos) {
+void retira_elemento(struct diretorio *diretorio, int pos) {
+    if (!diretorio || pos < 0 || pos >= diretorio->qtd_membros)
+        return;
+
     struct arquivo *aux = diretorio->membros[pos];
 
-    // Move todos os elementos uma posicao para tras a partir de pos
+    // Shift elementos para tras
     for (int i = pos; i < diretorio->qtd_membros - 1; i++) {
         diretorio->membros[i] = diretorio->membros[i + 1];
     }
 
-    destroi_s_arquivo(diretorio->membros[diretorio->qtd_membros - 1]);
+    // Destroi o membro em pos
+    destroi_s_arquivo(aux);
     diretorio->qtd_membros--;
 }
 

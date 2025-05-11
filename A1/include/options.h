@@ -18,8 +18,12 @@ int ic (struct diretorio * diretorio, char * membro, char * archive);
 // Retorno: 0 em caso de sucesso e -1 c.c.
 int m (struct diretorio * diretorio, char * membro, char * target, char * archive);
 
-// funcao que trata da opcao -x.
+// Funcao que trata da opcao -x.
 // Retorno: 0 em caso de sucesso e -1 c.c.
 int x (struct diretorio * diretorio, char * membro, char * archive);
+
+// Funcao que trata da opcao -r.
+// Retorno: 0 em caso de sucesso e -1 c.c.
+int r (struct diretorio * diretorio, char * file_name, char * archive);
 
 #endif

@@ -243,27 +243,28 @@ int m (struct diretorio * diretorio, char * membro, char * target, char * archiv
     return 0;
 }
 
-int x (struct diretorio * diretorio, char * membro, char * archive) {
+int x (struct diretorio * diretorio, char * file_name, char * archive) {
     if (!diretorio || !archive)
         return -1;
 
+    // Verifica se o membro existe e extrai a posicao se sim
     int pos_mem;
-
-    // Extrai todos os membros
-    if (!membro) {
-        pos_mem = -1;
+    for (pos_mem = 0; pos_mem < diretorio->qtd_membros; pos_mem++) {
+        if (strcmp(file_name, diretorio->membros[pos_mem]->nome) == 0)
+            break;
+    }
+    printf("qtd_membros = %d\n", diretorio->qtd_membros);
+    if (pos_mem == diretorio->qtd_membros) {
+        printf("Erro: membro nao existe!\n");
+        return -1;
     }
 
-    // Confere se o membro existe e extrai sua posicao se sim
-    else {
-        for (pos_mem = 0; pos_mem < diretorio->qtd_membros; pos_mem++)
-            if (strcmp(membro, diretorio->membros[pos_mem]->nome) == 0)
-                break;
-        if (pos_mem == diretorio->qtd_membros) {
-            printf("Erro: membro nao existe!\n");
-            return -1;
-        }
-    }
+    struct arquivo * file_s = diretorio->membros[pos_mem];
+    unsigned long tam_mem;
+    if (file_s->tam_comp == 0)
+        tam_mem = file_s->tam_or;
+    else 
+        tam_mem = file_s->tam_comp;
 
     // Abre o archiver para atualizacao
     FILE *archive_pt = fopen(archive, "r+b");
@@ -271,60 +272,68 @@ int x (struct diretorio * diretorio, char * membro, char * archive) {
         return -1;
     }
 
-    // Logica para remocao de um ou todos
-    int inicio;
-    int fim;
-    if (pos_mem != -1) {
-        inicio = pos_mem;
-        fim = pos_mem + 1;
+    // Aloca um buffer para o membro
+    char * buffer;
+    buffer = malloc(tam_mem);
+    if (!buffer) {
+        fclose(archive_pt);
+        return -1;
     }
-    else {
-        inicio = 0;
-        fim = diretorio->qtd_membros;
-    }
-    
-    // Loop para remocao do(s) membro(s)
-    for (int i = inicio; i < fim; i++) {
-        // Usar-se-a uma struct auxiliar
-        struct arquivo * membro_s = diretorio->membros[i];
 
-        // Define um tamanho para caso o membro esteja comprimido ou nao
-        unsigned long tam;
-        if (diretorio->membros[i]->tam_comp == 0)
-            tam = diretorio->membros[i]->tam_or;
-        else 
-            tam = diretorio->membros[i]->tam_comp;
+    // Le o conteudo do membro e armazena no buffer
+    fseek(archive_pt, file_s->offset, SEEK_SET);
+    fread(buffer, tam_mem, 1, archive_pt);
 
-        // Aloca um buffer para operar sobre o membro
-        char * buffer = calloc(tam, 1);
-        if (!buffer) {
-            fclose(archive_pt);
-            return -1;
-        }
+    // Se o membro estiver na ponta do vetor
+    if (pos_mem == diretorio->qtd_membros - 1) {
+        move_recursivo(diretorio, archive_pt, -1, -sizeof(struct arquivo), diretorio->qtd_membros - 1);
 
-        // Le o conteudo do membro e armazena no buffer
-        fseek(archive_pt, membro_s->offset, SEEK_SET);
-        fread(buffer, tam, 1, archive_pt);
-
-        // Move os arquivos para frente do membro em questao para tras
-        move_recursivo(diretorio, archive_pt, i, -tam, diretorio->qtd_membros);
-
-        // Retira o membro do vetor de structs 
         retira_elemento(diretorio, pos_mem);
 
-        // Move todos os membros sizeof(struct arquivo) para tras
-        move_recursivo(diretorio, archive_pt, 0, -(sizeof(struct arquivo)), diretorio->qtd_membros);
-
-        // Atualiza os offsets
         atualiza_metadados(diretorio);
 
-        // Trunca o archive
-        truncate_file(archive_pt, diretorio);
+        escreve_s_diretorio(diretorio, archive_pt);
 
-        free(buffer);
+        truncate_file(archive_pt, diretorio);
+    }
+    // c.c.
+    else {
+        move_recursivo(diretorio, archive_pt, pos_mem, -((long)tam_mem), diretorio->qtd_membros);
+
+        move_recursivo(diretorio, archive_pt, -1, -(sizeof(struct arquivo)), -1);
+
+        retira_elemento(diretorio, pos_mem);
+
+        atualiza_metadados(diretorio);
+
+        escreve_s_diretorio(diretorio, archive_pt);
+
+        truncate_file(archive_pt, diretorio);
     }
 
+    // Abre o novo arquivo para atualizacao
+    FILE *novo_pt = fopen(file_name, "w+b");
+    if (!novo_pt) {
+        fclose(archive_pt);
+        free(buffer);
+        return -1;
+    }
+
+    // Escreve o conteudo nele
+    fwrite(buffer, tam_mem, 1, novo_pt);
+
+    free(buffer);
+
+    // Descomprime se estiver comprimido
+    if (file_s->tam_comp > 0)
+        descomprime_arquivo(file_name, novo_pt, file_s);
+
+    fclose(novo_pt);
     fclose(archive_pt);
 
     return 0;
+}
+
+int r (struct diretorio * diretorio, char * file_name, char * archive) {
+    
 }
