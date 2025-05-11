@@ -129,7 +129,7 @@ int ic (struct diretorio * diretorio, char * membro, char * archive) {
 }
 
 int m (struct diretorio * diretorio, char * membro, char * target, char * archive) {
-    if (!diretorio || !membro || !archive)
+    if (!diretorio || !membro || !archive || !target)
         return -1;
 
     // Confere se o membro existe e extrai sua posicao se sim
@@ -253,7 +253,6 @@ int x (struct diretorio * diretorio, char * file_name, char * archive) {
         if (strcmp(file_name, diretorio->membros[pos_mem]->nome) == 0)
             break;
     }
-    printf("qtd_membros = %d\n", diretorio->qtd_membros);
     if (pos_mem == diretorio->qtd_membros) {
         printf("Erro: membro nao existe!\n");
         return -1;
@@ -335,5 +334,61 @@ int x (struct diretorio * diretorio, char * file_name, char * archive) {
 }
 
 int r (struct diretorio * diretorio, char * file_name, char * archive) {
-    
+    if (!diretorio || !archive)
+        return -1;
+
+    // Verifica se o membro existe e extrai a posicao se sim
+    int pos_mem;
+    for (pos_mem = 0; pos_mem < diretorio->qtd_membros; pos_mem++) {
+        if (strcmp(file_name, diretorio->membros[pos_mem]->nome) == 0)
+            break;
+    }
+    if (pos_mem == diretorio->qtd_membros) {
+        printf("Erro: membro nao existe!\n");
+        return -1;
+    }
+
+    struct arquivo * file_s = diretorio->membros[pos_mem];
+    unsigned long tam_mem;
+    if (file_s->tam_comp == 0)
+        tam_mem = file_s->tam_or;
+    else 
+        tam_mem = file_s->tam_comp;
+
+    // Abre o archiver para atualizacao
+    FILE *archive_pt = fopen(archive, "r+b");
+    if (!archive_pt) {
+        return -1;
+    }
+
+    // Se o membro estiver na ponta do vetor
+    if (pos_mem == diretorio->qtd_membros - 1) {
+        move_recursivo(diretorio, archive_pt, -1, -sizeof(struct arquivo), diretorio->qtd_membros - 1);
+
+        retira_elemento(diretorio, pos_mem);
+
+        atualiza_metadados(diretorio);
+
+        escreve_s_diretorio(diretorio, archive_pt);
+
+        truncate_file(archive_pt, diretorio);
+    }
+    // c.c.
+    else {
+        move_recursivo(diretorio, archive_pt, pos_mem, -((long)tam_mem), diretorio->qtd_membros);
+
+        move_recursivo(diretorio, archive_pt, -1, -(sizeof(struct arquivo)), -1);
+
+        retira_elemento(diretorio, pos_mem);
+
+        atualiza_metadados(diretorio);
+
+        escreve_s_diretorio(diretorio, archive_pt);
+
+        truncate_file(archive_pt, diretorio);
+    }
+
+    fclose(archive_pt);
+
+    return 0;
 }

@@ -6,7 +6,7 @@
 
 
 int main (int argc, char *argv[]) {
-    
+
     char *opcao = argv[1];
     char *archive = argv[2];
 
@@ -50,7 +50,15 @@ int main (int argc, char *argv[]) {
     }
 
     else if (strcmp(opcao, "-x") == 0) {
-        if (argc >= 3) {
+        if (argc == 3) {
+            for (int i = diretorio->qtd_membros - 1; i >= 0; i--) {
+                if (x(diretorio, diretorio->membros[i]->nome, archive) == -1) {
+                    destroi_diretorio(diretorio);
+                    return -1;
+                }
+            }
+        }
+        else if (argc > 3) {
             for (int i = 3; i < argc; i++) {
                 char *membro = argv[i];
                 if (x(diretorio, membro, archive) == -1) {
@@ -59,18 +67,10 @@ int main (int argc, char *argv[]) {
                 }
             }
         }
-        else if (argc == 2) {
-            for (int i = diretorio->qtd_membros -1; i >= 0; i--) {
-                if (x(diretorio, diretorio->membros[i]->nome, archive) == -1) {
-                    destroi_diretorio(diretorio);
-                    return -1;
-                }
-            }
-        }
     }
 
     else if (strcmp(opcao, "-r") == 0) {
-        if (argc >= 3) {
+        if (argc > 3) {
             for (int i = 3; i < argc; i++) {
                 char *membro = argv[i];
                 if (r(diretorio, membro, archive) == -1) {
@@ -79,7 +79,7 @@ int main (int argc, char *argv[]) {
                 }
             }
         }
-        else if (argc == 2) {
+        else if (argc == 3) {
             for (int i = diretorio->qtd_membros -1; i >= 0; i--) {
                 if (r(diretorio, diretorio->membros[i]->nome, archive) == -1) {
                     destroi_diretorio(diretorio);
