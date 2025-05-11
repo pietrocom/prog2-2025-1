@@ -101,8 +101,7 @@ int ic (struct diretorio * diretorio, char * membro, char * archive) {
 
     fclose(membro_pt);
 
-    if (ip(diretorio, membro, archive, novo_arq) == -1)
-        return -1;
+    // Refazer a lógica da compressão!
 
     return 0;
 }
@@ -298,7 +297,7 @@ int x (struct diretorio * diretorio, char * membro, char * archive) {
         atualiza_metadados(diretorio);
 
         // Trunca o archive
-        truncate_file(archive_pt);
+        truncate_file(archive_pt, diretorio);
 
         free(buffer);
     }
