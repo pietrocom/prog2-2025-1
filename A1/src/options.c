@@ -260,6 +260,7 @@ int x (struct diretorio * diretorio, char * file_name, char * archive) {
 
     struct arquivo * file_s = diretorio->membros[pos_mem];
     unsigned long tam_mem;
+    struct arquivo copia_file = *file_s;
     if (file_s->tam_comp == 0)
         tam_mem = file_s->tam_or;
     else 
@@ -324,8 +325,8 @@ int x (struct diretorio * diretorio, char * file_name, char * archive) {
     free(buffer);
 
     // Descomprime se estiver comprimido
-    if (file_s->tam_comp > 0)
-        descomprime_arquivo(file_name, novo_pt, file_s);
+    if (copia_file.tam_comp > 0)
+        descomprime_arquivo(file_name, novo_pt, &copia_file);
 
     fclose(novo_pt);
     fclose(archive_pt);

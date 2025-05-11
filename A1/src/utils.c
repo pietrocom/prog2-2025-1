@@ -121,8 +121,8 @@ int comprime_arquivo (char * file_name, FILE * file_pt, struct arquivo * arquivo
     if (fread(buffer_in, arquivo->tam_or, 1, file_pt) != 1)
         return -1;
 
-    // Buffer de saida 1% + 1 bytes maior que o de entrada (minimo exigido eh 0.4% + 1)
-    unsigned char * buffer_out = calloc(arquivo->tam_or / 100 + arquivo->tam_or + 1, 1);
+    // Buffer de saida 5% + 1 bytes maior que o de entrada (minimo exigido eh 0.4% + 1)
+    unsigned char * buffer_out = calloc(arquivo->tam_or * 5 / 100 + arquivo->tam_or + 1, 1);
     if (!buffer_out) {
         free(buffer_in);
         return -1;
