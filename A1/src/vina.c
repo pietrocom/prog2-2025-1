@@ -90,7 +90,10 @@ void atualiza_metadados (struct diretorio * diretorio) {
 
     for (int i = 0; i < diretorio->qtd_membros; i++) {
         diretorio->membros[i]->offset = offset;
-        offset += diretorio->membros[i]->tam_or;
+        if (diretorio->membros[i]->tam_comp == 0)
+            offset += diretorio->membros[i]->tam_or;
+        else
+            offset += (unsigned long)diretorio->membros[i]->tam_comp;
         diretorio->membros[i]->ordem = i;
     }
 }

@@ -21,7 +21,7 @@ int main (int argc, char *argv[]) {
     if ( (strcmp(opcao, "-ip") == 0) || (strcmp(opcao, "-p") == 0) ) {
         for (int i = 3; i < argc; i++) {
             char *membro = argv[i];
-            if (ip(diretorio, membro, archive, NULL) == -1)
+            if (ip(diretorio, membro, archive) == -1)
                 return -1;
         }
     }

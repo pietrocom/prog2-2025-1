@@ -130,6 +130,14 @@ int comprime_arquivo (char * file_name, FILE * file_pt, struct arquivo * arquivo
 
     int tam_comp = LZ_Compress(buffer_in, buffer_out, arquivo->tam_or);
 
+    // Caso em que a compressao nao eh executada
+    if ((unsigned long)tam_comp >= arquivo->tam_or) {
+        free(buffer_in);
+        free(buffer_out);
+        printf("Arquivo nao comprimido!\n");
+        return 0;
+    }
+
     // Atualiza tamanho do arquivo que esta compactado
     arquivo->tam_comp = tam_comp;
 
@@ -296,20 +304,16 @@ void retira_elemento (struct diretorio * diretorio, int pos) {
 long diff_tam (struct arquivo * arq1, struct arquivo * arq2) {
     long dif_tam;
     if (arq1->tam_comp == 0) {
-        // Ambos originais
         if (arq2->tam_comp == 0)
-            dif_tam = arq2->tam_or - arq1->tam_or;
-        // Novo arquivo comprimido
-        else 
-            dif_tam = arq2->tam_comp - arq1->tam_or; 
+            dif_tam = (long)arq2->tam_or - (long)arq1->tam_or;
+        else
+            dif_tam = (long)arq2->tam_comp - (long)arq1->tam_or;
     }
     else {
-        // Arquivo do vetor comprimido
-        if (arq1->tam_comp == 0)
-            dif_tam = arq2->tam_or - arq1->tam_comp;
-        // Ambos comprimidos
+        if (arq2->tam_comp == 0)
+            dif_tam = (long)arq2->tam_or - (long)arq1->tam_comp;
         else
-            dif_tam = arq2->tam_comp - arq1->tam_comp;
+            dif_tam = (long)arq2->tam_comp - (long)arq1->tam_comp;
     }
 
     return dif_tam;

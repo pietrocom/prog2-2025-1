@@ -11,7 +11,7 @@
 #include "utils.h"
 
 
-int ip (struct diretorio * diretorio, char * membro, char * archive, struct arquivo * novo_arq) {
+int ip (struct diretorio * diretorio, char * membro, char * archive) {
     if (!membro || !archive || !diretorio)
         return -1;
 
@@ -20,7 +20,7 @@ int ip (struct diretorio * diretorio, char * membro, char * archive, struct arqu
     for (pos = 0; pos < diretorio->qtd_membros; pos++)
         if (strcmp(membro, diretorio->membros[pos]->nome) == 0)
             // Trata do caso de o membro ja existir
-            return ip_existe(diretorio, membro, archive, pos, novo_arq);
+            return ip_existe(diretorio, membro, archive, pos);
          
     // Abre o membro
     FILE *membro_pt = fopen(membro, "rb");
@@ -35,28 +35,22 @@ int ip (struct diretorio * diretorio, char * membro, char * archive, struct arqu
     }
 
     // Cria uma struct com os dados do novo arquivo, se nao foi passado
+    struct arquivo * novo_arq = cria_s_arquivo();
     if (!novo_arq) {
-        novo_arq = cria_s_arquivo();
-        if (!novo_arq) {
-            fclose(membro_pt);
-            fclose(archive_pt);
-            return -1;
-        }
-        
-        novo_arq = inicia_s_arquivo(novo_arq, membro);
-        if (!novo_arq) {
-            fclose(membro_pt);
-            fclose(archive_pt);
-            destroi_s_arquivo(novo_arq);
-            return -1;
-        }
+        fclose(membro_pt);
+        fclose(archive_pt);
+        return -1;
+    }
+    novo_arq = inicia_s_arquivo(novo_arq, membro);
+    if (!novo_arq) {
+        fclose(membro_pt);
+        fclose(archive_pt);
+        destroi_s_arquivo(novo_arq);
+        return -1;
     }
 
     // Insere os dados do membro no archiver - Offset atualizado
-    if (novo_arq->tam_comp == 0)
-        insere_membro_arq(membro_pt, archive_pt, diretorio, novo_arq, novo_arq->tam_or, -1);
-    else 
-        insere_membro_arq(membro_pt, archive_pt, diretorio, novo_arq, novo_arq->tam_comp, -1);
+    insere_membro_arq(membro_pt, archive_pt, diretorio, novo_arq, novo_arq->tam_or, -1);
 
     // Atualiza o vetor de ponteiros para struct arquivo - qtd_membros atualizada
     insere_s_arquivo(diretorio, novo_arq, pos);
@@ -76,7 +70,14 @@ int ip (struct diretorio * diretorio, char * membro, char * archive, struct arqu
 int ic (struct diretorio * diretorio, char * membro, char * archive) {
     if (!membro || !archive || !diretorio)
         return -1;
-         
+    
+    // Confere se o membro ja existe
+    int pos;
+    for (pos = 0; pos < diretorio->qtd_membros; pos++)
+        if (strcmp(membro, diretorio->membros[pos]->nome) == 0)
+            // Trata do caso de o membro ja existir
+            return ic_existe(diretorio, membro, archive, pos);
+
     // Abre o membro
     FILE *membro_pt = fopen(membro, "rb");
     if (!membro_pt)
@@ -99,9 +100,30 @@ int ic (struct diretorio * diretorio, char * membro, char * archive) {
     if (comprime_arquivo(membro, membro_pt, novo_arq) == -1)
         return -1;
 
-    fclose(membro_pt);
+    // Abre o archiver para atualizacao
+    FILE *archive_pt = fopen(archive, "r+b");
+    if (!archive_pt) {
+        fclose(membro_pt);
+        return -1;
+    }
 
-    // Refazer a lógica da compressão!
+    // Insere os dados do membro no archiver - Offset atualizado
+    if (novo_arq->tam_comp == 0)
+        insere_membro_arq(membro_pt, archive_pt, diretorio, novo_arq, novo_arq->tam_or, -1);
+    else 
+        insere_membro_arq(membro_pt, archive_pt, diretorio, novo_arq, novo_arq->tam_comp, -1);
+
+    // Atualiza o vetor de ponteiros para struct arquivo - qtd_membros atualizada
+    insere_s_arquivo(diretorio, novo_arq, -1);
+
+    // Move todos os membros sizeof(struct arquivo) para frente - Offset atualizado
+    move_recursivo(diretorio, archive_pt, 0, sizeof(struct arquivo), -1);
+
+    // Escreve no archiver a struct diretorio
+    escreve_s_diretorio(diretorio, archive_pt);
+
+    fclose(membro_pt);
+    fclose(archive_pt);
 
     return 0;
 }
