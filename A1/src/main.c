@@ -41,6 +41,11 @@ int main (int argc, char *argv[]) {
     }
 
     else if (strcmp(opcao, "-m") == 0) {
+        if (argc != 5) {
+            printf("Argumentos invalidos!\n");
+            destroi_diretorio(diretorio);
+            return -1;
+        }
         char *membro = argv[3];
         char *target = argv[4];
         if (m(diretorio, membro, target, archive) == -1) {
