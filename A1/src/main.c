@@ -42,8 +42,16 @@ int main (int argc, char *argv[]) {
     }
 
     else if (strcmp(opcao, "-x") == 0) {
-        for (int i = 3; i < argc; i++) {
-            char *membro = argv[i];
+        if (argc >= 3) {
+            for (int i = 3; i < argc; i++) {
+                char *membro = argv[i];
+                if (x(diretorio, membro, archive) == -1)
+                    return -1;
+            }
+        }
+        else {
+            if (x(diretorio, NULL, archive) == -1)
+                    return -1;
         }
     }
 

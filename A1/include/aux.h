@@ -11,9 +11,5 @@
 // Retorno: 0 em caso de sucesso e -1 c.c.
 int ip_existe (struct diretorio * diretorio, char * membro, char * archive, int pos, struct arquivo * novo_arq);
 
-// Funcao que tambem trata do caso do membro ja existir no archive.
-// Retorno: 0 em caso de sucesso e -1 c.c.
-int ic_existe (struct diretorio * diretorio, char * membro, char * archive, int pos);
-
 
 #endif
