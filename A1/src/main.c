@@ -95,9 +95,12 @@ int main (int argc, char *argv[]) {
     }
 
     else if (strcmp(opcao, "-c") == 0) {
-        for (int i = 3; i < argc; i++) {
-            char *membro = argv[i];
+        if (argc > 3) {
+            printf("Argumentos invalidos!");
+            destroi_diretorio(diretorio);
+            return -1;
         }
+        c(diretorio);
     }
 
     else {

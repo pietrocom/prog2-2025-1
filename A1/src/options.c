@@ -393,3 +393,45 @@ int r (struct diretorio * diretorio, char * file_name, char * archive) {
 
     return 0;
 }
+
+void c (struct diretorio * diretorio) {
+    if (!diretorio || diretorio->qtd_membros == 0) {
+        printf("Archive vazio.\n");
+        return;
+    }
+
+    // Cabeçalho da tabela
+    printf("╔════════╤════════════════════════════╤══════════╤══════════════╤═══════════════╤═════════════════════════╗\n");
+    printf("║ Ordem  │ Nome do Arquivo            │ UID      │ Tamanho Orig │ Tamanho Disco │ Última Modificação      ║\n");
+    printf("╟────────┼────────────────────────────┼──────────┼──────────────┼───────────────┼─────────────────────────╢\n");
+
+    for (int i = 0; i < diretorio->qtd_membros; i++) {
+        struct arquivo *arq = diretorio->membros[i];
+        
+        // Calcula tamanho em disco
+        unsigned long tamanho_disco;
+        if (arq->tam_comp == 0)
+            tamanho_disco = arq->tam_or;
+        else 
+            tamanho_disco = arq->tam_comp;
+        
+        // Formata a data de modificacao
+        char mod_date[30];
+        strftime(mod_date, sizeof(mod_date), "%d/%m/%Y %H:%M:%S", localtime(&arq->mod_time));
+        
+        // Imprime os dados formatados
+        printf("║ %-6d │ %-25s │ %-8d │ %-12lu │ %-12lu │ %-23s ║\n",
+               arq->ordem + 1,  // +1 para ordem comecar em 1
+               arq->nome,
+               arq->uid,
+               arq->tam_or,
+               tamanho_disco,
+               mod_date);
+    }
+
+    // Rodape da tabela
+    printf("╚════════╧════════════════════════════╧══════════╧══════════════╧═══════════════╧═════════════════════════╝\n");
+    
+    // Resumo
+    printf("\nTotal de membros: %d\n", diretorio->qtd_membros);
+}

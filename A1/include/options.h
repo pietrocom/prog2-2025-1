@@ -26,4 +26,8 @@ int x (struct diretorio * diretorio, char * membro, char * archive);
 // Retorno: 0 em caso de sucesso e -1 c.c.
 int r (struct diretorio * diretorio, char * file_name, char * archive);
 
+// Funcao que trata da opcao -r.
+// Retorno: 0 em caso de sucesso e -1 c.c.
+void c (struct diretorio * diretorio);
+
 #endif

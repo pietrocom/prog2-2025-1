@@ -218,28 +218,6 @@ int descomprime_arquivo (char * file_name, FILE * file_pt, struct arquivo * arqu
     return 0;
 }
 
-void imprime_arquivo_info (struct arquivo *arq) {
-    if (!arq) {
-        printf("Arquivo NULL\n");
-        return;
-    }
-
-    printf("Nome: %s\n", arq->nome);
-    printf("UID: %d\n", arq->uid);
-    printf("Tamanho original: %lu bytes\n", arq->tam_or);
-    printf("Tamanho comprimido: %d bytes\n", arq->tam_comp);
-    printf("Ordem: %d\n", arq->ordem);
-    printf("Offset: %lu\n", arq->offset);
-    
-    // Formatação da data
-    if (arq->mod_time != 0) {
-        printf("Mod time: %s", ctime(&arq->mod_time)); 
-    } else {
-        printf("Mod time: (não definido)\n");
-    }
-    printf("-----------------\n");
-}
-
 void truncate_file (FILE * file_pt, struct diretorio * diretorio) {
     if (!file_pt || !diretorio)
         return;

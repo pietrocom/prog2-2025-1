@@ -38,9 +38,6 @@ int comprime_arquivo (char * file_name, FILE * file_pt, struct arquivo * arquivo
 // Retorno: 0 em caso de sucesso e -1 c.c.
 int descomprime_arquivo (char * file_name, FILE * file_pt, struct arquivo * arquivo);
 
-// Imprime os metadados da struct arquivo passada.
-void imprime_arquivo_info (struct arquivo * arquivo);
-
 // Deixa somente os bytes necessarios de um arquivo.vc.
 void truncate_file (FILE * file_pt, struct diretorio * diretorio);
 
