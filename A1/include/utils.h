@@ -21,9 +21,8 @@ int move (unsigned long inicio, unsigned long fim, long deslocamento, FILE * fil
 
 // Move, membro por membro todos os membros a frente de pos e antes de fim, alterando o offset.
 // Projetada para que nao sobrescreva informacao.
-// A funcao nao eh na verdade iterativa, mas o nome reflete seu comportamento.
 // Retorno: 0 em caso de sucesso ou -1 c.c.
-int move_recursivo (struct diretorio * diretorio, FILE * archive_pt, int pos, long deslocamento, int fim);
+int move_sequencial (struct diretorio * diretorio, FILE * archive_pt, int pos, long deslocamento, int fim);
 
 // Insere os dados, de tamanho tam, do membro, em pos, no archiver.
 // Se a struct arquivo for passada, atualiza seu offset.

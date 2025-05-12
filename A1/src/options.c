@@ -56,7 +56,7 @@ int ip (struct diretorio * diretorio, char * membro, char * archive) {
     insere_s_arquivo(diretorio, novo_arq, pos);
 
     // Move todos os membros sizeof(struct arquivo) para frente - Offset atualizado
-    move_recursivo(diretorio, archive_pt, 0, sizeof(struct arquivo), -1);
+    move_sequencial(diretorio, archive_pt, 0, sizeof(struct arquivo), -1);
 
     // Escreve no archiver a struct diretorio
     escreve_s_diretorio(diretorio, archive_pt);
@@ -117,7 +117,7 @@ int ic (struct diretorio * diretorio, char * membro, char * archive) {
     insere_s_arquivo(diretorio, novo_arq, -1);
 
     // Move todos os membros sizeof(struct arquivo) para frente - Offset atualizado
-    move_recursivo(diretorio, archive_pt, 0, sizeof(struct arquivo), -1);
+    move_sequencial(diretorio, archive_pt, 0, sizeof(struct arquivo), -1);
 
     // Escreve no archiver a struct diretorio
     escreve_s_diretorio(diretorio, archive_pt);
@@ -204,16 +204,16 @@ int m (struct diretorio * diretorio, char * membro, char * target, char * archiv
 
     // Move todos os membros para dar espaço para o membro
     if (pos_tar >= pos_mem) {
-        if (move_recursivo(diretorio, archive_pt, pos_mem, -tam_mem, pos_tar + 1) == -1)
+        if (move_sequencial(diretorio, archive_pt, pos_mem, -tam_mem, pos_tar + 1) == -1)
             return -1;
     }
     else if (pos_tar == -1) {
         pos_tar++;
-        if (move_recursivo(diretorio, archive_pt, pos_tar, tam_mem, pos_mem) == -1)
+        if (move_sequencial(diretorio, archive_pt, pos_tar, tam_mem, pos_mem) == -1)
             return -1;
     }
     else
-        if (move_recursivo(diretorio, archive_pt, pos_tar, tam_mem, pos_mem + 1) == -1)
+        if (move_sequencial(diretorio, archive_pt, pos_tar, tam_mem, pos_mem + 1) == -1)
             return -1;
 
     // Escreve o membro no seu lugar
@@ -286,7 +286,7 @@ int x (struct diretorio * diretorio, char * file_name, char * archive) {
 
     // Se o membro estiver na ponta do vetor
     if (pos_mem == diretorio->qtd_membros - 1) {
-        move_recursivo(diretorio, archive_pt, -1, -sizeof(struct arquivo), diretorio->qtd_membros - 1);
+        move_sequencial(diretorio, archive_pt, -1, -sizeof(struct arquivo), diretorio->qtd_membros - 1);
 
         retira_elemento(diretorio, pos_mem);
 
@@ -298,9 +298,9 @@ int x (struct diretorio * diretorio, char * file_name, char * archive) {
     }
     // c.c.
     else {
-        move_recursivo(diretorio, archive_pt, pos_mem, -((long)tam_mem), diretorio->qtd_membros);
+        move_sequencial(diretorio, archive_pt, pos_mem, -((long)tam_mem), diretorio->qtd_membros);
 
-        move_recursivo(diretorio, archive_pt, -1, -(sizeof(struct arquivo)), -1);
+        move_sequencial(diretorio, archive_pt, -1, -(sizeof(struct arquivo)), -1);
 
         retira_elemento(diretorio, pos_mem);
 
@@ -364,7 +364,7 @@ int r (struct diretorio * diretorio, char * file_name, char * archive) {
 
     // Se o membro estiver na ponta do vetor
     if (pos_mem == diretorio->qtd_membros - 1) {
-        move_recursivo(diretorio, archive_pt, -1, -sizeof(struct arquivo), diretorio->qtd_membros - 1);
+        move_sequencial(diretorio, archive_pt, -1, -sizeof(struct arquivo), diretorio->qtd_membros - 1);
 
         retira_elemento(diretorio, pos_mem);
 
@@ -376,9 +376,9 @@ int r (struct diretorio * diretorio, char * file_name, char * archive) {
     }
     // c.c.
     else {
-        move_recursivo(diretorio, archive_pt, pos_mem, -((long)tam_mem), diretorio->qtd_membros);
+        move_sequencial(diretorio, archive_pt, pos_mem, -((long)tam_mem), diretorio->qtd_membros);
 
-        move_recursivo(diretorio, archive_pt, -1, -(sizeof(struct arquivo)), -1);
+        move_sequencial(diretorio, archive_pt, -1, -(sizeof(struct arquivo)), -1);
 
         retira_elemento(diretorio, pos_mem);
 

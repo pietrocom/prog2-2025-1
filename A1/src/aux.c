@@ -42,7 +42,7 @@ int ip_existe (struct diretorio * diretorio, char * membro, char * archive, int 
     long dif_tam = diff_tam(diretorio->membros[pos], novo_arq);
 
     // Move todos os membros a frente de pos dif_tam bytes 
-    move_recursivo(diretorio, archive_pt, pos, dif_tam, -1);
+    move_sequencial(diretorio, archive_pt, pos, dif_tam, -1);
 
     // Insere os dados do membro no archiver
     if (novo_arq->tam_comp == 0)
@@ -114,7 +114,7 @@ int ic_existe (struct diretorio * diretorio, char * membro, char * archive, int 
     long dif_tam = diff_tam(diretorio->membros[pos], novo_arq);
 
     // Move todos os membros a frente de pos dif_tam bytes para frente 
-    move_recursivo(diretorio, archive_pt, pos, dif_tam, -1);
+    move_sequencial(diretorio, archive_pt, pos, dif_tam, -1);
 
     // Insere os dados do membro no archiver
     if (novo_arq->tam_comp == 0)

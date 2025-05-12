@@ -30,7 +30,7 @@ int move (unsigned long inicio, unsigned long fim, long deslocamento, FILE * fil
     return 0;
 }
 
-int move_recursivo (struct diretorio * diretorio, FILE * archive_pt, int pos, long deslocamento, int fim) {
+int move_sequencial (struct diretorio * diretorio, FILE * archive_pt, int pos, long deslocamento, int fim) {
     if (!diretorio || !archive_pt)
         return -1;
 
