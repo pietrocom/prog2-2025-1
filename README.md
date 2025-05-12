@@ -32,7 +32,7 @@ O programa `vinac` aceita as seguintes opções de execução:
 ## Estrutura do Projeto
 
 ```
-VINAc/
+A1/
 │
 ├── include/
 │   ├── aux.h
