@@ -1,0 +1,193 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazil]{babel}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{textcomp} 
+\usepackage{titlesec}
+\usepackage{forest}
+
+\geometry{a4paper, margin=2.5cm}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue
+}
+\titleformat{\section}{\large\bfseries}{\thesection}{1em}{}
+
+\lstset{
+    escapeinside={/*@}{@*/},  
+    basicstyle=\footnotesize\ttfamily,  
+    numberstyle=\tiny,      
+    frame=single,           
+    breaklines=true,           
+    postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space},
+    inputencoding=utf8,        
+    literate={├}{{\textcolor{red}{├}}}1 
+}
+
+\title{\textbf{VINAc – Arquivador com Suporte à Compressão}}
+\author{Pietro Comin \\ GRR20241955 \\ \texttt{pietro.comin@ufpr.br}}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\noindent \textbf{Número de linhas do código:} 1989
+
+\section*{Descrição}
+
+O \textbf{VINAc} é um arquivador com suporte à compressão baseado em linha de comando, semelhante a ferramentas como \texttt{tar}, \texttt{zip} ou \texttt{rar}. Seu objetivo é permitir o arquivamento de múltiplos arquivos em um único container (\texttt{.vc}), com a opção de compressão individual utilizando o algoritmo LZ.
+
+A estrutura do arquivo \texttt{.vc} inclui uma área de diretório responsável por armazenar todos os metadados necessários para manipulação dos membros arquivados.
+
+\section*{Funcionalidades}
+
+O programa \texttt{vinac} oferece suporte às seguites opções de execução:
+
+\begin{itemize}[noitemsep]
+    \item \texttt{-ip} ou \texttt{-p}: insere membros sem compressão
+    \item \texttt{-ic} ou \texttt{-i}: insere membros com compressão (LZ)
+    \item \texttt{-m membro}: move um membro dentro do arquivo
+    \item \texttt{-x}: extrai membros (ou todos)
+    \item \texttt{-r}: remove membros do arquivo
+    \item \texttt{-c}: lista o conteúdo do arquivo
+\end{itemize}
+
+\section*{Estrutura do Projeto}
+
+\begin{forest}
+  for tree={
+    font=\ttfamily,
+    grow'=0,
+    child anchor=west,
+    parent anchor=south,
+    anchor=west,
+    calign=first,
+    edge path={
+      \noexpand\path [draw, \forestoption{edge}]
+      (!u.south west) +(7.5pt,0) |- (.child anchor) \forestoption{edge label};
+    },
+    before typesetting nodes={
+      if n=1
+        {insert before={[,phantom]}}
+        {}
+    },
+    fit=band,
+    before computing xy={l=15pt},
+  }
+[A1/
+  [include/
+    [aux.h]
+    [lz/
+      [lz.h]
+    ]
+    [options.h]
+    [types.h]
+    [utils.h]
+    [vina.h]
+  ]
+  [src/
+    [aux.c]
+    [main.c]
+    [options.c]
+    [utils.c]
+    [vina.c]
+    [lz/
+      [lz.c]
+    ]
+  ]
+  [build/
+    [objects/ (gerado durante a compilação)]
+  ]
+  [login/
+    [vinac (executável gerado)]
+  ]
+  [makefile]
+  [A1 - O Arquivador VINAc.pdf (enunciado do trabalho)]
+  [texto.txt]
+  [texto2.txt]
+  [texto3.txt]
+  [texto4.txt]
+]
+\end{forest}
+
+\section*{Compilação}
+
+Para compilar o projeto, utilize:
+
+\begin{lstlisting}[language=bash]
+make
+\end{lstlisting}
+
+Para limpar os arquivos gerados:
+
+\begin{lstlisting}[language=bash]
+make clean
+\end{lstlisting}
+
+\section*{Estruturas de Dados e Algoritmos}
+
+\subsection*{Estruturas de Dados}
+
+\begin{itemize}
+    \item \texttt{struct arquivo}: armazena os metadados de cada membro do arquivo:
+    \begin{itemize}
+        \item nome
+        \item UID
+        \item tamanho original
+        \item tamanho comprimido
+        \item ordem
+        \item offset no arquivo
+        \item data de modificação
+    \end{itemize}
+    \item \texttt{struct diretorio}: vetor de ponteiros para \texttt{arquivo}, gerencia todos os membros do container.
+\end{itemize}
+
+\subsection*{Funções Relevantes}
+
+A manipulação de arquivos variáveis em tamanho e posição foi um dos principais desafios. As seguintes funções foram criadas para garantir consistência:
+
+\begin{itemize}
+    \item \texttt{int move(...)}: move um bloco dentro do arquivo
+    \item \texttt{int move\_sequencial(...)}: move membros em sequência, evitando sobrescrita
+    \item \texttt{int insere\_membro\_arq(...)}: insere um novo membro
+    \item \texttt{int comprime\_arquivo(...)}: comprime com LZ e atualiza metadados
+    \item \texttt{int descomprime\_arquivo(...)}: descomprime e restaura o conteúdo
+\end{itemize}
+
+\section*{Decisões de Implementação}
+
+\begin{itemize}
+    \item A compressão LZ é usada apenas se houver ganho no tamanho.
+    \item A área de diretório é mantida em RAM para facilitar o controle.
+    \item Os dados dos membros são manipulados diretamente no disco.
+    \item O código é modularizado para facilitar testes e manutenção.
+\end{itemize}
+
+\section*{Dificuldades Encontradas}
+
+\begin{itemize}
+    \item \textbf{Deslocamentos binários}: o gerenciamento de offsets exigiu lógica cuidadosa e criação de funções específicas, já que no máximo um membro pode ser deslocado por vez, evitando uso de buffers muito grandes.
+    \item \textbf{Compressão seletiva}: inserir membros apenas quando a compressão for vantajosa envolveu lógica condicional.
+    \item \textbf{Atualização de metadados}: todas as operações exigem atualização precisa de offsets e ordem.
+    \item \textbf{Atomicidade}: foi necessário evitar o uso de arquivos temporários, otimizando a leitura e escrita direta em disco.
+\end{itemize}
+
+\section*{Bugs Conhecidos}
+
+\begin{itemize}
+    \item \textbf{Warning no Valgrind}: alertas sobre bytes não inicializados. Após várias sessões de depuração, acredita-se que seja inofensivo.
+    \item \textbf{Testes limitados}: ainda não há testes com arquivos muito grandes ou com nomes inválidos.
+\end{itemize}
+
+\section*{Contato}
+
+Para dúvidas ou sugestões, entre em contato: \href{mailto:pietro.comin@ufpr.br}{pietro.comin@ufpr.br}
+
+\end{document}
