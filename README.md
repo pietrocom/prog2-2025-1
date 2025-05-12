@@ -133,17 +133,16 @@ Essas funções foram fundamentais para garantir consistência e evitar sobrescr
 ## Dificuldades Encontradas
 
 - **Gerenciamento de deslocamentos:** mover blocos binários com offsets distintos sem sobrescrever dados foi desafiador. A criação das funções `move()` e `move_sequencial()` foi essencial.  
-- **Compressão seletiva:** adaptar a lógica para armazenar membros comprimidos apenas quando vantajoso exigiu lógica condicional detalhada no momento da inserção.  
-- **Atualização de offsets:** cada operação (remoção, movimentação, inserção) exigia atualização precisa de todos os campos de offset e ordem no diretório.  
-- **Manter atomicidade:** como só se pode manipular um membro por vez, houve um esforço para otimizar leitura/escrita sem buffer desnecessário.  
+- **Compressão seletiva:** adaptar a lógica para armazenar membros comprimidos apenas quando vantajoso; exigiu lógica condicional detalhada no momento da inserção.  
+- **Atualização de offsets:** cada operação (remoção, movimentação, inserção) exigia atualização precisa de todos os campos de offset e ordem no diretório. Movimentações podem apenas ocorrer de membro em membro, evitando buffers muito grandes.
+- **Manter atomicidade:** como só se pode manipular um membro por vez, houve um esforço para otimizar leitura/escrita sem arquivos temporários ou buffers desnecessários.  
 
 ---
 
 ## Bugs Conhecidos
 
-- A remoção de membros pode deixar espaços vazios no arquivo `.vc`. Apesar de os metadados estarem consistentes, não há compactação automática do espaço.  
-- A função `move()` pode ter desempenho lento com arquivos muito grandes, devido à necessidade de alocar grandes buffers temporários.  
-- Ainda não há verificação extensiva para arquivos com nomes duplicados ou contendo caracteres inválidos.  
+- Warning do Valgrind sobre bytes não inicializados. Foram feitas diversas sessões de debug sem suucesso. Pesquisas mostraram que talvez o erro seja inofensivo.
+- Ainda não há verificação extensiva para desempenho em compressões muito grandes ou contendo caracteres inválidos.  
 
 ---
 
