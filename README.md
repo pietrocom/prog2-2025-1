@@ -4,6 +4,7 @@
 - Pietro Comin  
 - GRR20241955  
 - Contato: [pietro.comin@ufpr.br](mailto:pietro.comin@ufpr.br)
+- Número de linhas: 1989
 
 ---
 
