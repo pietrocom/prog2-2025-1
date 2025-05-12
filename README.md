@@ -142,7 +142,7 @@ Essas funções foram fundamentais para garantir consistência e evitar sobrescr
 
 ## Bugs Conhecidos
 
-- Warning do Valgrind sobre bytes não inicializados. Foram feitas diversas sessões de debug sem suucesso. Pesquisas mostraram que talvez o erro seja inofensivo.
+- Warning do Valgrind sobre bytes não inicializados. Foram feitas diversas sessões de debug sem sucesso. Pesquisas mostraram que talvez o erro seja inofensivo.
 - Ainda não há verificação extensiva para desempenho em compressões muito grandes ou contendo caracteres inválidos.  
 
 ---
