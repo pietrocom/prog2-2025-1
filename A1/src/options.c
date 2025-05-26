@@ -266,8 +266,8 @@ int x (struct diretorio * diretorio, char * file_name, char * archive) {
     else 
         tam_mem = file_s->tam_comp;
 
-    // Abre o archiver para atualizacao
-    FILE *archive_pt = fopen(archive, "r+b");
+    // Abre o archiver para leitura
+    FILE *archive_pt = fopen(archive, "rb");
     if (!archive_pt) {
         return -1;
     }
@@ -283,33 +283,7 @@ int x (struct diretorio * diretorio, char * file_name, char * archive) {
     // Le o conteudo do membro e armazena no buffer
     fseek(archive_pt, file_s->offset, SEEK_SET);
     fread(buffer, tam_mem, 1, archive_pt);
-
-    // Se o membro estiver na ponta do vetor
-    if (pos_mem == diretorio->qtd_membros - 1) {
-        move_sequencial(diretorio, archive_pt, -1, -sizeof(struct arquivo), diretorio->qtd_membros - 1);
-
-        retira_elemento(diretorio, pos_mem);
-
-        atualiza_metadados(diretorio);
-
-        escreve_s_diretorio(diretorio, archive_pt);
-
-        truncate_file(archive_pt, diretorio);
-    }
-    // c.c.
-    else {
-        move_sequencial(diretorio, archive_pt, pos_mem, -((long)tam_mem), diretorio->qtd_membros);
-
-        move_sequencial(diretorio, archive_pt, -1, -(sizeof(struct arquivo)), -1);
-
-        retira_elemento(diretorio, pos_mem);
-
-        atualiza_metadados(diretorio);
-
-        escreve_s_diretorio(diretorio, archive_pt);
-
-        truncate_file(archive_pt, diretorio);
-    }
+    fclose(archive_pt);
 
     // Abre o novo arquivo para atualizacao
     FILE *novo_pt = fopen(file_name, "w+b");
@@ -329,7 +303,6 @@ int x (struct diretorio * diretorio, char * file_name, char * archive) {
         descomprime_arquivo(file_name, novo_pt, &copia_file);
 
     fclose(novo_pt);
-    fclose(archive_pt);
 
     return 0;
 }
