@@ -29,6 +29,7 @@ int main() {
 	while (menu) {																
 		al_wait_for_event(queue, &event);
 		
+		// Batida do clock
 		if (event.type == 30){													
 			al_clear_to_color(al_map_rgb(0, 0, 0));		
     		al_flip_display();											
