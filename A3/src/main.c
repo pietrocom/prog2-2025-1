@@ -27,7 +27,7 @@ int main() {
     
     int menu = 1;
 	while (menu) {																
-		al_wait_for_event(queue, &event);										
+		al_wait_for_event(queue, &event);
 		
 		if (event.type == 30){													
 			al_clear_to_color(al_map_rgb(0, 0, 0));		
