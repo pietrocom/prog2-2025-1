@@ -42,7 +42,8 @@ struct Player {
 
 struct Menu {
     ALLEGRO_BITMAP *background; // Fundo do menu
-    ALLEGRO_FONT *font;         // Fonte usada
+    ALLEGRO_FONT *title_font;   // Fonte para o título
+    ALLEGRO_FONT *text_font;    // Fonte para o resto
     int selected_option;        // Opção selecionada
     MenuState current_state; 
 };

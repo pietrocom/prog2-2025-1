@@ -4,7 +4,8 @@
 #include <allegro5/allegro5.h>
 #include "types.h"
 
-#define MENU_FONT_SIZE 24
+#define MENU_TITLE_FONT_SIZE 54
+#define MENU_TEXT_FONT_SIZE 24
 
 void init_menu(struct Menu *menu);
 void load_menu_resources(struct Menu *menu);

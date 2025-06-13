@@ -84,10 +84,9 @@ int main() {
 				break;
 				
 			case PLAYING:
-				// Implemente pelo menos um esqueleto básico
 				if (redraw) {
 					al_clear_to_color(al_map_rgb(0, 0, 50)); // Fundo azul escuro
-					al_draw_text(game_menu.font, al_map_rgb(255, 255, 255),
+					al_draw_text(game_menu.text_font, al_map_rgb(255, 255, 255),
 								SCREEN_W/2, SCREEN_H/2,
 								ALLEGRO_ALIGN_CENTER, "MODO JOGO - PRESSIONE ESC PARA VOLTAR");
 					al_flip_display();
@@ -100,8 +99,6 @@ int main() {
 					game_state = MENU;
 				}
 				break;
-				
-			// ... outros casos
 		}
 
 		if (event.type == ALLEGRO_EVENT_TIMER) {
