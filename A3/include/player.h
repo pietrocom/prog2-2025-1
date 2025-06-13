@@ -2,6 +2,53 @@
 #define PLAYER_H
 
 #include "types.h"
+#include "projectiles.h"
+
+#define PLAYER_W 10
+#define PLAYER_H 10
+#define MAX_FRAMES 10 
+
+// ---- Estruturas de dados básica ----
+
+typedef enum {
+    SOLDIER_1,
+    SOLDIER_2,
+    SOLDIER_3
+} SoldierType;
+
+struct Animation {
+    ALLEGRO_BITMAP *frames[MAX_FRAMES];
+    int frame_count;      // Quantos frames tem a animação
+    int current_frame;    // Frame atual sendo exibido
+    float frame_delay;    // Tempo entre frames (em segundos)
+    float elapsed_time;   // Tempo acumulado desde a última troca de frame
+};
+
+struct Player {
+    struct Entity entity;
+    ALLEGRO_BITMAP *sprites[5];
+    SoldierType soldier_type;
+
+    // Estatísticas
+    int health;
+    int score;
+
+    // Fluxo de animações do player
+    struct Animation idle;
+    struct Animation walking;
+    struct Animation jumping;
+    struct Animation crouching;
+    struct Animation attacking;
+
+    // Estado
+    bool is_jumping;
+    bool is_crouching;
+    bool is_shooting;
+    bool facing_right;
+};
+
+
+// ---- Funções ----
 
 // Inicialização
 void init_player(struct Player *player);
@@ -24,5 +71,8 @@ bool is_player_dead(struct Player *player);
 
 // Renderização
 void draw_player(struct Player *player);
+// Adicione em player.h
+void split_spritesheet(ALLEGRO_BITMAP *sheet, int frame_width, int frame_height, 
+    ALLEGRO_BITMAP **frames, int *frame_count);
 
 #endif

@@ -5,11 +5,24 @@
 
 #define MAX_PROJECTILES 50
 
+
+// ---- Estruturas de Dados Básica ----
+
+struct Projectile {
+    struct Entity entity;
+    ALLEGRO_BITMAP *sprite;
+    bool is_active;
+    bool is_player_projectile;
+};
+
 // Estrutura de gerenciamento
 struct ProjectileSystem {
     struct Projectile projectiles[MAX_PROJECTILES];
     int count;
 };
+
+
+// ---- Funções ----
 
 // Inicialização
 void init_projectile_system(struct ProjectileSystem *system);

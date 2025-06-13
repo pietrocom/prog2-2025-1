@@ -7,7 +7,7 @@
 #include <stdbool.h>
 
 
-// Estruturas principais
+// Estruturas gerais principais
 
 typedef enum {
     MENU_MAIN,
@@ -28,18 +28,6 @@ struct Entity {
     float vel_x, vel_y;
 };
 
-struct Player {
-    struct Entity entity;
-    // 0: parado, 1: andando, 2: pulando, 3: abaixado, 4: atirando
-    ALLEGRO_BITMAP *sprites[5];
-    int health;
-    int score;
-    bool is_jumping;
-    bool is_crouching;
-    bool is_shooting;
-    bool facing_right;
-};
-
 struct Menu {
     ALLEGRO_BITMAP *background;
     ALLEGRO_FONT *title_font;
@@ -47,21 +35,6 @@ struct Menu {
     int main_menu_selection;    // Seleção no menu principal (0-2)
     int options_menu_selection; // Seleção no menu de opções (0-X)
     MenuState current_state;
-};
-
-struct Enemy {
-    struct Entity entity;
-    ALLEGRO_BITMAP *sprite;
-    int health;
-    int damage;
-    bool is_active;
-};
-
-struct Projectile {
-    struct Entity entity;
-    ALLEGRO_BITMAP *sprite;
-    bool is_active;
-    bool is_player_projectile;
 };
 
 struct GameLevel {

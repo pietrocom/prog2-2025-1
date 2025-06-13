@@ -9,6 +9,9 @@
 #include "types.h"
 #include "game.h"
 #include "menu.h"
+#include "player.h"
+#include "projectiles.h"
+#include "enemy.h"
 
 #define SCREEN_W 1600
 #define SCREEN_H 900

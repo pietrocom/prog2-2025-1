@@ -5,6 +5,19 @@
 
 #define MAX_ENEMIES 20
 
+// ---- Estruturas de dados básica ----
+
+struct Enemy {
+    struct Entity entity;
+    ALLEGRO_BITMAP *sprite;
+    int health;
+    int damage;
+    bool is_active;
+};
+
+
+// ---- Funções ----
+
 // Inicialização
 void init_enemies(struct Enemy enemies[], int size);
 void load_enemy_sprites(struct Enemy *enemy, const char *sprite_path);
