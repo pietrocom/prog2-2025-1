@@ -34,7 +34,7 @@ void unload_menu_resources (struct Menu *menu) {
     }
 }
 
-void handle_menu_input (struct Menu *menu, GameState *game_state, ALLEGRO_EVENT *event) {
+void handle_menu_input(struct Menu *menu, GameState *game_state, ALLEGRO_EVENT *event) {
     if (event->type == ALLEGRO_EVENT_KEY_DOWN) {
         switch (event->keyboard.keycode) {
             case ALLEGRO_KEY_UP:
@@ -47,11 +47,25 @@ void handle_menu_input (struct Menu *menu, GameState *game_state, ALLEGRO_EVENT 
                 break;
                 
             case ALLEGRO_KEY_ENTER:
-                *game_state = PLAYING;
+                switch(menu->selected_option) {
+                    case 0: // Iniciar Jogo
+                        *game_state = PLAYING;
+                        break;
+                    case 1: // Opções
+                        menu->current_state = MENU_OPTIONS;
+                        break;
+                    case 2: // Sair
+                        *game_state = GAME_OVER; // Isto deve fechar o jogo
+                        break;
+                }
                 break;
                 
             case ALLEGRO_KEY_ESCAPE:
-                *game_state = GAME_OVER;
+                if (menu->current_state == MENU_OPTIONS) {
+                    menu->current_state = MENU_MAIN; // Volta ao menu principal
+                } else {
+                    *game_state = GAME_OVER; // Sai do jogo
+                }
                 break;
         }
     }

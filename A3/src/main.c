@@ -61,58 +61,55 @@ int main() {
 
     // Loop principal do jogo
     while (true) {
-        ALLEGRO_EVENT event;
-        al_wait_for_event(event_queue, &event);
+		ALLEGRO_EVENT event;
+		al_wait_for_event(event_queue, &event);
 
-        switch ((int)game_state) {
-            case MENU:
-                handle_menu_input(&game_menu, &game_state, &event);
-                if (redraw) {
-                    if (game_menu.current_state == MENU_MAIN) { 
-                        draw_main_menu(&game_menu);
-                    } else if (game_menu.current_state == MENU_OPTIONS) {
-                        draw_options_menu(&game_menu);
-                    }
-                    al_flip_display();
-                    redraw = false;
-                }
-                break;
-                
-            case PLAYING:
-                handle_game_events(&event, &player, &level, &game_state);
-                update_game(&player, &level);
-                if (redraw) {
-                    draw_game(&player, &level);
-                    al_flip_display();
-                    redraw = false;
-                }
-                break;
-                
-            case GAME_OVER:
-                handle_game_over_events(&event, &game_state);
-                if (redraw) {
-                    draw_game_over(player.score);
-                    al_flip_display();
-                    redraw = false;
-                }
-                break;
-                
-            case PAUSED:
-                handle_pause_events(&event, &game_state);
-                if (redraw) {
-                    draw_pause_menu();
-                    al_flip_display();
-                    redraw = false;
-                }
-                break;
-        }
+		// Verifica se quer sair do jogo
+		if (game_state == GAME_OVER) {
+			break; // Sai do loop principal
+		}
 
-        if (event.type == ALLEGRO_EVENT_TIMER) {
-            redraw = true;
-        } else if (event.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
-            break;
-        }
-    }
+		switch (game_state) {
+			case MENU:
+				handle_menu_input(&game_menu, &game_state, &event);
+				if (redraw) {
+					if (game_menu.current_state == MENU_MAIN) {
+						draw_main_menu(&game_menu);
+					} else if (game_menu.current_state == MENU_OPTIONS) {
+						draw_options_menu(&game_menu);
+					}
+					al_flip_display();
+					redraw = false;
+				}
+				break;
+				
+			case PLAYING:
+				// Implemente pelo menos um esqueleto básico
+				if (redraw) {
+					al_clear_to_color(al_map_rgb(0, 0, 50)); // Fundo azul escuro
+					al_draw_text(game_menu.font, al_map_rgb(255, 255, 255),
+								SCREEN_W/2, SCREEN_H/2,
+								ALLEGRO_ALIGN_CENTER, "MODO JOGO - PRESSIONE ESC PARA VOLTAR");
+					al_flip_display();
+					redraw = false;
+				}
+				
+				// Verifica se quer voltar ao menu
+				if (event.type == ALLEGRO_EVENT_KEY_DOWN && 
+					event.keyboard.keycode == ALLEGRO_KEY_ESCAPE) {
+					game_state = MENU;
+				}
+				break;
+				
+			// ... outros casos
+		}
+
+		if (event.type == ALLEGRO_EVENT_TIMER) {
+			redraw = true;
+		} else if (event.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
+			break;
+		}
+	}
 
     // Limpeza
     destroy_player(&player);
