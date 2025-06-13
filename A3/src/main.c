@@ -6,72 +6,121 @@
 #include <allegro5/allegro_image.h>		
 #include <allegro5/allegro_ttf.h>
 
+#include "types.h"
+#include "game.h"
+#include "menu.h"
+
+#define SCREEN_W 1000
+#define SCREEN_H 800
+#define FPS 60
+
 int main() {
-	al_init();														
-	al_install_keyboard();	
-	al_init_image_addon();
-	al_init_ttf_addon();						
+    if (!al_init()) {
+        fprintf(stderr, "Falha ao inicializar Allegro.\n");
+        return -1;
+    }
 
-	ALLEGRO_TIMER* timer = al_create_timer(1.0 / 30.0);				
-	ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();			
-	ALLEGRO_FONT* font = al_create_builtin_font();					
-	ALLEGRO_DISPLAY* disp = al_create_display(1000, 1000);				
+    if (!al_install_keyboard()) {
+        fprintf(stderr, "Falha ao inicializar o teclado.\n");
+        return -1;
+    }
 
-	al_register_event_source(queue, al_get_keyboard_event_source());		
-	al_register_event_source(queue, al_get_display_event_source(disp));		
-	al_register_event_source(queue, al_get_timer_event_source(timer));		
+    al_init_image_addon();
+    al_init_font_addon();
+    al_init_ttf_addon();
 
-	if (!al_init_image_addon()) {
-		printf("couldn't initialize image addon\n");
-		return 1;
-	}
+    ALLEGRO_DISPLAY *display = al_create_display(SCREEN_W, SCREEN_H);
+    if (!display) {
+        fprintf(stderr, "Falha ao criar display.\n");
+        return -1;
+    }
 
-	ALLEGRO_EVENT event;													
-	al_start_timer(timer);
+    ALLEGRO_TIMER *timer = al_create_timer(1.0 / FPS);
+    ALLEGRO_EVENT_QUEUE *event_queue = al_create_event_queue();
     
-    int menu = 1;
-	while (menu) {																
-		al_wait_for_event(queue, &event);
-		
-		// Batida do clock
-		if (event.type == ALLEGRO_EVENT_TIMER){													
-			al_clear_to_color(al_map_rgb(0, 0, 0));		
-    		al_flip_display();									
-		}
+    al_register_event_source(event_queue, al_get_display_event_source(display));
+    al_register_event_source(event_queue, al_get_keyboard_event_source());
+    al_register_event_source(event_queue, al_get_timer_event_source(timer));
 
-		else if (event.type == ALLEGRO_EVENT_DISPLAY_CLOSE) break;	
+    // Inicializações do jogo
+    GameState game_state = MENU;
+    struct Player player;
+    struct GameLevel level;
 
-        else if (event.type == ALLEGRO_KEY_DOWN) {
-            switch (event.keyboard.keycode) {
-                case ALLEGRO_KEY_W:
-                    break;
-                case ALLEGRO_KEY_S:
-                    break;
-                case ALLEGRO_KEY_ENTER:
-                    break;
-                default:
-                    break;
-            }
+	init_player(&player);
+    init_level(&level);
+
+	// Inicializações do menu
+	struct Menu game_menu;
+	init_menu(&game_menu);
+	load_menu_resources(&game_menu);
+
+	// Controla refresh da tela
+    bool redraw = true;
+    al_start_timer(timer);
+
+    // Loop principal do jogo
+    while (true) {
+        ALLEGRO_EVENT event;
+        al_wait_for_event(event_queue, &event);
+
+        switch ((int)game_state) {
+            case MENU:
+                handle_menu_input(&game_menu, &game_state, &event);
+                if (redraw) {
+                    if (game_menu.current_state == MENU_MAIN) { 
+                        draw_main_menu(&game_menu);
+                    } else if (game_menu.current_state == MENU_OPTIONS) {
+                        draw_options_menu(&game_menu);
+                    }
+                    al_flip_display();
+                    redraw = false;
+                }
+                break;
+                
+            case PLAYING:
+                handle_game_events(&event, &player, &level, &game_state);
+                update_game(&player, &level);
+                if (redraw) {
+                    draw_game(&player, &level);
+                    al_flip_display();
+                    redraw = false;
+                }
+                break;
+                
+            case GAME_OVER:
+                handle_game_over_events(&event, &game_state);
+                if (redraw) {
+                    draw_game_over(player.score);
+                    al_flip_display();
+                    redraw = false;
+                }
+                break;
+                
+            case PAUSED:
+                handle_pause_events(&event, &game_state);
+                if (redraw) {
+                    draw_pause_menu();
+                    al_flip_display();
+                    redraw = false;
+                }
+                break;
         }
 
-		else if (event.type == ALLEGRO_KEY_UP) {
-			switch (event.keyboard.keycode) {
-				case ALLEGRO_KEY_W:
-					break;
-				case ALLEGRO_KEY_S:
-                    break;
-                case ALLEGRO_KEY_ENTER:
-                    break;
-                default:
-                    break;
-			}
-		}
-	}
+        if (event.type == ALLEGRO_EVENT_TIMER) {
+            redraw = true;
+        } else if (event.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
+            break;
+        }
+    }
 
-	al_destroy_font(font);	
-	al_destroy_display(disp);			
-	al_destroy_timer(timer);
-	al_destroy_event_queue(queue);
+    // Limpeza
+    destroy_player(&player);
+    destroy_level(&level);
+    unload_menu_resources(&game_menu);
+    al_destroy_timer(timer);
+    al_destroy_event_queue(event_queue);
+    al_destroy_display(display);
 
-	return 0;
+    return 0;
 }
