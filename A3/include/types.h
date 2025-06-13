@@ -41,11 +41,12 @@ struct Player {
 };
 
 struct Menu {
-    ALLEGRO_BITMAP *background; // Fundo do menu
-    ALLEGRO_FONT *title_font;   // Fonte para o título
-    ALLEGRO_FONT *text_font;    // Fonte para o resto
-    int selected_option;        // Opção selecionada
-    MenuState current_state; 
+    ALLEGRO_BITMAP *background;
+    ALLEGRO_FONT *title_font;
+    ALLEGRO_FONT *text_font;
+    int main_menu_selection;    // Seleção no menu principal (0-2)
+    int options_menu_selection; // Seleção no menu de opções (0-X)
+    MenuState current_state;
 };
 
 struct Enemy {

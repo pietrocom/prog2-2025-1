@@ -1,11 +1,12 @@
 #include <stdio.h>
 #include "menu.h"
 
-void init_menu (struct Menu *menu) {
+void init_menu(struct Menu *menu) {
     menu->background = NULL;
     menu->title_font = NULL;
     menu->text_font = NULL;
-    menu->selected_option = 0;
+    menu->main_menu_selection = 0;
+    menu->options_menu_selection = 0;
     menu->current_state = MENU_MAIN; 
 }
 
@@ -39,44 +40,72 @@ void unload_menu_resources (struct Menu *menu) {
     }
 }
 
-void handle_menu_input(struct Menu *menu, GameState *game_state, ALLEGRO_EVENT *event) {
+void handle_menu_input (struct Menu *menu, GameState *game_state, ALLEGRO_EVENT *event) {
     if (event->type == ALLEGRO_EVENT_KEY_DOWN) {
-        switch (event->keyboard.keycode) {
-            case ALLEGRO_KEY_UP:
-                menu->selected_option--;
-                if (menu->selected_option < 0) menu->selected_option = 2;
+        switch (menu->current_state) {
+            case MENU_MAIN:
+                handle_main_menu_input(menu, game_state, event);
                 break;
                 
-            case ALLEGRO_KEY_DOWN:
-                menu->selected_option = (menu->selected_option + 1) % 3;
-                break;
-                
-            case ALLEGRO_KEY_ENTER:
-                switch(menu->selected_option) {
-                    case 0: // Iniciar Jogo
-                        *game_state = PLAYING;
-                        break;
-                    case 1: // Opções
-                        menu->current_state = MENU_OPTIONS;
-                        break;
-                    case 2: // Sair
-                        *game_state = GAME_OVER; // Isto deve fechar o jogo
-                        break;
-                }
-                break;
-                
-            case ALLEGRO_KEY_ESCAPE:
-                if (menu->current_state == MENU_OPTIONS) {
-                    menu->current_state = MENU_MAIN; // Volta ao menu principal
-                } else {
-                    *game_state = GAME_OVER; // Sai do jogo
-                }
+            case MENU_OPTIONS:
+                handle_options_menu_input(menu, event);
                 break;
         }
     }
 }
 
-void draw_main_menu (struct Menu *menu) {
+void handle_main_menu_input (struct Menu *menu, GameState *game_state, ALLEGRO_EVENT *event) {
+    switch (event->keyboard.keycode) {
+        case ALLEGRO_KEY_UP:
+            menu->main_menu_selection--;
+            if (menu->main_menu_selection < 0) menu->main_menu_selection = 2;
+            break;
+            
+        case ALLEGRO_KEY_DOWN:
+            menu->main_menu_selection = (menu->main_menu_selection + 1) % 3;
+            break;
+            
+        case ALLEGRO_KEY_ENTER:
+            switch(menu->main_menu_selection) {
+                case 0: *game_state = PLAYING; break;
+                case 1: menu->current_state = MENU_OPTIONS; break;
+                case 2: *game_state = GAME_OVER; break;
+            }
+            break;
+            
+        case ALLEGRO_KEY_ESCAPE:
+            *game_state = GAME_OVER;
+            break;
+    }
+}
+
+void handle_options_menu_input (struct Menu *menu, ALLEGRO_EVENT *event) {
+    switch (event->keyboard.keycode) {
+        case ALLEGRO_KEY_UP:
+            menu->options_menu_selection--;
+            if (menu->options_menu_selection < 0) 
+                menu->options_menu_selection = 1; // Ajuste para número de opções
+            break;
+            
+        case ALLEGRO_KEY_DOWN:
+            menu->options_menu_selection = (menu->options_menu_selection + 1) % 2;
+            break;
+            
+        case ALLEGRO_KEY_ENTER:
+            if (menu->options_menu_selection == 0) {
+                // Implemente ação para a primeira opção
+            } else {
+                menu->current_state = MENU_MAIN;
+            }
+            break;
+            
+        case ALLEGRO_KEY_ESCAPE:
+            menu->current_state = MENU_MAIN;
+            break;
+    }
+}
+
+void draw_main_menu(struct Menu *menu) {
     // Limpa a tela
     al_clear_to_color(al_map_rgb(0, 0, 0));
     
@@ -111,9 +140,10 @@ void draw_main_menu (struct Menu *menu) {
     const char *options[] = {"Iniciar Jogo", "Opções", "Sair"};
     
     for (int i = 0; i < 3; i++) {
-        ALLEGRO_COLOR color = (i == menu->selected_option) ? yellow : white;
+        // CORREÇÃO AQUI: usando main_menu_selection em vez de options_menu_selection
+        ALLEGRO_COLOR color = (i == menu->main_menu_selection) ? yellow : white;
         al_draw_text(menu->text_font, color, screen_w/2, 
-                    screen_h/2 + i * 50, 
+                    4 * screen_h / 7 + i * 50, 
                     ALLEGRO_ALIGN_CENTER, options[i]);
     }
 }
@@ -124,16 +154,24 @@ void draw_options_menu (struct Menu *menu) {
     int screen_w = al_get_display_width(al_get_current_display());
     int screen_h = al_get_display_height(al_get_current_display());
 
-    al_draw_text(menu->text_font, al_map_rgb(255, 255, 255), 
+    // Título
+    al_draw_text(menu->title_font, al_map_rgb(255, 255, 255), 
                 screen_w/2, screen_h/4, 
                 ALLEGRO_ALIGN_CENTER, "OPÇÕES");
 
-    // Exemplo de opções ajustáveis
-    al_draw_text(menu->text_font, al_map_rgb(255, 255, 255),
+    // Opções
+    ALLEGRO_COLOR white = al_map_rgb(255, 255, 255);
+    ALLEGRO_COLOR yellow = al_map_rgb(255, 255, 0);
+    
+    // Opção 1 - Volume
+    al_draw_text(menu->text_font, 
+                (menu->options_menu_selection == 0) ? yellow : white,
                 screen_w/2, screen_h/2,
                 ALLEGRO_ALIGN_CENTER, "Volume: [implementar]");
 
-    al_draw_text(menu->text_font, al_map_rgb(255, 255, 0),
-                screen_w/2, screen_h - 100,
+    // Opção 2 - Voltar
+    al_draw_text(menu->text_font, 
+                (menu->options_menu_selection == 1) ? yellow : white,
+                screen_w/2, screen_h/2 + 50,
                 ALLEGRO_ALIGN_CENTER, "Voltar (ESC)");
 }
