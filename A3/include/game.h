@@ -2,6 +2,8 @@
 #define GAME_H
 
 #include "types.h"
+#include "player.h"
+#include <allegro5/allegro.h>
 
 void init_player(struct Player *player);
 void init_level(struct GameLevel *level);

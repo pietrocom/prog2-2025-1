@@ -1,4 +1,5 @@
 #include "game.h"
+#include "player.h"
 
 void init_player (struct Player *player) {}
 

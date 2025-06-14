@@ -7,11 +7,12 @@
 #define PLAYER_W 10
 #define PLAYER_H 10
 #define MAX_FRAMES 10 
+#define SPRITE_SIZE 128
 
 // ---- Estruturas de dados básica ----
 
 typedef enum {
-    SOLDIER_1,
+    SOLDIER_1,   // Não tem crouch
     SOLDIER_2,
     SOLDIER_3
 } SoldierType;
@@ -34,11 +35,14 @@ struct Player {
     int score;
 
     // Fluxo de animações do player
+    struct Animation *current_animation; // Aponta para a animação atual
     struct Animation idle;
     struct Animation walking;
+    struct Animation running;
     struct Animation jumping;
-    struct Animation crouching;
-    struct Animation attacking;
+    struct Animation shooting;
+    struct Animation crouching;          // Não há animação de crouch e se mover ao mesmo tempo
+    struct Animation crouch_shot;
 
     // Estado
     bool is_jumping;
@@ -71,8 +75,5 @@ bool is_player_dead(struct Player *player);
 
 // Renderização
 void draw_player(struct Player *player);
-// Adicione em player.h
-void split_spritesheet(ALLEGRO_BITMAP *sheet, int frame_width, int frame_height, 
-    ALLEGRO_BITMAP **frames, int *frame_count);
 
 #endif
