@@ -65,14 +65,8 @@ void unload_player_sprites(struct Player *player);
 void handle_player_input(struct Player *player, ALLEGRO_EVENT *event);
 void update_player(struct Player *player, float delta_time, struct GameLevel *level);
 
-// Ações
-void player_jump(struct Player *player);
-void player_shoot(struct Player *player, struct Projectile projectiles[], int *projectile_count);
-void player_crouch(struct Player *player, bool crouch);
-
 // Estado
 void damage_player(struct Player *player, int amount);
-void heal_player(struct Player *player, int amount);
 bool is_player_dead(struct Player *player);
 
 // Renderização

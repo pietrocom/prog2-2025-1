@@ -24,10 +24,11 @@ typedef enum {
 } MenuState;
 
 typedef enum {
-    MENU,      // Estado do menu principal
-    PLAYING,   // Estado de jogo ativo
-    GAME_OVER, // Estado de fim de jogo
-    PAUSED     // Estado de pausa
+    MENU,
+    PLAYING,
+    PAUSED,
+    GAME_OVER,
+    QUIT
 } GameState;
 
 struct Entity {

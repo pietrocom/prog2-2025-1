@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <allegro5/allegro.h>
+#include <allegro5/allegro_primitives.h>
 #include "enemy.h"
 #include "game.h"
 #include "menu.h"
@@ -57,6 +58,9 @@ void start_level(struct GameLevel *level) {
     level->boss_active = false;
 }
 
+
+// ---- Funções de Limpeza ----
+
 void destroy_player(struct Player *player) {
     unload_player_sprites(player);
 }
@@ -68,19 +72,64 @@ void destroy_level(struct GameLevel *level) {
 }
 
 
-// ---- Funções de Manipulação de Eventos ----
+// ---- Funções de Controle do Jogo ----
 
-void handle_game_events (ALLEGRO_EVENT *event, struct Player *player, struct GameLevel *level, GameState *state) {
+void handle_game_events(ALLEGRO_EVENT *event, GameState *state) {
     if (event->type == ALLEGRO_EVENT_KEY_DOWN) {
-        if (event->keyboard.keycode == ALLEGRO_KEY_ESCAPE) {
-            *state = MENU; 
+        switch (event->keyboard.keycode) {
+            case ALLEGRO_KEY_ESCAPE:   // Entrará na condição abaixo
+            case ALLEGRO_KEY_P:
+                toggle_pause(state);
+                break;
+
+            case ALLEGRO_KEY_Q:
+                *state = MENU;  // Volta ao menu
+                break;
+                
+            case ALLEGRO_EVENT_DISPLAY_CLOSE:
+                *state = QUIT;
+                break;
         }
     }
 }
 
-void handle_game_over_events (ALLEGRO_EVENT *event, GameState *state) {}
 
-void handle_pause_events (ALLEGRO_EVENT *event, GameState *state) {}
+// ---- Funções de Controle de Pausa ----
+
+void toggle_pause(GameState *current_state) {
+    if (*current_state == PLAYING) {
+        *current_state = PAUSED;
+        // adicionar lógica adicional (pausar música)
+    } 
+    else if (*current_state == PAUSED) {
+        *current_state = PLAYING;
+    }
+}
+
+void handle_pause_input(ALLEGRO_EVENT *event, GameState *state) {
+    if (event->type == ALLEGRO_EVENT_KEY_DOWN) {
+        switch (event->keyboard.keycode) {
+            case ALLEGRO_KEY_ESCAPE:
+            case ALLEGRO_KEY_P:
+                toggle_pause(state);
+                break;
+                
+            case ALLEGRO_KEY_M:
+                // Exemplo: Mute durante a pausa
+                // toggle_audio_mute();
+                break;
+                
+            case ALLEGRO_KEY_Q:
+                *state = MENU;  // Volta ao menu
+                break;
+        }
+    }
+}
+
+
+// ---- Funções de Controle de Game Over ----
+
+void handle_game_over_events (ALLEGRO_EVENT *event, GameState *state) {}
 
 
 // ---- Funções de Atualização e Renderização ----
@@ -112,6 +161,7 @@ void update_game(struct Player *player, struct GameLevel *level) {
     printf("ScrollX: %.1f, PlayerX: %.1f\n", level->scroll_x, player->entity.x);
 }
 
+// Relativiza a posição do jogador na tela
 void draw_game(struct Player *player, struct GameLevel *level) {
     int screen_w = al_get_display_width(al_get_current_display());
     int screen_h = al_get_display_height(al_get_current_display());
@@ -139,4 +189,84 @@ void draw_game(struct Player *player, struct GameLevel *level) {
 
 void draw_game_over (int score) {}
 
-void draw_pause_menu () {}
+void draw_pause_menu(struct GameLevel *level) {
+    if (!al_is_primitives_addon_initialized()) {
+        fprintf(stderr, "Primitives addon not initialized!\n");
+        exit(1);
+    }
+
+    // Configurações
+    ALLEGRO_COLOR bg_color = al_map_rgba(0, 0, 0, 200);  // Fundo semi-transparente
+    ALLEGRO_COLOR box_color = al_map_rgba(70, 70, 90, 220);  // Cor das caixas de texto
+    ALLEGRO_COLOR text_color = al_map_rgb(255, 255, 255);
+    ALLEGRO_COLOR highlight_color = al_map_rgb(180, 180, 255);  // Cor de destaque
+    
+    // Use sua fonte customizada ou a built-in
+    ALLEGRO_FONT *font = al_load_font("assets/fonts/DirtyWar.otf", MENU_TEXT_FONT_SIZE, 0);
+    ALLEGRO_FONT *title_font = al_load_font("assets/fonts/DirtyWar.otf", MENU_TITLE_FONT_SIZE, 0);
+    
+    // Dimensões
+    int display_w = al_get_display_width(al_get_current_display());
+    int display_h = al_get_display_height(al_get_current_display());
+    int box_width = 400;
+    int box_height = 200;
+    int box_padding = 20;
+    int text_height = al_get_font_line_height(font);
+
+    if (!al_is_primitives_addon_initialized()) {
+        fprintf(stderr, "ERRO: Primitives não inicializado no draw!\n");
+        exit(1);
+    }
+
+    // 1. Desenha overlay escuro
+    al_draw_filled_rectangle(0, 0, display_w, display_h, bg_color);
+
+    // 2. Caixa principal centralizada
+    al_draw_filled_rounded_rectangle(
+        display_w/2 - box_width/2, 
+        display_h/2 - box_height/2,
+        display_w/2 + box_width/2,
+        display_h/2 + box_height/2,
+        10, 10, box_color);
+    
+    // Borda da caixa principal
+    al_draw_rounded_rectangle(
+        display_w/2 - box_width/2, 
+        display_h/2 - box_height/2,
+        display_w/2 + box_width/2,
+        display_h/2 + box_height/2,
+        10, 10, highlight_color, 3);
+
+    // 3. Título
+    al_draw_text(
+        title_font, 
+        highlight_color, 
+        display_w/2, 
+        display_h/2 - box_height/2 + box_padding - 50, 
+        ALLEGRO_ALIGN_CENTRE, 
+        "JOGO PAUSADO");
+
+    // 4. Opções
+    int y_offset = display_h/2 - box_height/2 + box_padding * 3;
+    
+    // Opção 1 - Continuar
+    al_draw_text(
+        font, 
+        text_color, 
+        display_w/2, 
+        y_offset, 
+        ALLEGRO_ALIGN_CENTRE, 
+        "[ESC/P] Continuar");
+    
+    // Opção 2 - Voltar ao menu
+    al_draw_text(
+        font, 
+        text_color, 
+        display_w/2, 
+        y_offset + text_height + 10, 
+        ALLEGRO_ALIGN_CENTRE, 
+        "[Q] Voltar ao menu");
+
+    // 5. Limpeza
+    al_destroy_font(font);
+}

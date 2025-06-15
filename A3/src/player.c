@@ -2,54 +2,7 @@
 #include <sys/stat.h> 
 #include "types.h"
 #include "player.h"
-
-// ---- Funções auxiliares ----
-
-void split_spritesheet(const char *filename, int frame_width, int frame_height,
-                      ALLEGRO_BITMAP **frames, int *frame_count) 
-{
-    // Carrega a spritesheet uma vez
-    ALLEGRO_BITMAP *sheet = al_load_bitmap(filename);
-    if (!sheet) {
-        fprintf(stderr, "Failed to load spritesheet: %s\n", filename);
-        *frame_count = 0;
-        return;
-    }
-
-    int sheet_width = al_get_bitmap_width(sheet);
-    *frame_count = sheet_width / frame_width;
-
-    ALLEGRO_BITMAP *old_target = al_get_target_bitmap();
-
-    for (int i = 0; i < *frame_count; i++) {
-        // Cria bitmap independente para cada frame
-        frames[i] = al_create_bitmap(frame_width, frame_height);
-        if (!frames[i]) {
-            fprintf(stderr, "Failed to create frame %d\n", i);
-            continue;
-        }
-
-        // Copia a região da spritesheet para o frame independente
-        al_set_target_bitmap(frames[i]);
-        al_draw_bitmap_region(sheet, i * frame_width, 0, 
-                             frame_width, frame_height,
-                             0, 0, 0);
-    }
-
-    // Restaura o target e limpa
-    al_set_target_bitmap(old_target);
-    al_destroy_bitmap(sheet); // Já podemos destruir a spritesheet
-}
-
-bool soldier_supports_crouch(SoldierType type) {
-    return type != SOLDIER_1; // Apenas Soldier 1 não agacha
-}
-
-bool file_exists(const char* filename) {
-    struct stat buffer;
-    return (stat(filename, &buffer) == 0);
-}
-
+#include "utils.h"
 
 // ---- Inicialização ----
 
@@ -308,6 +261,28 @@ void update_player(struct Player *player, float delta_time, struct GameLevel *le
             (player->current_animation->current_frame + 1) % 
             player->current_animation->frame_count;
         player->current_animation->elapsed_time = 0;
+    }
+}
+
+
+// ---- Estado do Jogador ----
+
+bool is_player_dead(struct Player *player) {
+    if (!player) {
+        fprintf(stderr, "Invalid player in is_player_dead\n");
+        return false;
+    }
+    return player->health <= 0;
+}
+
+void damage_player(struct Player *player, int amount) {
+    if (!player) {
+        fprintf(stderr, "Invalid player in damage_player\n");
+        return;
+    }
+    player->health -= amount;
+    if (player->health < 0) {
+        player->health = 0; // Não deixa a vida ficar negativa
     }
 }
 

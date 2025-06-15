@@ -55,12 +55,29 @@ int main() {
 
 		// Verifica se quer sair do jogo
 		if (game_state == GAME_OVER) {
-			break; // Sai do loop principal
+			break; 
 		}
 
+		// Trata eventos gerais (fechar janela)
+		if (event.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
+			break;
+		}
+
+		// Chama o handler de eventos específico para cada estado
 		switch (game_state) {
 			case MENU:
 				handle_menu_input(&game_menu, &game_state, &event);
+				break;
+				
+			case PLAYING:
+			case PAUSED:
+				handle_game_events(&event, &game_state); 
+				break;
+		}
+
+		// Atualizações de estado
+		switch (game_state) {
+			case MENU:
 				if (redraw) {
 					if (game_menu.current_state == MENU_MAIN) {
 						draw_main_menu(&game_menu);
@@ -83,17 +100,20 @@ int main() {
 					al_flip_display();
 					redraw = false;
 				}
-				
-				if (event.type == ALLEGRO_EVENT_KEY_DOWN && event.keyboard.keycode == ALLEGRO_KEY_ESCAPE) {
-					game_state = MENU;
+				break;
+
+			case PAUSED:
+				if (redraw) {
+					draw_game(&player, &level);
+					draw_pause_menu(&level);
+					al_flip_display();
+					redraw = false;
 				}
 				break;
 		}
 
 		if (event.type == ALLEGRO_EVENT_TIMER) {
 			redraw = true;
-		} else if (event.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
-			break;
 		}
 	}
 
