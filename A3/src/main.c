@@ -32,6 +32,11 @@ int main() {
     al_init_font_addon();
     al_init_ttf_addon();
 
+	if (!al_is_image_addon_initialized()) {
+		fprintf(stderr, "Failed to initialize image addon!\n");
+		return -1;
+	}
+
     ALLEGRO_DISPLAY *display = al_create_display(SCREEN_W, SCREEN_H);
     if (!display) {
         fprintf(stderr, "Falha ao criar display.\n");
@@ -87,18 +92,17 @@ int main() {
 				break;
 				
 			case PLAYING:
+				handle_player_input(&player, &event);
+				update_player(&player, 1.0/FPS);
+				update_game(&player, &level);
+				
 				if (redraw) {
-					al_clear_to_color(al_map_rgb(0, 0, 50)); // Fundo azul escuro
-					al_draw_text(game_menu.text_font, al_map_rgb(255, 255, 255),
-								SCREEN_W/2, SCREEN_H/2,
-								ALLEGRO_ALIGN_CENTER, "MODO JOGO - PRESSIONE ESC PARA VOLTAR");
+					draw_game(&player, &level);
 					al_flip_display();
 					redraw = false;
 				}
 				
-				// Verifica se quer voltar ao menu
-				if (event.type == ALLEGRO_EVENT_KEY_DOWN && 
-					event.keyboard.keycode == ALLEGRO_KEY_ESCAPE) {
+				if (event.type == ALLEGRO_EVENT_KEY_DOWN && event.keyboard.keycode == ALLEGRO_KEY_ESCAPE) {
 					game_state = MENU;
 				}
 				break;

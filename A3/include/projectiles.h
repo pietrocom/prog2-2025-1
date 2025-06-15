@@ -39,7 +39,7 @@ void clear_projectiles(struct ProjectileSystem *system);
 // Colisão
 void check_projectile_collisions(struct ProjectileSystem *projectiles, 
                                struct Player *player, 
-                               struct Enemy enemies[], int enemy_count);
+                               struct Enemy *enemies[], int enemy_count);
 
 // Renderização
 void draw_projectiles(struct ProjectileSystem *system);
