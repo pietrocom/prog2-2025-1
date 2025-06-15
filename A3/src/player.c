@@ -259,15 +259,19 @@ void handle_player_input(struct Player *player, ALLEGRO_EVENT *event) {
 
 void update_player(struct Player *player, float delta_time) {
 
+    // Aplica gravidade
     player->entity.vel_y += GRAVITY * delta_time;
 
-    // Atualiza a posição do jogador
+    // Atualiza posição
     player->entity.x += player->entity.vel_x * delta_time;
     player->entity.y += player->entity.vel_y * delta_time;
 
-    // Colisão com o chão
-    if (player->entity.y >= GROUND_LEVEL) {
-        player->entity.y = GROUND_LEVEL;
+    // Colisão com o chão (ajustado para a nova escala)
+    int screen_h = al_get_display_height(al_get_current_display());
+    float ground_level = screen_h - player->entity.height; // Base da tela
+    
+    if (player->entity.y >= ground_level) {
+        player->entity.y = ground_level;
         player->entity.vel_y = 0;
         player->is_jumping = false;
     }

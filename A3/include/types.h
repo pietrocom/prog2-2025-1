@@ -11,7 +11,7 @@
 #define PLAYER_JUMP_VEL -8.0f
 #define PLAYER_MOVE_SPEED 5.0f
 #define GRAVITY 9.8f
-#define GROUND_LEVEL 300.0f 
+#define GROUND_LEVEL 700.0f 
 
 
 
