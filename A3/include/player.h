@@ -42,10 +42,11 @@ struct Player {
     struct Animation running;
     struct Animation jumping;
     struct Animation shooting;
-    struct Animation crouching;          // Não há animação de crouch e se mover ao mesmo tempo
+    struct Animation crouching; 
     struct Animation crouch_shot;
 
     // Estado
+    bool is_moving;
     bool is_jumping;
     bool is_crouching;
     bool is_shooting;

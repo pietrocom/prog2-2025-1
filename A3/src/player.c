@@ -64,7 +64,7 @@ void init_player (struct Player * player) {
 
     // Bitmap sera carregado em load_player_sprites
 
-    // Vai carregar o soldado correto (padrão é o 1)
+    // Vai carregar o soldado correto (padrão é o 2)
     player->soldier_type = SOLDIER_1;
 
     // Status
@@ -123,7 +123,7 @@ void load_player_sprites(struct Player *player) {
         "Jump.png",    // 3
         "Shot_1.png",  // 4
         "Crouch.png",  // 5 (opcional)
-        "Crouch_shot.png" // 6 (opcional)
+        "Crouch_Shot.png" // 6 (opcional)
     };
 
     SoldierType type = player->soldier_type;
@@ -224,9 +224,14 @@ void handle_player_input(struct Player *player, ALLEGRO_EVENT *event) {
                 player->entity.vel_x = player->is_crouching ? 
                     (-PLAYER_MOVE_SPEED * 0.2f) : // Movimento mais caso agachado
                     (-PLAYER_MOVE_SPEED);
+                player->is_moving = true;
+                player->facing_right = false;
                 break;
             case ALLEGRO_KEY_RIGHT:
-                player->entity.vel_x = PLAYER_MOVE_SPEED;  // Mover para a direita
+                player->entity.vel_x = player->is_crouching ? 
+                    (PLAYER_MOVE_SPEED * 0.2f) : // Movimento mais caso agachado
+                    (PLAYER_MOVE_SPEED);
+                player->is_moving = true;
                 player->facing_right = true;
                 break;
             case ALLEGRO_KEY_SPACE:
@@ -243,11 +248,13 @@ void handle_player_input(struct Player *player, ALLEGRO_EVENT *event) {
             case ALLEGRO_KEY_LEFT:
                 if (player->entity.vel_x < 0) // Só zera se ainda estiver indo para esquerda
                     player->entity.vel_x = 0;
+                player->is_moving = false;
                 break;
                 
             case ALLEGRO_KEY_RIGHT:
                 if (player->entity.vel_x > 0) // Só zera se ainda estiver indo para direita
                     player->entity.vel_x = 0;
+                player->is_moving = false;
                 break;
                 
             case ALLEGRO_KEY_SPACE:
@@ -263,8 +270,9 @@ void update_player(struct Player *player, float delta_time, struct GameLevel *le
         return;
     }
 
-    player->entity.vel_y += GRAVITY * delta_time;
-    player->entity.y += player->entity.vel_y * delta_time;
+    // Ajuste de pulo para parecer natural
+    player->entity.vel_y += GRAVITY * delta_time * 4;                // Aumentar para aumentar gravidade
+    player->entity.y += player->entity.vel_y * delta_time * 12;      // Aumentar para pular mais alto
     
     // Colisão com o chão
     if (player->entity.y >= level->ground_level - player->entity.height) {
@@ -277,6 +285,9 @@ void update_player(struct Player *player, float delta_time, struct GameLevel *le
     if (player->is_crouching) {
         player->current_animation = player->is_shooting ? &player->crouch_shot : &player->crouching;
     } 
+    else if (player->is_shooting) {
+        player->current_animation = &player->shooting;
+    }
     else if (player->is_jumping) {
         player->current_animation = &player->jumping;
     } 

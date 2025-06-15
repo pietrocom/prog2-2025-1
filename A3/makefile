@@ -5,7 +5,7 @@ CC = gcc
 CFLAGS = -Wall -Wextra -Iinclude -g $(shell pkg-config --cflags allegro-5 allegro_image-5 allegro_font-5 allegro_ttf-5 allegro_primitives-5)
 
 # Flags de linkedição
-LDFLAGS = $(shell pkg-config --libs allegro-5 allegro_image-5 allegro_font-5 allegro_ttf-5 allegro_primitives-5)
+LDFLAGS = $(shell pkg-config --libs allegro-5 allegro_image-5 allegro_font-5 allegro_ttf-5 allegro_primitives-5) -lm
 
 # Nome do executável
 TARGET = run_and_gun

@@ -13,42 +13,17 @@
 #include "player.h"
 #include "projectiles.h"
 #include "enemy.h"
+#include "utils.h"
 
 #define SCREEN_W 1600
 #define SCREEN_H 900
 #define FPS 60
 
 int main() {
-    if (!al_init()) {
-        fprintf(stderr, "Falha ao inicializar Allegro.\n");
-        return -1;
-    }
+    
+	init_allegro();
 
-    if (!al_install_keyboard()) {
-        fprintf(stderr, "Falha ao inicializar o teclado.\n");
-        return -1;
-    }
-
-	if (!al_init_primitives_addon()) {
-        fprintf(stderr, "Falha ao inicializar addon de primitivas!\n");
-        return -1;
-    }
-
-    al_init_image_addon();
-    al_init_font_addon();
-    al_init_ttf_addon();
-
-	if (!al_is_image_addon_initialized()) {
-		fprintf(stderr, "Failed to initialize image addon!\n");
-		return -1;
-	}
-
-    ALLEGRO_DISPLAY *display = al_create_display(SCREEN_W, SCREEN_H);
-    if (!display) {
-        fprintf(stderr, "Falha ao criar display.\n");
-        return -1;
-    }
-
+    ALLEGRO_DISPLAY *display = create_display(SCREEN_W, SCREEN_H);
     ALLEGRO_TIMER *timer = al_create_timer(1.0 / FPS);
     ALLEGRO_EVENT_QUEUE *event_queue = al_create_event_queue();
     
@@ -89,7 +64,8 @@ int main() {
 				if (redraw) {
 					if (game_menu.current_state == MENU_MAIN) {
 						draw_main_menu(&game_menu);
-					} else if (game_menu.current_state == MENU_OPTIONS) {
+					} 
+					else if (game_menu.current_state == MENU_OPTIONS) {
 						draw_options_menu(&game_menu);
 					}
 					al_flip_display();
