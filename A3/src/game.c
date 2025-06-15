@@ -1,9 +1,9 @@
 #include "game.h"
 #include "player.h"
 
-void init_player (struct Player *player) {}
+void start_player (struct Player *player) {}
 
-void init_level (struct GameLevel *level) {}
+void start_level (struct GameLevel *level) {}
 
 void destroy_player (struct Player *player) {}
 

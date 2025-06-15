@@ -4,10 +4,11 @@
 #include "types.h"
 #include "projectiles.h"
 
-#define PLAYER_W 10
-#define PLAYER_H 10
+#define PLAYER_WIDTH 10
+#define PLAYER_HEIGHT 10
 #define MAX_FRAMES 10 
 #define SPRITE_SIZE 128
+#define RUN_THRESHOLD 3.0f
 
 // ---- Estruturas de dados básica ----
 
@@ -61,7 +62,7 @@ void unload_player_sprites(struct Player *player);
 
 // Controles
 void handle_player_input(struct Player *player, ALLEGRO_EVENT *event);
-void update_player(struct Player *player);
+void update_player(struct Player *player, float delta_time);
 
 // Ações
 void player_jump(struct Player *player);

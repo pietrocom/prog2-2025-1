@@ -2,6 +2,9 @@
 #define PROJECTILES_H
 
 #include "types.h"
+#include "game.h"
+#include "player.h"
+#include "enemy.h"
 
 #define MAX_PROJECTILES 50
 

@@ -32,8 +32,8 @@ void init_player (struct Player * player) {
     // Entidade
     player->entity.x = 0;
     player->entity.y = 0;
-    player->entity.width = PLAYER_W;
-    player->entity.height = PLAYER_H;
+    player->entity.width = PLAYER_WIDTH;
+    player->entity.height = PLAYER_HEIGHT;
     player->entity.vel_x = 0;
     player->entity.vel_y = 0;
 
@@ -214,8 +214,8 @@ void update_player(struct Player *player, float delta_time) {
     player->entity.y += player->entity.vel_y * delta_time;
 
     // Colisão com o chão
-    if (player->entity.y >= GROUND_Y) {
-        player->entity.y = GROUND_Y;
+    if (player->entity.y >= GROUND_LEVEL) {
+        player->entity.y = GROUND_LEVEL;
         player->entity.vel_y = 0;
         player->is_jumping = false;
     }
@@ -227,8 +227,9 @@ void update_player(struct Player *player, float delta_time) {
     else if (player->is_jumping) {
         player->current_animation = &player->jumping;
     } 
+    // Vai definir uma velocidade mínima para estar correndo
     else if (player->entity.vel_x > 0.1f || player->entity.vel_x < -0.1f) { 
-        player->current_animation = (fabs(player->entity.vel_x) > RUN_THRESHOLD) 
+        player->current_animation = (player->entity.vel_x > RUN_THRESHOLD || player->entity.vel_x < -RUN_THRESHOLD) 
                                  ? &player->running 
                                  : &player->walking;
     } 

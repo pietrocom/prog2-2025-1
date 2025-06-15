@@ -50,8 +50,8 @@ int main() {
     struct Player player;
     struct GameLevel level;
 
-	init_player(&player);
-    init_level(&level);
+	start_player(&player);
+    start_level(&level);
 
 	// Inicializações do menu
 	struct Menu game_menu;
