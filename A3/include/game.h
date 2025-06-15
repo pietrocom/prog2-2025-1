@@ -5,7 +5,7 @@
 #include "player.h"
 #include <allegro5/allegro.h>
 
-void start_player(struct Player *player);
+void start_player(struct Player *player, struct GameLevel *level);
 void start_level(struct GameLevel *level);
 void destroy_player(struct Player *player);
 void destroy_level(struct GameLevel *level);

@@ -5,6 +5,7 @@
 #include <allegro5/allegro_font.h>	
 #include <allegro5/allegro_image.h>		
 #include <allegro5/allegro_ttf.h>
+#include <allegro5/allegro_primitives.h>
 
 #include "types.h"
 #include "game.h"
@@ -25,6 +26,11 @@ int main() {
 
     if (!al_install_keyboard()) {
         fprintf(stderr, "Falha ao inicializar o teclado.\n");
+        return -1;
+    }
+
+	if (!al_init_primitives_addon()) {
+        fprintf(stderr, "Falha ao inicializar addon de primitivas!\n");
         return -1;
     }
 
@@ -55,8 +61,8 @@ int main() {
     struct Player player;
     struct GameLevel level;
 
-	start_player(&player);
     start_level(&level);
+	start_player(&player, &level);
 
 	// Inicializações do menu
 	struct Menu game_menu;
@@ -93,7 +99,7 @@ int main() {
 				
 			case PLAYING:
 				handle_player_input(&player, &event);
-				update_player(&player, 1.0/FPS);
+				update_player(&player, 1.0/FPS, &level);
 				update_game(&player, &level);
 				
 				if (redraw) {

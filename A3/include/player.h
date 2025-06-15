@@ -62,7 +62,7 @@ void unload_player_sprites(struct Player *player);
 
 // Controles
 void handle_player_input(struct Player *player, ALLEGRO_EVENT *event);
-void update_player(struct Player *player, float delta_time);
+void update_player(struct Player *player, float delta_time, struct GameLevel *level);
 
 // Ações
 void player_jump(struct Player *player);

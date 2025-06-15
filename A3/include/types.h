@@ -9,9 +9,9 @@
 
 // Definições de constantes físicas
 #define PLAYER_JUMP_VEL -8.0f
-#define PLAYER_MOVE_SPEED 5.0f
+#define PLAYER_MOVE_SPEED 40.0f
 #define GRAVITY 9.8f
-#define GROUND_LEVEL 700.0f 
+#define GROUND_LEVEL 900.0f 
 
 
 
@@ -50,6 +50,8 @@ struct GameLevel {
     float scroll_x;
     int enemy_count;
     bool boss_active;
+    float ground_level;
+    float background_scale;
 };
 
 #endif

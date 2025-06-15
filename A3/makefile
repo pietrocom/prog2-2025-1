@@ -2,10 +2,10 @@
 CC = gcc
 
 # Flags de compilação
-CFLAGS = -Wall -Wextra -Iinclude -g $(shell pkg-config --cflags allegro-5 allegro_image-5 allegro_font-5 allegro_ttf-5)
+CFLAGS = -Wall -Wextra -Iinclude -g $(shell pkg-config --cflags allegro-5 allegro_image-5 allegro_font-5 allegro_ttf-5 allegro_primitives-5)
 
 # Flags de linkedição
-LDFLAGS = $(shell pkg-config --libs allegro-5 allegro_image-5 allegro_font-5 allegro_ttf-5)
+LDFLAGS = $(shell pkg-config --libs allegro-5 allegro_image-5 allegro_font-5 allegro_ttf-5 allegro_primitives-5)
 
 # Nome do executável
 TARGET = run_and_gun
@@ -41,7 +41,7 @@ clean:
 
 # Instala as dependências (Linux/Ubuntu)
 install_deps:
-	sudo apt-get install -y liballegro5-dev liballegro-image5-dev liballegro-font5-dev liballegro-ttf5-dev
+	sudo apt-get install -y liballegro5-dev liballegro-image5-dev liballegro-font5-dev liballegro-ttf5-dev liballegro-primitives5-dev
 
 # Executa o jogo
 run: all
