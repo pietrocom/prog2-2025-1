@@ -97,3 +97,22 @@ bool file_exists(const char* filename) {
     struct stat buffer;
     return (stat(filename, &buffer) == 0);
 }
+
+void draw_ground_line(struct GameLevel *level) {
+    if (!level || !level->draw_ground_line) return;
+
+    // Configurações da linha
+    ALLEGRO_COLOR line_color = al_map_rgb(255, 0, 0); // Vermelho
+    float line_thickness = 2.0f;
+    int screen_width = al_get_display_width(al_get_current_display());
+    
+    // Desenha a linha horizontal no ground level
+    al_draw_line(
+        0,                          // X inicial (borda esquerda)
+        level->ground_level,        // Y (ground level)
+        screen_width,               // X final (borda direita)
+        level->ground_level,        // Y (ground level)
+        line_color, 
+        line_thickness
+    );
+}

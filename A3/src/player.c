@@ -206,7 +206,7 @@ void unload_player_sprites(struct Player *player) {
 
 // ---- Controles ----
 
-void handle_player_input(struct Player *player, ALLEGRO_EVENT *event) {
+void handle_player_input(struct Player *player, ALLEGRO_EVENT *event, struct GameLevel *level) {
     if (event->type == ALLEGRO_EVENT_KEY_DOWN) {
         switch (event->keyboard.keycode) {
             case ALLEGRO_KEY_UP:
@@ -243,6 +243,7 @@ void handle_player_input(struct Player *player, ALLEGRO_EVENT *event) {
                 break;
             case ALLEGRO_KEY_H:
                 player->hitbox_show = !player->hitbox_show; // Alterna exibição da hitbox
+                level->draw_ground_line = !level->draw_ground_line; 
                 break;
         }
     } 

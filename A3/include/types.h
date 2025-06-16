@@ -61,6 +61,7 @@ struct GameLevel {
     bool boss_active;
     float ground_level;
     float background_scale;
+    bool draw_ground_line; 
 };
 
 #endif

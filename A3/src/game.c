@@ -10,25 +10,6 @@
 #include "projectiles.h"
 #include "types.h"
 
-// ---- Funções Auxiliares ----
-
-void draw_ground_line(struct GameLevel *level) {
-    // Configurações da linha
-    ALLEGRO_COLOR line_color = al_map_rgb(255, 0, 0); // Vermelho
-    float line_thickness = 2.0f;
-    int screen_width = al_get_display_width(al_get_current_display());
-    
-    // Desenha a linha horizontal no ground level
-    al_draw_line(
-        0,                          // X inicial (borda esquerda)
-        level->ground_level,        // Y (ground level)
-        screen_width,               // X final (borda direita)
-        level->ground_level,        // Y (ground level)
-        line_color, 
-        line_thickness
-    );
-}
-
 
 
 // ---- Funções de Inicialização ----
@@ -188,8 +169,8 @@ void draw_game(struct Player *player, struct GameLevel *level) {
                           : player->entity.x;
     
     draw_player_at_position(player, player_screen_x, player->entity.y, player->hitbox_show);
-
-    draw_ground_line(level);
+    
+    draw_ground_line(level);  
 }
 
 void draw_game_over (int score) {}

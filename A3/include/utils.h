@@ -14,4 +14,6 @@ bool soldier_supports_crouch (SoldierType type);
 
 bool file_exists (const char* filename);
 
+void draw_ground_line(struct GameLevel *level);
+
 #endif

@@ -91,7 +91,7 @@ int main() {
 				break;
 				
 			case PLAYING:
-				handle_player_input(&player, &event);
+				handle_player_input(&player, &event, &level);
 				update_player(&player, 1.0/FPS, &level);
 				update_game(&player, &level);
 				
