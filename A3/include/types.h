@@ -11,7 +11,7 @@
 #define PLAYER_JUMP_VEL -100.0f
 #define PLAYER_MOVE_SPEED 4.0f
 #define GRAVITY 70.0f
-#define GROUND_LEVEL 110 // Distância do chão até a base da tela
+#define GROUND_LEVEL 200 // Distância do teto até a base da tela
 
 
 
@@ -32,8 +32,16 @@ typedef enum {
 } GameState;
 
 struct Entity {
-    float x, y;
-    float width, height;
+    float x, y;          // Posição do canto inferior esquerdo (base do personagem)
+    float width, height; 
+    
+    // Sistema de hitbox 
+    struct {
+        float x, y;               // Posição do canto inferior esquerdo da hitbox
+        float width, height;
+        float offset_x, offset_y; // Deslocamento relativo à entidade
+    } hitbox;
+    
     float vel_x, vel_y;
 };
 

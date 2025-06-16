@@ -2,6 +2,7 @@
 #include <math.h>
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_primitives.h>
+
 #include "enemy.h"
 #include "game.h"
 #include "menu.h"
@@ -9,25 +10,25 @@
 #include "projectiles.h"
 #include "types.h"
 
-
 // ---- Funções Auxiliares ----
 
-void draw_player_at_position(struct Player *player, float x, float y) {
-    if (!player || !player->current_animation || 
-        player->current_animation->current_frame < 0 ||
-        player->current_animation->current_frame >= player->current_animation->frame_count) {
-        return;
-    }
-
-    ALLEGRO_BITMAP *frame = player->current_animation->frames[player->current_animation->current_frame];
-    if (!frame) return;
-
-    int flags = player->facing_right ? 0 : ALLEGRO_FLIP_HORIZONTAL;
-    al_draw_bitmap(frame, 
-                  x, 
-                  y - (SPRITE_SIZE - player->entity.height),
-                  flags);
+void draw_ground_line(struct GameLevel *level) {
+    // Configurações da linha
+    ALLEGRO_COLOR line_color = al_map_rgb(255, 0, 0); // Vermelho
+    float line_thickness = 2.0f;
+    int screen_width = al_get_display_width(al_get_current_display());
+    
+    // Desenha a linha horizontal no ground level
+    al_draw_line(
+        0,                          // X inicial (borda esquerda)
+        level->ground_level,        // Y (ground level)
+        screen_width,               // X final (borda direita)
+        level->ground_level,        // Y (ground level)
+        line_color, 
+        line_thickness
+    );
 }
+
 
 
 // ---- Funções de Inicialização ----
@@ -51,7 +52,7 @@ void start_level(struct GameLevel *level) {
     int screen_h = al_get_display_height(al_get_current_display());
     int bg_height = al_get_bitmap_height(level->background);
     
-    level->ground_level = screen_h - GROUND_LEVEL;  // Chão 200px acima da base
+    level->ground_level = screen_h - GROUND_LEVEL; 
     level->background_scale = (float)screen_h / (float)bg_height;
     level->scroll_x = 0.0f;
     level->enemy_count = 0;
@@ -134,6 +135,8 @@ void handle_game_over_events (ALLEGRO_EVENT *event, GameState *state) {}
 
 // ---- Funções de Atualização e Renderização ----
 
+// Tanto o jogador quanto o background vao se mover
+// dependendo da posição do jogador na tela
 void update_game(struct Player *player, struct GameLevel *level) {
     float screen_width = al_get_display_width(al_get_current_display());
     float threshold = screen_width * 0.6f; // 60% da tela
@@ -157,7 +160,7 @@ void update_game(struct Player *player, struct GameLevel *level) {
         }
     }
     
-    // Debug: mostra os valores de scroll e posição do jogador
+    // Mostra coordenadas X do jogador e do scroll
     printf("ScrollX: %.1f, PlayerX: %.1f\n", level->scroll_x, player->entity.x);
 }
 
@@ -169,7 +172,7 @@ void draw_game(struct Player *player, struct GameLevel *level) {
     float scaled_width = bg_width * level->background_scale;
     
     // Calcula a posição de desenho do background
-    float bg_offset = fmod(level->scroll_x, scaled_width);
+    float bg_offset = fmod(level->scroll_x, scaled_width);  // Resto da divisao de floats
     
     // Desenha o background repetido
     for (int i = -1; i <= (screen_w / scaled_width) + 1; i++) {
@@ -184,7 +187,9 @@ void draw_game(struct Player *player, struct GameLevel *level) {
                           ? screen_w * 0.6f 
                           : player->entity.x;
     
-    draw_player_at_position(player, player_screen_x, player->entity.y);
+    draw_player_at_position(player, player_screen_x, player->entity.y, player->hitbox_show);
+
+    draw_ground_line(level);
 }
 
 void draw_game_over (int score) {}

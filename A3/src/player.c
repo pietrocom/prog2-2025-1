@@ -1,8 +1,47 @@
 #include <stdio.h>
 #include <sys/stat.h> 
+#include <allegro5/allegro_primitives.h>
+
 #include "types.h"
 #include "player.h"
 #include "utils.h"
+
+// ---- Funções Auxiliares ----
+
+void update_hitbox_position(struct Entity *entity) {
+    entity->hitbox.x = entity->x + entity->hitbox.offset_x;
+    entity->hitbox.y = entity->y + entity->hitbox.offset_y;
+}
+
+bool check_collision(struct Entity *a, struct Entity *b) {
+    return (a->hitbox.x < b->hitbox.x + b->hitbox.width &&
+            a->hitbox.x + a->hitbox.width > b->hitbox.x &&
+            a->hitbox.y < b->hitbox.y + b->hitbox.height &&
+            a->hitbox.y + a->hitbox.height > b->hitbox.y);
+}
+
+void handle_ground_collision(struct Player *player, struct GameLevel *level) {
+    if (player->entity.hitbox.y > level->ground_level) {
+        // Calcula quanto o player afundou no chão
+        float penetration_depth = player->entity.hitbox.y - level->ground_level;
+        
+        // Corrige a posição
+        player->entity.y -= penetration_depth;
+        player->entity.vel_y = 0;
+        player->is_jumping = false;
+        
+        update_hitbox_position(&player->entity);
+    }
+}
+
+void set_player_scale(struct Player *player, float scale) {
+    if (scale <= 0) {
+        fprintf(stderr, "Invalid scale value: %f\n", scale);
+        return;
+    }
+    player->scale = scale;
+}
+
 
 // ---- Inicialização ----
 
@@ -12,10 +51,17 @@ void init_player (struct Player * player) {
     player->entity.y = 0;
     player->entity.width = PLAYER_WIDTH;
     player->entity.height = PLAYER_HEIGHT;
+
+    player->entity.hitbox.width = PLAYER_WIDTH * 0.8f;  // 80% da largura do sprite
+    player->entity.hitbox.height = PLAYER_HEIGHT * 0.9f; // 90% da altura
+    player->entity.hitbox.offset_x = PLAYER_HITBOX_OFFSET_X;
+    player->entity.hitbox.offset_y = PLAYER_HITBOX_OFFSET_Y;
+
     player->entity.vel_x = 0;
     player->entity.vel_y = 0;
 
     // Bitmap sera carregado em load_player_sprites
+    player->scale = 1.0f;
 
     // Vai carregar o soldado correto (padrão é o 2)
     player->soldier_type = SOLDIER_1;
@@ -29,6 +75,7 @@ void init_player (struct Player * player) {
     player->is_crouching = false;
     player->is_shooting = false;
     player->facing_right = true;
+    player->hitbox_show = false;
 
     // Inicializa animações
     player->idle.frame_delay = 0.1f;
@@ -163,17 +210,20 @@ void handle_player_input(struct Player *player, ALLEGRO_EVENT *event) {
     if (event->type == ALLEGRO_EVENT_KEY_DOWN) {
         switch (event->keyboard.keycode) {
             case ALLEGRO_KEY_UP:
+            case ALLEGRO_KEY_W:
                 if (!player->is_jumping) {  // Só permite pular se não estiver no ar
                     player->entity.vel_y = PLAYER_JUMP_VEL;
                     player->is_jumping = true;
                 }
                 break;
             case ALLEGRO_KEY_DOWN:
+            case ALLEGRO_KEY_S:
                 if (soldier_supports_crouch(player->soldier_type)) {
                     player->is_crouching = true; // Agachar
                 }
                 break;
             case ALLEGRO_KEY_LEFT:
+            case ALLEGRO_KEY_A:
                 player->entity.vel_x = player->is_crouching ? 
                     (-PLAYER_MOVE_SPEED * 0.2f) : // Movimento mais caso agachado
                     (-PLAYER_MOVE_SPEED);
@@ -181,6 +231,7 @@ void handle_player_input(struct Player *player, ALLEGRO_EVENT *event) {
                 player->facing_right = false;
                 break;
             case ALLEGRO_KEY_RIGHT:
+            case ALLEGRO_KEY_D:
                 player->entity.vel_x = player->is_crouching ? 
                     (PLAYER_MOVE_SPEED * 0.2f) : // Movimento mais caso agachado
                     (PLAYER_MOVE_SPEED);
@@ -190,21 +241,27 @@ void handle_player_input(struct Player *player, ALLEGRO_EVENT *event) {
             case ALLEGRO_KEY_SPACE:
                 player->is_shooting = true; // Atirar
                 break;
+            case ALLEGRO_KEY_H:
+                player->hitbox_show = !player->hitbox_show; // Alterna exibição da hitbox
+                break;
         }
     } 
     else if (event->type == ALLEGRO_EVENT_KEY_UP) {
         switch (event->keyboard.keycode) {
             case ALLEGRO_KEY_DOWN:
+            case ALLEGRO_KEY_S:
                 player->is_crouching = false;
                 break;
                 
             case ALLEGRO_KEY_LEFT:
+            case ALLEGRO_KEY_A:
                 if (player->entity.vel_x < 0) // Só zera se ainda estiver indo para esquerda
                     player->entity.vel_x = 0;
                 player->is_moving = false;
                 break;
                 
             case ALLEGRO_KEY_RIGHT:
+            case ALLEGRO_KEY_D:
                 if (player->entity.vel_x > 0) // Só zera se ainda estiver indo para direita
                     player->entity.vel_x = 0;
                 player->is_moving = false;
@@ -227,12 +284,9 @@ void update_player(struct Player *player, float delta_time, struct GameLevel *le
     player->entity.vel_y += GRAVITY * delta_time * 4;                // Aumentar para aumentar gravidade
     player->entity.y += player->entity.vel_y * delta_time * 12;      // Aumentar para pular mais alto
     
-    // Colisão com o chão
-    if (player->entity.y >= level->ground_level - player->entity.height) {
-        player->entity.y = level->ground_level - player->entity.height;
-        player->entity.vel_y = 0;
-        player->is_jumping = false;
-    }
+    update_hitbox_position(&player->entity);
+
+    handle_ground_collision(player, level);
 
     // Máquina de estados para animações
     if (player->is_crouching) {
@@ -306,8 +360,56 @@ void draw_player(struct Player *player) {
     }
 
     int flags = player->facing_right ? 0 : ALLEGRO_FLIP_HORIZONTAL;
+    // x e y sao coordenadas do canto superior esquerdo
     al_draw_bitmap(frame, 
                   player->entity.x, 
-                  player->entity.y - (SPRITE_SIZE - player->entity.height),
+                  player->entity.y - player->entity.height, 
                   flags);
+}
+
+void draw_player_at_position(struct Player *player, float x, float y, bool hitbox_show) {
+    if (!player || !player->current_animation || 
+        player->current_animation->current_frame < 0 ||
+        player->current_animation->current_frame >= player->current_animation->frame_count) {
+        return;
+    }
+
+    ALLEGRO_BITMAP *frame = player->current_animation->frames[player->current_animation->current_frame];
+    if (!frame) return;
+
+    if (hitbox_show)
+        show_player_hitbox(player); 
+
+    int flags = player->facing_right ? 0 : ALLEGRO_FLIP_HORIZONTAL;
+    set_player_scale(player, PLAYER_SCALE);
+    al_draw_scaled_bitmap(
+        frame,
+        0, 0, // Origem
+        al_get_bitmap_width(frame), al_get_bitmap_height(frame), // Dimensões originais
+        player->entity.x,
+        player->entity.y - (al_get_bitmap_height(frame) * player->scale), // Ajuste Y
+        al_get_bitmap_width(frame) * player->scale,
+        al_get_bitmap_height(frame) * player->scale,
+        player->facing_right ? 0 : ALLEGRO_FLIP_HORIZONTAL
+    );
+}
+
+void show_player_hitbox(struct Player *player) {
+    if (!player) return;
+
+    update_hitbox_position(&player->entity);
+
+    // Desenha a hitbox atualizada
+    al_draw_rectangle(
+        player->entity.hitbox.x,
+        player->entity.hitbox.y,
+        player->entity.hitbox.x + player->entity.hitbox.width,
+        player->entity.hitbox.y - player->entity.hitbox.height,
+        al_map_rgb(255, 0, 0), 2);
+    
+    // Ponto de referência (base do personagem)
+    al_draw_filled_circle(
+        player->entity.hitbox.x + player->entity.hitbox.width / 2, // Centraliza horizontalmente
+        player->entity.hitbox.y - player->entity.hitbox.height / 2, // Centraliza verticalmente
+        3, al_map_rgb(0, 255, 0));
 }
