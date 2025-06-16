@@ -11,7 +11,6 @@
 #include "types.h"
 
 
-
 // ---- Funções de Inicialização ----
 
 void start_player(struct Player *player, struct GameLevel *level) {
@@ -63,10 +62,6 @@ void handle_game_events(ALLEGRO_EVENT *event, GameState *state) {
             case ALLEGRO_KEY_P:
                 toggle_pause(state);
                 break;
-
-            case ALLEGRO_KEY_Q:
-                *state = MENU;  // Volta ao menu
-                break;
                 
             case ALLEGRO_EVENT_DISPLAY_CLOSE:
                 *state = QUIT;
@@ -88,7 +83,9 @@ void toggle_pause(GameState *current_state) {
     }
 }
 
-void handle_pause_input(ALLEGRO_EVENT *event, GameState *state) {
+void handle_pause_input(ALLEGRO_EVENT *event, GameState *state, 
+    struct Player *player, struct GameLevel *level) {
+
     if (event->type == ALLEGRO_EVENT_KEY_DOWN) {
         switch (event->keyboard.keycode) {
             case ALLEGRO_KEY_ESCAPE:
@@ -102,6 +99,7 @@ void handle_pause_input(ALLEGRO_EVENT *event, GameState *state) {
                 break;
                 
             case ALLEGRO_KEY_Q:
+                reset_game(player, level);
                 *state = MENU;  // Volta ao menu
                 break;
         }
@@ -115,6 +113,22 @@ void handle_game_over_events (ALLEGRO_EVENT *event, GameState *state) {}
 
 
 // ---- Funções de Atualização e Renderização ----
+
+void reset_game(struct Player *player, struct GameLevel *level) {
+    init_player(player);  // Reinicializa o jogador
+
+    player->entity.x = 100.0f;
+    player->entity.y = level->ground_level - player->entity.height;
+
+    int screen_h = al_get_display_height(al_get_current_display());
+    int bg_height = al_get_bitmap_height(level->background);
+    
+    level->ground_level = screen_h - GROUND_LEVEL; 
+    level->background_scale = (float)screen_h / (float)bg_height;
+    level->scroll_x = 0.0f;
+    level->enemy_count = 0;
+    level->boss_active = false;
+}
 
 // Tanto o jogador quanto o background vao se mover
 // dependendo da posição do jogador na tela

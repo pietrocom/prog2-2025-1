@@ -70,8 +70,11 @@ int main() {
 				break;
 				
 			case PLAYING:
-			case PAUSED:
 				handle_game_events(&event, &game_state); 
+				break;
+
+			case PAUSED:
+				handle_pause_input(&event, &game_state, &player, &level); 
 				break;
 		}
 

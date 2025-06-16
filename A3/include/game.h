@@ -21,7 +21,7 @@ void handle_game_events(ALLEGRO_EVENT *event, GameState *state);
 
 // ---- Controle de Pausa ----
 void toggle_pause(GameState *current_state);
-void handle_pause_input(ALLEGRO_EVENT *event, GameState *state);
+void handle_pause_input(ALLEGRO_EVENT *event, GameState *state, struct Player *player, struct GameLevel *level);
 
 // ---- Controle de Game Over ----
 void handle_game_over_events(ALLEGRO_EVENT *event, GameState *state);
