@@ -208,8 +208,8 @@ void draw_pause_menu(struct GameLevel *level) {
     // Dimensões
     int display_w = al_get_display_width(al_get_current_display());
     int display_h = al_get_display_height(al_get_current_display());
-    int box_width = 400;
-    int box_height = 200;
+    int box_width = 600;
+    int box_height = 400;
     int box_padding = 20;
     int text_height = al_get_font_line_height(font);
 
@@ -242,7 +242,7 @@ void draw_pause_menu(struct GameLevel *level) {
         title_font, 
         highlight_color, 
         display_w/2, 
-        display_h/2 - box_height/2 + box_padding - 50, 
+        display_h/2 - 160, 
         ALLEGRO_ALIGN_CENTRE, 
         "JOGO PAUSADO");
 
@@ -254,18 +254,18 @@ void draw_pause_menu(struct GameLevel *level) {
         font, 
         text_color, 
         display_w/2, 
-        y_offset, 
+        display_h/2 + 35, 
         ALLEGRO_ALIGN_CENTRE, 
-        "[ESC/P] Continuar");
+        "''P'' Continuar");
     
     // Opção 2 - Voltar ao menu
     al_draw_text(
         font, 
         text_color, 
         display_w/2, 
-        y_offset + text_height + 10, 
+        display_h/2, 
         ALLEGRO_ALIGN_CENTRE, 
-        "[Q] Voltar ao menu");
+        "''Q'' Voltar ao menu");
 
     // 5. Limpeza
     al_destroy_font(font);
