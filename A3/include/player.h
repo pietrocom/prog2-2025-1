@@ -4,10 +4,10 @@
 #include "types.h"
 #include "projectiles.h"
 
-#define PLAYER_WIDTH 20
-#define PLAYER_HEIGHT 40
-#define PLAYER_HITBOX_OFFSET_X 10.0f
-#define PLAYER_HITBOX_OFFSET_Y 10.0f
+#define PLAYER_WIDTH 40
+#define PLAYER_HEIGHT 105
+#define PLAYER_HITBOX_OFFSET_X 77.0f
+#define PLAYER_HITBOX_OFFSET_Y 00.0f
 
 #define PLAYER_SCALE 1.5f
 

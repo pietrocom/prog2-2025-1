@@ -19,7 +19,7 @@ void start_player(struct Player *player, struct GameLevel *level) {
     
     // Posição inicial
     player->entity.x = 100.0f;
-    player->entity.y = level->ground_level - player->entity.height;
+    player->entity.y = level->ground_level;
 }
 
 void start_level(struct GameLevel *level) {
@@ -118,7 +118,7 @@ void reset_game(struct Player *player, struct GameLevel *level) {
     init_player(player);  // Reinicializa o jogador
 
     player->entity.x = 100.0f;
-    player->entity.y = level->ground_level - player->entity.height;
+    player->entity.y = level->ground_level;
 
     int screen_h = al_get_display_height(al_get_current_display());
     int bg_height = al_get_bitmap_height(level->background);
@@ -156,7 +156,7 @@ void update_game(struct Player *player, struct GameLevel *level) {
     }
     
     // Mostra coordenadas X do jogador e do scroll
-    printf("ScrollX: %.1f, PlayerX: %.1f\n", level->scroll_x, player->entity.x);
+    // printf("ScrollX: %.1f, PlayerX: %.1f\n", level->scroll_x, player->entity.x);
 }
 
 // Relativiza a posição do jogador na tela
