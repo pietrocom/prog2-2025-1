@@ -179,32 +179,41 @@ void check_projectile_collisions(struct ProjectileSystem *system,
         
         struct Projectile *p = &system->projectiles[i];
         
-        // Colisão com jogador (apenas projéteis inimigos)
-        if (p->type == PROJECTILE_ENEMY && 
-            check_projectile_hit(p, &player->entity)) {
+        // Colisão com jogador (apenas projéteis inimigos que não estejam mortos)
+        if (p->type == PROJECTILE_ENEMY && !is_player_dead(player) && 
+            check_collision(&p->entity, &player->entity)) {
+            
             damage_player(player, p->damage);
-            p->is_active = false;
+            p->is_active = false; // Desativa o projétil
             system->active_count--;
-            continue;
+            continue; // Pula para o próximo projétil
         }
         
         // Colisão com inimigos (apenas projéteis do jogador)
         if (p->type == PROJECTILE_PLAYER) {
+            bool hit_someone = false;
+
+            // Loop para inimigos normais
             for (int j = 0; j < MAX_ENEMIES; j++) {
-                if (enemy_system->enemies[j].is_active && 
-                    !enemy_system->enemies[j].is_dead &&
-                    check_projectile_hit(p, &enemy_system->enemies[j].entity)) {
+                if (enemy_system->enemies[j].is_active && !is_enemy_dead(&enemy_system->enemies[j]) &&
+                    check_collision(&p->entity, &enemy_system->enemies[j].entity)) {
+                    
                     damage_enemy(&enemy_system->enemies[j], p->damage);
-                    p->is_active = false;
-                    system->active_count--;
-                    break;
+                    hit_someone = true;
+                    // Não damos break aqui ainda, caso o projétil seja perfurante no futuro
                 }
             }
             
-            // Verifica colisão com o boss
-            if (enemy_system->boss.is_active && 
-                check_projectile_hit(p, &enemy_system->boss.entity)) {
+            // Checa colisão com o boss
+            if (enemy_system->boss.is_active && !is_enemy_dead(&enemy_system->boss) &&
+                check_collision(&p->entity, &enemy_system->boss.entity)) {
+                
                 damage_enemy(&enemy_system->boss, p->damage);
+                hit_someone = true;
+            }
+
+            // Se o projétil atingiu alguém e for do tipo normal, ele é destruído.
+            if (hit_someone && p->behavior == PROJECTILE_NORMAL) {
                 p->is_active = false;
                 system->active_count--;
             }

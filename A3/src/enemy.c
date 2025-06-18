@@ -543,21 +543,26 @@ void draw_enemy_health_bar(struct Enemy *enemy) {
                             al_map_rgb(255, 0, 0));
 }
 
-void draw_enemies(struct EnemySystem *system, struct GameLevel *level) {
+void draw_enemies(struct EnemySystem *system, struct GameLevel *level, struct Player *player) {
     // Desenha todos os inimigos normais
     for (int i = 0; i < MAX_ENEMIES; i++) {
         if (system->enemies[i].is_active) {
-            // Para desenhar o inimigo na posição correta da tela,
-            // subtraímos o deslocamento do cenário (scroll_x).
+            // Sincroniza a flag de exibição da hitbox do inimigo com a do player
+            system->enemies[i].hitbox_show = player->hitbox_show;
+
+            // Converte a posição de mundo para posição de tela para desenhar
             float original_x = system->enemies[i].entity.x;
             system->enemies[i].entity.x -= level->scroll_x;
             draw_enemy(&system->enemies[i]);
-            system->enemies[i].entity.x = original_x; // Restaura a posição global
+            system->enemies[i].entity.x = original_x; // Restaura a posição de mundo
         }
     }
 
     // Desenha o boss se estiver ativo
     if (system->boss.is_active) {
+        // Sincroniza a flag do boss também
+        system->boss.hitbox_show = player->hitbox_show;
+        
         float original_x = system->boss.entity.x;
         system->boss.entity.x -= level->scroll_x;
         draw_enemy(&system->boss);

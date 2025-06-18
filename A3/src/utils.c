@@ -139,26 +139,28 @@ void update_hitbox_position(struct Entity *entity, bool facing_right) {
 }
 
 bool check_collision(struct Entity *a, struct Entity *b) {
-    // A lógica de colisão original está um pouco estranha. Uma verificação AABB (Axis-Aligned Bounding Box)
-    // padrão é mais confiável. Vamos assumir que a.hitbox.y é o TOPO e a.hitbox.y + height é a BASE.
-    
-    // A hitbox de A
-    float a_top = a->hitbox.y;
-    float a_bottom = a->hitbox.y + a->hitbox.height;
+    // Coordenadas da hitbox A
     float a_left = a->hitbox.x;
     float a_right = a->hitbox.x + a->hitbox.width;
+    float a_top = a->hitbox.y;
+    float a_bottom = a->hitbox.y + a->hitbox.height;
 
-    // A hitbox de B
-    float b_top = b->hitbox.y;
-    float b_bottom = b->hitbox.y + b->hitbox.height;
+    // Coordenadas da hitbox B
     float b_left = b->hitbox.x;
     float b_right = b->hitbox.x + b->hitbox.width;
+    float b_top = b->hitbox.y;
+    float b_bottom = b->hitbox.y + b->hitbox.height;
 
-    // Verifica se não há colisão
-    if (a_right < b_left || a_left > b_right || a_bottom < b_top || a_top > b_bottom) {
-        return false; // Sem colisão
+    // A colisão ocorre se NÃO houver um eixo de separação.
+    // Retorna 'false' se houver uma separação (sem colisão).
+    if (a_right < b_left ||  // A está totalmente à esquerda de B
+        a_left > b_right ||  // A está totalmente à direita de B
+        a_bottom < b_top ||  // A está totalmente acima de B
+        a_top > b_bottom)    // A está totalmente abaixo de B
+    {
+        return false;
     }
 
-    // Se nenhuma das condições acima for verdadeira, há uma colisão
+    // Se nenhuma das condições de separação for verdadeira, então houve colisão.
     return true;
 }

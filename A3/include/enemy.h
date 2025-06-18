@@ -114,7 +114,7 @@ void kill_enemy(struct Enemy *enemy);
 // Renderização
 void draw_enemy(struct Enemy *enemy);
 void draw_enemy_health_bar(struct Enemy *enemy);
-void draw_enemies(struct EnemySystem *system, struct GameLevel *level);
+void draw_enemies(struct EnemySystem *system, struct GameLevel *level, struct Player *player);
 
 // Chefe
 void init_boss(struct Enemy *boss);

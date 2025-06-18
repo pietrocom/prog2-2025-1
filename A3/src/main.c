@@ -112,7 +112,7 @@ int main() {
                 
                 if (redraw) {
                     draw_game(&player, &level);
-                    draw_enemies(&enemy_system, &level);
+                    draw_enemies(&enemy_system, &level, &player); 
                     draw_projectiles(&projectile_system, &level);
                     al_flip_display();
                     redraw = false;
@@ -122,7 +122,7 @@ int main() {
             case PAUSED:
                 if (redraw) {
                     draw_game(&player, &level);
-                    draw_enemies(&enemy_system, &level);
+                    draw_enemies(&enemy_system, &level, &player);
                     draw_projectiles(&projectile_system, &level);
                     draw_pause_menu(&level);
                     al_flip_display();
