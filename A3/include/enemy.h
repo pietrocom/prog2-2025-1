@@ -12,8 +12,11 @@
 
 #define ENEMY_WIDTH 40
 #define ENEMY_HEIGHT 105
-#define ENEMY_HITBOX_OFFSET_X 00.0f
-#define ENEMY_HITBOX_OFFSET_Y 00.0f
+
+#define ENEMY_HITBOX_OFFSET_X 10.0f
+#define ENEMY_HITBOX_OFFSET_Y 20.0f
+#define ENEMY_LSPRITE_OFFSET_X 15.0f  // Adicionei essa que faltava
+#define ENEMY_RSPRITE_OFFSET_X 00.0f
 
 #define ENEMY_SCALE 1.5f
 
@@ -54,12 +57,14 @@ struct Enemy {
     float detection_range;
     float attack_cooldown;
     float current_cooldown;
+    float ground_level; 
     
     // Controle
     bool is_active;
     bool facing_right;
     bool is_attacking;
     bool hitbox_show;
+    bool is_dead;
 };
 
 // Sistema de inimigos
@@ -88,7 +93,7 @@ void update_enemy(struct Enemy *enemy, struct Player *player, float delta_time);
 void enemy_ai(struct Enemy *enemy, struct Player *player, float delta_time);
 void enemy_move(struct Enemy *enemy, float dx, float dy);
 void enemy_attack(struct Enemy *enemy, struct Player *player);
-void enemy_ranged_attack(struct Enemy *enemy, struct Projectile *projectiles[], int *projectile_count);
+void enemy_ranged_attack(struct Enemy *enemy, struct ProjectileSystem *projectile_system);
 
 // Estado
 void damage_enemy(struct Enemy *enemy, int amount);

@@ -1,3 +1,4 @@
+#include <math.h>
 #include <stdio.h>
 
 #include "types.h"
@@ -119,6 +120,7 @@ void spawn_enemy_wave(struct EnemySystem *system, struct GameLevel *level) {
 void init_enemy(struct Enemy *enemy, EnemyType type, float x, float y) {
 
     // Configuração básica da entidade
+    enemy->ground_level = GROUND_LEVEL; 
     enemy->entity.x = x;
     enemy->entity.y = y;
     enemy->type = type;
@@ -243,24 +245,213 @@ void unload_enemy_sprites(struct Enemy *enemy) {
 
 // Controle
 
-void update_enemy(struct Enemy *enemy, struct Player *player, float delta_time) {}
-void enemy_ai(struct Enemy *enemy, struct Player *player, float delta_time) {}
+void update_enemy(struct Enemy *enemy, struct Player *player, float delta_time) {
+    if (!enemy->is_active || enemy->is_dead) return;
+
+    // Atualiza cooldown do ataque
+    if (enemy->current_cooldown > 0) {
+        enemy->current_cooldown -= delta_time;
+    }
+
+    // Executa a lógica de IA
+    enemy_ai(enemy, player, delta_time);
+
+    // Atualiza animação
+    if (enemy->current_animation) {
+        enemy->current_animation->elapsed_time += delta_time;
+        if (enemy->current_animation->elapsed_time >= enemy->current_animation->frame_delay) {
+            enemy->current_animation->elapsed_time = 0;
+            enemy->current_animation->current_frame = 
+                (enemy->current_animation->current_frame + 1) % enemy->current_animation->frame_count;
+            
+            // Verifica se a animação de morte terminou
+            if (enemy->is_dead && enemy->current_animation == &enemy->animations[ENEMY_ANIM_DEATH] &&
+                enemy->current_animation->current_frame == enemy->current_animation->frame_count - 1) {
+                enemy->is_active = false;
+            }
+        }
+    }
+
+    // Atualiza posição da hitbox
+    update_hitbox_position(&enemy->entity, enemy->facing_right);
+}
+
+void enemy_ai(struct Enemy *enemy, struct Player *player, float delta_time) {
+    float dx = player->entity.x - enemy->entity.x;
+    float dy = player->entity.y - enemy->entity.y;
+    float distance = sqrtf(dx*dx + dy*dy);
+
+    // Atualiza direção que o inimigo está olhando
+    enemy->facing_right = (dx > 0);
+
+    // Comportamento baseado no tipo de inimigo
+    switch(enemy->type) {
+        case ENEMY_MELEE:
+            if (distance < enemy->detection_range) {
+                if (distance > enemy->attack_range) {
+                    // Persegue o jogador
+                    float move_x = (dx / distance) * enemy->speed * delta_time;
+                    enemy_move(enemy, move_x, 0);
+                    enemy->current_animation = &enemy->animations[ENEMY_ANIM_WALK];
+                } 
+                else if (enemy->current_cooldown <= 0) {
+                    // Ataque melee
+                    enemy_attack(enemy, player);
+                }
+            } else {
+                enemy->current_animation = &enemy->animations[ENEMY_ANIM_IDLE];
+            }
+            break;
+
+        case ENEMY_RANGED:
+            if (distance < enemy->detection_range) {
+                // Mantém distância do jogador
+                if (distance < enemy->attack_range * 0.7f) {
+                    // Recua se o jogador chegar muito perto
+                    float move_x = (-dx / distance) * enemy->speed * delta_time;
+                    enemy_move(enemy, move_x, 0);
+                    enemy->current_animation = &enemy->animations[ENEMY_ANIM_WALK];
+                } 
+                else if (distance > enemy->attack_range * 1.2f) {
+                    // Aproxima se estiver muito longe
+                    float move_x = (dx / distance) * enemy->speed * delta_time;
+                    enemy_move(enemy, move_x, 0);
+                    enemy->current_animation = &enemy->animations[ENEMY_ANIM_WALK];
+                }
+                else if (enemy->current_cooldown <= 0) {
+                    // Ataque ranged
+                    enemy->current_animation = &enemy->animations[ENEMY_ANIM_ATTACK];
+                }
+            } else {
+                enemy->current_animation = &enemy->animations[ENEMY_ANIM_IDLE];
+            }
+            break;
+
+        case ENEMY_BOSS:
+            // Comportamento especial será implementado em update_boss()
+            break;
+    }
+}
+
 void enemy_move(struct Enemy *enemy, float dx, float dy) {}
-void enemy_attack(struct Enemy *enemy, struct Player *player) {}
-void enemy_ranged_attack(struct Enemy *enemy, struct Projectile *projectiles[], int *projectile_count) {}
+
+void enemy_attack(struct Enemy *enemy, struct Player *player) {
+    enemy->is_attacking = true;
+    enemy->current_animation = &enemy->animations[ENEMY_ANIM_ATTACK];
+    enemy->current_cooldown = enemy->attack_cooldown;
+    
+    // Verifica se o jogador está dentro do range de ataque
+    float dx = player->entity.x - enemy->entity.x;
+    float distance = fabs(dx);
+    
+    if (distance <= enemy->attack_range) {
+        damage_player(player, enemy->damage);
+    }
+}
+
+void enemy_ranged_attack(struct Enemy *enemy, struct ProjectileSystem *projectile_system) {
+    if (!enemy->is_active || enemy->current_cooldown > 0) return;
+    
+    // Configuração do projétil
+    float direction = enemy->facing_right ? 1.0f : -1.0f;
+    float start_x = enemy->entity.x + (direction * enemy->entity.width/2);
+    float start_y = enemy->entity.y - enemy->entity.height/2;
+    
+    // Adiciona o projétil ao sistema
+    add_projectile(projectile_system, 
+                  start_x, start_y,
+                  direction * 300.0f,  // velocidade x
+                  0,                  // velocidade y
+                  false);             // não é projétil do jogador
+    
+    enemy->current_cooldown = enemy->attack_cooldown;
+    enemy->current_animation = &enemy->animations[ENEMY_ANIM_ATTACK];
+}
 
 
 // Estado
 
-void damage_enemy(struct Enemy *enemy, int amount) {}
-bool is_enemy_dead(struct Enemy *enemy) {}
-void kill_enemy(struct Enemy *enemy) {}
+void damage_enemy(struct Enemy *enemy, int amount) {
+    if (enemy->is_dead) return;
+    
+    enemy->health -= amount;
+    enemy->current_animation = &enemy->animations[ENEMY_ANIM_HURT];
+    
+    if (enemy->health <= 0) {
+        enemy->health = 0;
+        kill_enemy(enemy);
+    }
+}
 
+bool is_enemy_dead(struct Enemy *enemy) {
+    return enemy->is_dead || enemy->health <= 0;
+}
+
+void kill_enemy(struct Enemy *enemy) {
+    enemy->is_dead = true;
+    enemy->current_animation = &enemy->animations[ENEMY_ANIM_DEATH];
+    enemy->current_animation->current_frame = 0;
+    enemy->current_animation->elapsed_time = 0;
+}
 
 // Renderização
 
-void draw_enemy(struct Enemy *enemy) {}
-void draw_enemy_health_bar(struct Enemy *enemy) {}
+void draw_enemy(struct Enemy *enemy) {
+    if (!enemy->is_active) return;
+    
+    ALLEGRO_BITMAP *frame = enemy->current_animation->frames[enemy->current_animation->current_frame];
+    if (!frame) return;
+    
+    // Calcula posição de renderização
+    float draw_x = enemy->entity.x - (enemy->facing_right ? ENEMY_RSPRITE_OFFSET_X : ENEMY_LSPRITE_OFFSET_X);
+    float draw_y = enemy->entity.y - enemy->entity.height;
+    
+    // Flags de desenho (inverte horizontalmente se necessário)
+    int flags = enemy->facing_right ? ALLEGRO_FLIP_HORIZONTAL : 0;
+    
+    // Desenha o sprite
+    al_draw_scaled_bitmap(frame,
+                        0, 0, SPRITE_SIZE, SPRITE_SIZE,
+                        draw_x, draw_y, 
+                        enemy->entity.width * ENEMY_SCALE, 
+                        enemy->entity.height * ENEMY_SCALE,
+                        flags);
+    
+    // Desenha a hitbox se ativada
+    if (enemy->hitbox_show) {
+        al_draw_rectangle(enemy->entity.hitbox.x, enemy->entity.hitbox.y,
+                         enemy->entity.hitbox.x + enemy->entity.hitbox.width,
+                         enemy->entity.hitbox.y + enemy->entity.hitbox.height,
+                         al_map_rgb(255, 0, 0), 2);
+    }
+    
+    // Desenha a barra de vida
+    draw_enemy_health_bar(enemy);
+}
+
+void draw_enemy_health_bar(struct Enemy *enemy) {
+    if (enemy->health <= 0) return;
+    
+    float bar_width = 50.0f;
+    float bar_height = 5.0f;
+    float health_percent = (float)enemy->health / (float)enemy->max_health;
+    
+    // Posição acima do inimigo
+    float bar_x = enemy->entity.x - bar_width/2;
+    float bar_y = enemy->entity.y - enemy->entity.height - 10;
+    
+    // Fundo da barra
+    al_draw_filled_rectangle(bar_x, bar_y, 
+                            bar_x + bar_width, bar_y + bar_height,
+                            al_map_rgb(50, 50, 50));
+    
+    // Vida atual
+    al_draw_filled_rectangle(bar_x, bar_y, 
+                            bar_x + bar_width * health_percent, bar_y + bar_height,
+                            health_percent > 0.6f ? al_map_rgb(0, 255, 0) :
+                            health_percent > 0.3f ? al_map_rgb(255, 255, 0) :
+                            al_map_rgb(255, 0, 0));
+}
 
 
 // Chefe
