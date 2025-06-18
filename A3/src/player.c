@@ -9,20 +9,6 @@
 
 // ---- Funções Auxiliares ----
 
-void handle_player_ground_collision(struct Player *player, struct GameLevel *level) {
-    if (player->entity.hitbox.y > level->ground_level) {
-        // Calcula quanto o player afundou no chão
-        float penetration_depth = player->entity.hitbox.y - level->ground_level;
-        
-        // Corrige a posição
-        player->entity.y -= penetration_depth;
-        player->entity.vel_y = 0;
-        player->is_jumping = false;
-        
-        update_hitbox_position(&player->entity, player->facing_right);
-    }
-}
-
 void set_player_scale(struct Player *player, float scale) {
     if (scale <= 0) {
         fprintf(stderr, "Invalid scale value: %f\n", scale);
@@ -41,10 +27,10 @@ void init_player (struct Player * player) {
     player->entity.width = PLAYER_WIDTH;
     player->entity.height = PLAYER_HEIGHT;
 
-    player->entity.hitbox.width = PLAYER_WIDTH * 0.8f;  // 80% da largura do sprite
-    player->entity.hitbox.height = PLAYER_HEIGHT * 0.9f; // 90% da altura
-    player->entity.hitbox.offset_x = PLAYER_HITBOX_OFFSET_X;
-    player->entity.hitbox.offset_y = PLAYER_HITBOX_OFFSET_Y;
+    player->entity.hitbox.width = PLAYER_WIDTH; 
+    player->entity.hitbox.height = PLAYER_HEIGHT; 
+    player->entity.hitbox.offset_x = 0; 
+    player->entity.hitbox.offset_y = 0;
 
     player->entity.vel_x = 0;
     player->entity.vel_y = 0;
@@ -282,13 +268,15 @@ void update_player(struct Player *player, float delta_time, struct GameLevel *le
         return;
     }
 
-    // Ajuste de pulo para parecer natural
-    player->entity.vel_y += GRAVITY * delta_time * 4;                // Aumentar para aumentar gravidade
-    player->entity.y += player->entity.vel_y * delta_time * 12;      // Aumentar para pular mais alto
+    // Aplica gravidade e atualiza posição Y
+    player->entity.vel_y += GRAVITY * delta_time;
+    player->entity.y += player->entity.vel_y * delta_time;
     
-    update_hitbox_position(&player->entity, player->facing_right);
-
+    // Checa colisão com o chão ANTES de atualizar a hitbox
     handle_player_ground_collision(player, level);
+
+    // Atualiza a posição da hitbox com base na posição final da entidade
+    update_hitbox_position(&player->entity, player->facing_right);
 
     // Lógica para disparos
     if (player->current_shoot_cooldown > 0) {
@@ -299,7 +287,7 @@ void update_player(struct Player *player, float delta_time, struct GameLevel *le
     if (player->is_shooting && player->can_shoot) {
         player->can_shoot = false;
         player->current_shoot_cooldown = PLAYER_PROJECTILE_COOLDOWN;
-        spawn_player_projectile(projectile_system, player);
+        spawn_player_projectile(projectile_system, player, level);
     }
 
     // Máquina de estados para animações
@@ -329,6 +317,15 @@ void update_player(struct Player *player, float delta_time, struct GameLevel *le
             (player->current_animation->current_frame + 1) % 
             player->current_animation->frame_count;
         player->current_animation->elapsed_time = 0;
+    }
+}
+
+void handle_player_ground_collision(struct Player *player, struct GameLevel *level) {
+    // Se a base do jogador (entity.y) passou do nível do chão
+    if (player->entity.y > level->ground_level) {
+        player->entity.y = level->ground_level; // Corrige a posição
+        player->entity.vel_y = 0;
+        player->is_jumping = false;
     }
 }
 
@@ -367,38 +364,52 @@ void draw_player(struct Player *player) {
     ALLEGRO_BITMAP *frame = player->current_animation->frames[player->current_animation->current_frame];
     if (!frame) return;
 
-    if (player->hitbox_show)
-        show_player_hitbox(player); 
-
+    // Define a escala do jogador
     set_player_scale(player, PLAYER_SCALE);
+
+    // 1. Pega as dimensões do sprite e aplica a escala
+    float sprite_w = al_get_bitmap_width(frame);
+    float sprite_h = al_get_bitmap_height(frame);
+    float scaled_w = sprite_w * player->scale;
+    float scaled_h = sprite_h * player->scale;
+
+    // 2. Calcula a posição do canto superior esquerdo (draw_x, draw_y) para desenhar o sprite,
+    //    baseado no ponto de âncora (entity.x, entity.y) que é o CENTRO da BASE.
+    float draw_x = player->entity.x - (scaled_w / 2);
+    float draw_y = player->entity.y - scaled_h;
+
+    // 3. Define se o sprite deve ser espelhado
+    int flags = player->facing_right ? 0 : ALLEGRO_FLIP_HORIZONTAL;
+
+    // 4. Desenha o bitmap
     al_draw_scaled_bitmap(
         frame,
-        0, 0, // Origem
-        al_get_bitmap_width(frame), al_get_bitmap_height(frame), // Dimensões originais
-        player->entity.hitbox.x - (player->facing_right ? PLAYER_RSPRITE_OFFSET_X : PLAYER_LSPRITE_OFFSET_X),  // Ajuste X
-        player->entity.hitbox.y - (al_get_bitmap_height(frame) * player->scale), // Ajuste Y
-        al_get_bitmap_width(frame) * player->scale,
-        al_get_bitmap_height(frame) * player->scale,
-        player->facing_right ? 0 : ALLEGRO_FLIP_HORIZONTAL
+        0, 0,          // Origem x, y no bitmap do frame
+        sprite_w, sprite_h, // Dimensões da origem
+        draw_x, draw_y,     // Posição x, y na tela (canto superior esquerdo)
+        scaled_w, scaled_h, // Largura e altura final na tela
+        flags
     );
+
+    // O desenho da hitbox (opcional) também foi atualizado
+    if (player->hitbox_show)
+        show_player_hitbox(player); 
 }
 
 void show_player_hitbox(struct Player *player) {
     if (!player) return;
 
-    update_hitbox_position(&player->entity, player->facing_right);
-
-    // Desenha a hitbox atualizada
+    // Desenha o retângulo da hitbox
     al_draw_rectangle(
         player->entity.hitbox.x,
         player->entity.hitbox.y,
         player->entity.hitbox.x + player->entity.hitbox.width,
-        player->entity.hitbox.y - player->entity.hitbox.height,
-        al_map_rgb(255, 0, 0), 2);
+        player->entity.hitbox.y + player->entity.hitbox.height,
+        al_map_rgb(255, 0, 0), 2.0f);
     
-    // Ponto de referência (base do personagem)
+    // Desenha um círculo no ponto de âncora para fácil visualização
     al_draw_filled_circle(
-        player->entity.hitbox.x + player->entity.hitbox.width / 2, // Centraliza horizontalmente
-        player->entity.hitbox.y - player->entity.hitbox.height / 2, // Centraliza verticalmente
-        3, al_map_rgb(0, 255, 0));
+        player->entity.x, 
+        player->entity.y, 
+        4, al_map_rgb(0, 255, 0));
 }

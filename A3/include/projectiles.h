@@ -4,11 +4,12 @@
 #include "types.h"
 
 #define MAX_PROJECTILES 50
-#define PROJECTILE_SPEED 300.0f
+#define PROJECTILE_SPEED 500.0f
 #define PROJECTILE_WIDTH 10.0f
 #define PROJECTILE_HEIGHT 5.0f
 #define PLAYER_PROJECTILE_COOLDOWN 0.5f
 #define ENEMY_PROJECTILE_COOLDOWN 2.0f
+#define PROJECTILE_LIFETIME 3.0f
 
 struct Projectile {
     struct Entity entity;
@@ -37,12 +38,12 @@ struct EnemySystem;
 
 void init_projectile_system(struct ProjectileSystem *system);
 void update_projectile_system(struct ProjectileSystem *system, float delta_time, struct Player *player, struct EnemySystem *enemy_system);
-void draw_projectiles(struct ProjectileSystem *system);
+void draw_projectiles(struct ProjectileSystem *system, struct GameLevel *level);
 
 // ---- Funções de Controle de Projéteis ----
 
 void spawn_projectile(struct ProjectileSystem *system, float x, float y, bool facing_right, ProjectileType type, ProjectileBehavior behavior, int damage);
-void spawn_player_projectile(struct ProjectileSystem *system, struct Player *player);
+void spawn_player_projectile(struct ProjectileSystem *system, struct Player *player, struct GameLevel *level);
 void spawn_enemy_projectile(struct ProjectileSystem *system, struct Enemy *enemy);
 
 // ---- Funções de Colisão ----

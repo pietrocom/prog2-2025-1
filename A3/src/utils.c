@@ -133,18 +133,32 @@ void draw_ground_line(struct GameLevel *level) {
 }
 
 void update_hitbox_position(struct Entity *entity, bool facing_right) {
-    if (facing_right) {
-        entity->hitbox.x = entity->x + entity->hitbox.offset_x;
-    } else {
-        entity->hitbox.x = entity->x + (entity->width - entity->hitbox.width - entity->hitbox.offset_x);
-    }
+    entity->hitbox.x = entity->x - (entity->hitbox.width / 2) + entity->hitbox.offset_x;
     
-    entity->hitbox.y = entity->y;
+    entity->hitbox.y = entity->y - entity->hitbox.height + entity->hitbox.offset_y;
 }
 
 bool check_collision(struct Entity *a, struct Entity *b) {
-    return (a->hitbox.x < b->hitbox.x + b->hitbox.width &&
-            a->hitbox.x + a->hitbox.width > b->hitbox.x &&
-            a->hitbox.y < b->hitbox.y + b->hitbox.height &&
-            a->hitbox.y + a->hitbox.height > b->hitbox.y);
+    // A lógica de colisão original está um pouco estranha. Uma verificação AABB (Axis-Aligned Bounding Box)
+    // padrão é mais confiável. Vamos assumir que a.hitbox.y é o TOPO e a.hitbox.y + height é a BASE.
+    
+    // A hitbox de A
+    float a_top = a->hitbox.y;
+    float a_bottom = a->hitbox.y + a->hitbox.height;
+    float a_left = a->hitbox.x;
+    float a_right = a->hitbox.x + a->hitbox.width;
+
+    // A hitbox de B
+    float b_top = b->hitbox.y;
+    float b_bottom = b->hitbox.y + b->hitbox.height;
+    float b_left = b->hitbox.x;
+    float b_right = b->hitbox.x + b->hitbox.width;
+
+    // Verifica se não há colisão
+    if (a_right < b_left || a_left > b_right || a_bottom < b_top || a_top > b_bottom) {
+        return false; // Sem colisão
+    }
+
+    // Se nenhuma das condições acima for verdadeira, há uma colisão
+    return true;
 }

@@ -44,29 +44,34 @@ void update_projectile_system(struct ProjectileSystem *system, float delta_time,
 }
 
 // Desenha todos os projéteis ativos
-void draw_projectiles(struct ProjectileSystem *system) {
+void draw_projectiles(struct ProjectileSystem *system, struct GameLevel *level) {
     for (int i = 0; i < MAX_PROJECTILES; i++) {
         if (system->projectiles[i].is_active) {
+            
+            // Converte a posição de mundo do projétil para uma posição de tela
+            float draw_x = system->projectiles[i].entity.x - level->scroll_x;
+            float draw_y = system->projectiles[i].entity.y;
+
             if (system->projectiles[i].sprite) {
                 // Desenha com sprite
                 al_draw_bitmap(system->projectiles[i].sprite, 
-                             system->projectiles[i].entity.x, 
-                             system->projectiles[i].entity.y, 0);
+                             draw_x, 
+                             draw_y, 0);
             } else {
                 // Desenha primitiva (retângulo ou círculo)
                 ALLEGRO_COLOR color = system->projectiles[i].color;
                 if (system->projectiles[i].type == PROJECTILE_PLAYER) {
                     al_draw_filled_rectangle(
-                        system->projectiles[i].entity.x,
-                        system->projectiles[i].entity.y,
-                        system->projectiles[i].entity.x + PROJECTILE_WIDTH,
-                        system->projectiles[i].entity.y + PROJECTILE_HEIGHT,
+                        draw_x,
+                        draw_y,
+                        draw_x + PROJECTILE_WIDTH,
+                        draw_y + PROJECTILE_HEIGHT,
                         color
                     );
                 } else { // Inimigo
                     al_draw_filled_circle(
-                        system->projectiles[i].entity.x + PROJECTILE_WIDTH/2,
-                        system->projectiles[i].entity.y + PROJECTILE_HEIGHT/2,
+                        draw_x + PROJECTILE_WIDTH/2,
+                        draw_y + PROJECTILE_HEIGHT/2,
                         PROJECTILE_WIDTH/2,
                         color
                     );
@@ -110,8 +115,8 @@ void spawn_projectile(struct ProjectileSystem *system, float x, float y,
             p->behavior = behavior;
             p->is_active = true;
             p->damage = damage;
-            p->lifetime = 2.0f; // 2 segundos por padrão
-            p->max_lifetime = 2.0f;
+            p->lifetime = PROJECTILE_LIFETIME; // 2 segundos por padrão
+            p->max_lifetime = PROJECTILE_LIFETIME;
             
             // Configura aparência baseada no tipo
             if (type == PROJECTILE_PLAYER) {
@@ -127,19 +132,24 @@ void spawn_projectile(struct ProjectileSystem *system, float x, float y,
 }
 
 // Cria projétil do jogador
-void spawn_player_projectile(struct ProjectileSystem *system, struct Player *player) {
+void spawn_player_projectile(struct ProjectileSystem *system, struct Player *player, struct GameLevel *level) {
+
+    float player_world_x = player->entity.x + level->scroll_x;
+
     float offset_x = player->facing_right ? 
-        player->entity.width - 10 : 
-        -PROJECTILE_WIDTH;
+        (player->entity.width / 2) : 
+        (-player->entity.width / 2);
     
+    float spawn_y = player->entity.y - (player->entity.height * 0.55f);
+
     spawn_projectile(
         system,
-        player->entity.x + offset_x,
-        player->entity.y - player->entity.height/2,
+        player_world_x + offset_x,
+        spawn_y,
         player->facing_right,
         PROJECTILE_PLAYER,
         PROJECTILE_NORMAL,
-        10 // Dano base do jogador
+        25 
     );
 }
 

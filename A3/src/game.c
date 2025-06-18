@@ -137,64 +137,64 @@ void reset_game(struct Player *player, struct GameLevel *level) {
 // dependendo da posição do jogador na tela
 void update_game(struct Player *player, struct GameLevel *level) {
     float screen_width = al_get_display_width(al_get_current_display());
-    float threshold = screen_width * BACKGROUND_THRESHOLD; // 60% da tela
-    
+    // A "fronteira" onde a câmera começa a se mover
+    float right_threshold = screen_width * 0.6f;
+    float left_threshold = screen_width * 0.4f;
+
+    // A posição global do jogador é player->entity.x + level->scroll_x
+    float player_screen_pos = player->entity.x;
+
     // Movimento para a direita
-    if (player->entity.vel_x > 0) {
-        if (player->entity.x > threshold) {
-            level->scroll_x += player->entity.vel_x;
-        } else {
-            player->entity.x += player->entity.vel_x;
-        }
+    if (player->entity.vel_x > 0 && player_screen_pos > right_threshold) {
+        // Se o player ultrapassa a fronteira, move a câmera em vez do player
+        level->scroll_x += player->entity.vel_x;
+    } else {
+        // Senão, move o player normalmente
+        player->entity.x += player->entity.vel_x;
     }
+
     // Movimento para a esquerda
-    else if (player->entity.vel_x < 0) {
-        if (level->scroll_x > 0) {
-            level->scroll_x += player->entity.vel_x;
-            if (level->scroll_x < 0) level->scroll_x = 0;
-        } else {
-            player->entity.x += player->entity.vel_x;
-            if (player->entity.x < 50) player->entity.x = 50; // Limite esquerdo
-        }
+    if (player->entity.vel_x < 0 && player_screen_pos < left_threshold) {
+        // Move a câmera para a esquerda, até o limite de 0
+        level->scroll_x += player->entity.vel_x;
+        if (level->scroll_x < 0) level->scroll_x = 0;
+    } else if (player->entity.vel_x < 0) {
+        // Move o player para a esquerda
+        player->entity.x += player->entity.vel_x;
     }
-    
-    // Mostra coordenadas X do jogador e do scroll
-    // printf("ScrollX: %.1f, PlayerX: %.1f\n", level->scroll_x, player->entity.x);
+
+    // Limites para o jogador não sair da tela
+    if (player->entity.x < 0) player->entity.x = 0;
+    if (player->entity.x > screen_width) player->entity.x = screen_width;
 }
+
 
 // Relativiza a posição do jogador na tela
 void draw_game(struct Player *player, struct GameLevel *level) {
     int screen_w = al_get_display_width(al_get_current_display());
     int screen_h = al_get_display_height(al_get_current_display());
     int bg_width = al_get_bitmap_width(level->background);
-    float scaled_width = bg_width * level->background_scale;
+    float scaled_bg_width = bg_width * level->background_scale;
     
-    // Calcula a posição de desenho do background
-    float bg_offset = fmod(level->scroll_x, scaled_width);  // Resto da divisao de floats
+    float bg_offset = fmod(level->scroll_x, scaled_bg_width);
     
+
     // Desenha o background repetido
-    for (int i = -1; i <= (screen_w / scaled_width) + 1; i++) {
+    for (int i = -1; i <= (screen_w / scaled_bg_width) + 1; i++) {
         al_draw_scaled_bitmap(level->background,
             0, 0, bg_width, al_get_bitmap_height(level->background),
-            (i * scaled_width) - bg_offset, 0, scaled_width, screen_h,
+            (i * scaled_bg_width) - bg_offset, 0, scaled_bg_width, screen_h,
             0);
     }
     
-    // Calcula a posição de desenho do jogador na tela
-    float player_screen_x = (player->entity.x > al_get_display_width(al_get_current_display()) * BACKGROUND_THRESHOLD) 
-                          ? al_get_display_width(al_get_current_display()) * BACKGROUND_THRESHOLD 
-                          : player->entity.x;
-    
-    // Salva a posição global real do jogador
-    float original_x = player->entity.x;
-    
-    // Define posição relativa
-    player->entity.x = player_screen_x;
+    // A posição do player (player->entity.x) já é sua posição na tela.
+    // A função update_game cuida de mover o scroll ou o player.
+    // Então, podemos simplesmente desenhar o player em sua posição atual.
     draw_player(player);
     
-    // Restaura posição original 
-    player->entity.x = original_x;
-    draw_ground_line(level);  
+    if (level->draw_ground_line) {
+        draw_ground_line(level);
+    }
 }
 
 void draw_game_over (int score) {}

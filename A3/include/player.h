@@ -77,6 +77,7 @@ void unload_player_sprites(struct Player *player);
 // Controles
 void handle_player_input(struct Player *player, ALLEGRO_EVENT *event, struct GameLevel *level);
 void update_player(struct Player *player, float delta_time, struct GameLevel *level, struct ProjectileSystem *projectile_system);
+void handle_player_ground_collision(struct Player *player, struct GameLevel *level);
 
 // Estado
 void damage_player(struct Player *player, int amount);

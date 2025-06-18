@@ -1,6 +1,7 @@
 #include <allegro5/allegro_primitives.h>
 #include <math.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "types.h"
 #include "enemy.h"
@@ -12,20 +13,18 @@
 // Inicialização do sistema de inimigos
 
 void init_enemy_system(struct EnemySystem *system) {
-    // Inicializa todos os inimigos como inativos
-    for (int i = 0; i < MAX_ENEMIES; i++) {
-        system->enemies[i].is_active = false;
-        system->enemies[i].hitbox_show = false;
-    }
-    
+    // Limpa o array de inimigos normais para começar
+    memset(system->enemies, 0, sizeof(system->enemies));
+
     // Configuração inicial do sistema
     system->spawn_timer = ENEMY_SPAWN_COOLDOWN;
     system->active_count = 0;
     system->wave_number = 0;
     
-    // Inicializa o boss (mas não ativa ainda)
+    // Limpa a estrutura do boss e o inicializa
+    memset(&system->boss, 0, sizeof(struct Enemy));
     init_boss(&system->boss);
-    system->boss.is_active = false;
+    system->boss.is_active = false; // Desativa até que a wave correta chegue
     
     // Seed para números aleatórios (usado no spawn)
     srand(al_get_time());
@@ -138,15 +137,17 @@ void destroy_enemy_system(struct EnemySystem *system) {
 // Inimigos individuais
 void init_enemy(struct Enemy *enemy, EnemyType type, float x, float y) {
 
+    memset(enemy, 0, sizeof(struct Enemy));
+
     // Configuração básica da entidade
     enemy->ground_level = GROUND_LEVEL; 
     enemy->entity.x = x;
     enemy->entity.y = y;
     enemy->type = type;
     enemy->is_active = true;
-    enemy->facing_right = false; // Inimigos geralmente virados para esquerda
+    enemy->facing_right = false;
     
-    // Configuração específica por tipo
+    // Configuração específica por tipo (seu código original)
     switch(type) {
         case ENEMY_MELEE:
             enemy->entity.width = 40;
@@ -177,22 +178,19 @@ void init_enemy(struct Enemy *enemy, EnemyType type, float x, float y) {
             break;
     }
 
-    // Confirguração dos projeteis
     enemy->can_shoot = (type == ENEMY_RANGED || type == ENEMY_BOSS);
-    enemy->shoot_cooldown = ENEMY_PROJECTILE_COOLDOWN;
-    enemy->current_shoot_cooldown = 0;
     
     // Configuração da hitbox (proporcional ao tamanho do sprite)
     enemy->entity.hitbox.width = enemy->entity.width * 0.7f;
     enemy->entity.hitbox.height = enemy->entity.height * 0.8f;
     enemy->entity.hitbox.offset_x = ENEMY_HITBOX_OFFSET_X;
     enemy->entity.hitbox.offset_y = ENEMY_HITBOX_OFFSET_Y;
-    update_hitbox_position(&enemy->entity, enemy->facing_right);
     
     // Inicializa animações
     load_enemy_sprites(enemy, type);
     
-    // Configura animação inicial
+    // Atualiza a hitbox e configura a animação inicial após o carregamento
+    update_hitbox_position(&enemy->entity, enemy->facing_right);
     enemy->current_animation = &enemy->animations[ENEMY_ANIM_IDLE];
 }
 
@@ -201,7 +199,7 @@ void load_enemy_sprites(struct Enemy *enemy, EnemyType type) {
     const char* enemy_folders[] = {
         "assets/gangster_sprites/Gangsters_2/",     // ENEMY_MELEE
         "assets/gangster_sprites/Gangsters_1/",     // ENEMY_RANGED
-        "assets/gangster_sprites/Gangsters_3"       // ENEMY_BOSS
+        "assets/gangster_sprites/Gangsters_3/"       // ENEMY_BOSS
     };
 
     // Nomes dos arquivos de animação (deve corresponder à enum EnemyAnimState)
@@ -255,14 +253,46 @@ void load_enemy_sprites(struct Enemy *enemy, EnemyType type) {
 }
 
 void unload_enemy_sprites(struct Enemy *enemy) {
+    // Lista para rastrear ponteiros de bitmap que já foram liberados, evitando "double free".
+    // O tamanho máximo é o número de tipos de animação vezes o máximo de frames.
+    ALLEGRO_BITMAP* freed_pointers[ENEMY_ANIM_COUNT * MAX_FRAMES] = {NULL};
+    int freed_count = 0;
+
+    // Array para iterar sobre todas as animações do inimigo
+    struct Animation* all_animations[ENEMY_ANIM_COUNT];
     for (int i = 0; i < ENEMY_ANIM_COUNT; i++) {
-        for (int j = 0; j < enemy->animations[i].frame_count; j++) {
-            if (enemy->animations[i].frames[j]) {
-                al_destroy_bitmap(enemy->animations[i].frames[j]);
-                enemy->animations[i].frames[j] = NULL;
+        all_animations[i] = &enemy->animations[i];
+    }
+
+    for (int anim_idx = 0; anim_idx < ENEMY_ANIM_COUNT; anim_idx++) {
+        struct Animation* anim = all_animations[anim_idx];
+        
+        for (int i = 0; i < anim->frame_count; i++) {
+            if (anim->frames[i]) {
+                bool already_freed = false;
+                
+                // 1. Verifica se este ponteiro já está na nossa lista de liberados
+                for (int j = 0; j < freed_count; j++) {
+                    if (freed_pointers[j] == anim->frames[i]) {
+                        already_freed = true;
+                        break;
+                    }
+                }
+
+                // 2. Se não foi liberado ainda, libere-o e adicione à lista
+                if (!already_freed) {
+                    al_destroy_bitmap(anim->frames[i]);
+                    
+                    if (freed_count < ENEMY_ANIM_COUNT * MAX_FRAMES) {
+                        freed_pointers[freed_count++] = anim->frames[i];
+                    }
+                }
+                
+                // 3. Define o ponteiro como NULL para segurança
+                anim->frames[i] = NULL;
             }
         }
-        enemy->animations[i].frame_count = 0;
+        anim->frame_count = 0;
     }
 }
 
@@ -441,14 +471,9 @@ void kill_enemy(struct Enemy *enemy) {
 // Renderização
 
 void draw_enemy(struct Enemy *enemy) {
-    // Verificações de segurança para evitar crashes
-    if (!enemy || !enemy->is_active || !enemy->current_animation) {
+    if (!enemy || !enemy->is_active || !enemy->current_animation || 
+        enemy->current_animation->current_frame >= enemy->current_animation->frame_count) {
         return; 
-    }
-    
-    // Garante que o frame atual seja um índice válido para o array de frames
-    if (enemy->current_animation->current_frame >= enemy->current_animation->frame_count) {
-        return;
     }
 
     ALLEGRO_BITMAP *frame = enemy->current_animation->frames[enemy->current_animation->current_frame];
@@ -456,38 +481,38 @@ void draw_enemy(struct Enemy *enemy) {
         return;
     }
     
-    // --- LÓGICA DE ESCALA E POSICIONAMENTO CORRIGIDA ---
+    // --- LÓGICA DE ESCALA E POSICIONAMENTO COM PONTO DE ÂNCORA ---
 
-    // 1. A altura da entidade (ex: 105) é nossa referência visual de tamanho.
-    float scaled_height = enemy->entity.height * ENEMY_SCALE;
+    // 1. Pega as dimensões do sprite e aplica a escala
+    float sprite_w = al_get_bitmap_width(frame);
+    float sprite_h = al_get_bitmap_height(frame);
+    float scaled_w = sprite_w * ENEMY_SCALE;
+    float scaled_h = sprite_h * ENEMY_SCALE;
     
-    // 2. --> CORRIGIDO: A largura escalada é igual à altura para manter a proporção de um sprite quadrado (128x128)
-    float scaled_width = scaled_height; 
+    // 2. O ponto de âncora do inimigo (entity.x, entity.y) é o centro da base dele.
+    //    Calculamos o canto superior esquerdo (draw_x, draw_y) para desenhar o sprite.
+    float draw_x = enemy->entity.x - (scaled_w / 2);
+    float draw_y = enemy->entity.y - scaled_h;
     
-    // 3. O ponto de âncora do inimigo (entity.x) é o centro da base dele.
-    //    Calculamos o canto superior esquerdo para que o sprite fique centralizado na âncora.
-    float draw_x = enemy->entity.x - (scaled_width / 2);
-    float draw_y = enemy->entity.y - scaled_height;
-    
-    // Define se o sprite deve ser virado horizontalmente
+    // 3. Define se o sprite deve ser virado horizontalmente
     int flags = enemy->facing_right ? 0 : ALLEGRO_FLIP_HORIZONTAL;
     
-    // Desenha o sprite com a escala e posição corretas
+    // 4. Desenha o sprite com a escala e posição corretas
     al_draw_scaled_bitmap(frame,
-                        0, 0,                     // Origem x, y no bitmap do frame
-                        SPRITE_SIZE, SPRITE_SIZE,  // Largura e altura da origem
-                        draw_x, draw_y,            // Posição x, y na tela
-                        scaled_width,              // Largura final na tela
-                        scaled_height,             // Altura final na tela
+                        0, 0,                     // Origem x, y no bitmap
+                        sprite_w, sprite_h,       // Largura e altura da origem
+                        draw_x, draw_y,           // Posição x, y na tela
+                        scaled_w,                 // Largura final na tela
+                        scaled_h,                 // Altura final na tela
                         flags);
     
-    // O código para desenhar a hitbox e a barra de vida não muda
+    // Desenho da hitbox e vida (o seu já estava bom, mas precisa da hitbox atualizada)
     if (enemy->hitbox_show) {
         al_draw_rectangle(
             enemy->entity.hitbox.x, 
-            enemy->entity.hitbox.y - enemy->entity.hitbox.height,
-            enemy->entity.hitbox.x + enemy->entity.hitbox.width,
             enemy->entity.hitbox.y,
+            enemy->entity.hitbox.x + enemy->entity.hitbox.width,
+            enemy->entity.hitbox.y + enemy->entity.hitbox.height,
             al_map_rgb(255, 0, 0), 2);
     }
     
@@ -542,6 +567,41 @@ void draw_enemies(struct EnemySystem *system, struct GameLevel *level) {
 
 // Chefe
 
-void init_boss(struct Enemy *boss) {}
+void init_boss(struct Enemy *boss) {
+    // PRIMEIRO: Limpa a estrutura para evitar lixo de memória.
+    memset(boss, 0, sizeof(struct Enemy));
+
+    // SEGUNDO: Configura os atributos específicos do Boss
+    boss->type = ENEMY_BOSS;
+    boss->is_active = true;
+    boss->facing_right = false;
+    boss->ground_level = GROUND_LEVEL;
+
+    boss->entity.width = 80;  // Exemplo: Boss é maior
+    boss->entity.height = 150;
+    boss->entity.vel_x = 0;
+    boss->entity.vel_y = 0;
+
+    boss->health = 500;
+    boss->max_health = 500;
+    boss->damage = 40;
+    boss->speed = 50.0f;
+    boss->attack_range = 100.0f;
+    boss->detection_range = 1000.0f;
+    boss->attack_cooldown = 1.0f;
+
+    // Configuração da hitbox do Boss
+    boss->entity.hitbox.width = boss->entity.width * 0.8f;
+    boss->entity.hitbox.height = boss->entity.height * 0.9f;
+    boss->entity.hitbox.offset_x = 0;
+    boss->entity.hitbox.offset_y = 0;
+
+    // TERCEIRO: Carrega os sprites do Boss
+    load_enemy_sprites(boss, ENEMY_BOSS);
+    
+    // Configura a animação inicial
+    boss->current_animation = &boss->animations[ENEMY_ANIM_IDLE];
+}
+
 void update_boss(struct Enemy *boss, struct Player *player, float delta_time) {}
 void boss_attack_pattern(struct Enemy *boss, struct Player *player, struct Projectile *projectiles[], int *projectile_count) {}

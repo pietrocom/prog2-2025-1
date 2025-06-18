@@ -113,7 +113,7 @@ int main() {
                 if (redraw) {
                     draw_game(&player, &level);
                     draw_enemies(&enemy_system, &level);
-                    draw_projectiles(&projectile_system);
+                    draw_projectiles(&projectile_system, &level);
                     al_flip_display();
                     redraw = false;
                 }
@@ -123,7 +123,7 @@ int main() {
                 if (redraw) {
                     draw_game(&player, &level);
                     draw_enemies(&enemy_system, &level);
-                    draw_projectiles(&projectile_system);
+                    draw_projectiles(&projectile_system, &level);
                     draw_pause_menu(&level);
                     al_flip_display();
                     redraw = false;

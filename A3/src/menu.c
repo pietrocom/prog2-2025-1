@@ -69,12 +69,12 @@ void handle_main_menu_input (struct Menu *menu, GameState *game_state, ALLEGRO_E
             switch(menu->main_menu_selection) {
                 case 0: *game_state = PLAYING; break;
                 case 1: menu->current_state = MENU_OPTIONS; break;
-                case 2: *game_state = GAME_OVER; break;
+                case 2: *game_state = QUIT; break;
             }
             break;
             
         case ALLEGRO_KEY_ESCAPE:
-            *game_state = GAME_OVER;
+            *game_state = QUIT;
             break;
     }
 }
