@@ -13,6 +13,9 @@
 #define GRAVITY 70.0f
 #define GROUND_LEVEL 200 // Distância do teto até a base da tela
 
+#define MAX_FRAMES 10 
+
+#define SPRITE_SIZE 128
 
 
 // Estruturas gerais principais
@@ -43,6 +46,14 @@ struct Entity {
     } hitbox;
     
     float vel_x, vel_y;
+};
+
+struct Animation {
+    ALLEGRO_BITMAP *frames[MAX_FRAMES];
+    int frame_count;      // Quantos frames tem a animação
+    int current_frame;    // Frame atual sendo exibido
+    float frame_delay;    // Tempo entre frames (em segundos)
+    float elapsed_time;   // Tempo acumulado desde a última troca de frame
 };
 
 struct Menu {

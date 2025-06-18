@@ -7,8 +7,8 @@
 #include <allegro5/allegro_ttf.h>
 #include <allegro5/allegro_primitives.h>
 
-#include "utils.h"
 #include "types.h"
+#include "utils.h"
 #include "player.h"
 
 void init_allegro () {
@@ -115,4 +115,21 @@ void draw_ground_line(struct GameLevel *level) {
         line_color, 
         line_thickness
     );
+}
+
+void update_hitbox_position(struct Entity *entity, bool facing_right) {
+    if (facing_right) {
+        entity->hitbox.x = entity->x + entity->hitbox.offset_x;
+    } else {
+        entity->hitbox.x = entity->x + (entity->width - entity->hitbox.width - entity->hitbox.offset_x);
+    }
+    
+    entity->hitbox.y = entity->y;
+}
+
+bool check_collision(struct Entity *a, struct Entity *b) {
+    return (a->hitbox.x < b->hitbox.x + b->hitbox.width &&
+            a->hitbox.x + a->hitbox.width > b->hitbox.x &&
+            a->hitbox.y < b->hitbox.y + b->hitbox.height &&
+            a->hitbox.y + a->hitbox.height > b->hitbox.y);
 }

@@ -17,8 +17,8 @@ void load_menu_resources (struct Menu *menu) {
         fprintf(stderr, "Falha ao carregar o background do menu!\n");
     }
 
-    menu->title_font = al_load_font("assets/fonts/DirtyWar.otf", MENU_TITLE_FONT_SIZE, 0);
-    menu->text_font = al_load_font("assets/fonts/DirtyWar.otf", MENU_TEXT_FONT_SIZE, 0);
+    menu->title_font = al_load_font("assets/fonts/DirtyWar.otf", MAIN_MENU_TITLE_FONT_SIZE, 0);
+    menu->text_font = al_load_font("assets/fonts/DirtyWar.otf", MAIN_MENU_TEXT_FONT_SIZE, 0);
     if (!menu->title_font || !menu->text_font) {
         fprintf(stderr, "Falha ao carregar a fonte do menu!\n");
         // Usa fonte built-in se a customizada falhar

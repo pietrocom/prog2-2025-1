@@ -1,8 +1,10 @@
 #ifndef GAME_H
 #define GAME_H
 
-#define MENU_TITLE_FONT_SIZE 25
-#define MENU_TEXT_FONT_SIZE 15
+#define PAUSE_MENU_TITLE_FONT_SIZE 54
+#define PAUSE_MENU_TEXT_FONT_SIZE 24
+
+#define BACKGROUND_THRESHOLD 0.4f
 
 #include "types.h"
 #include "player.h"
@@ -27,6 +29,7 @@ void handle_pause_input(ALLEGRO_EVENT *event, GameState *state, struct Player *p
 void handle_game_over_events(ALLEGRO_EVENT *event, GameState *state);
 
 // ---- Renderização ----
+void reset_game(struct Player *player, struct GameLevel *level);
 void update_game(struct Player *player, struct GameLevel *level);
 void draw_game(struct Player *player, struct GameLevel *level);
 void draw_game_over(int score);

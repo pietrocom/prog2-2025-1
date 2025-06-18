@@ -3,23 +3,26 @@
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_primitives.h>
 
-#include "enemy.h"
-#include "game.h"
-#include "menu.h"
-#include "player.h"
-#include "projectiles.h"
 #include "types.h"
+#include "game.h"
+#include "player.h"
+#include "enemy.h"
+#include "utils.h"
+#include "menu.h"
+#include "projectiles.h"
 
 
 // ---- Funções de Inicialização ----
 
 void start_player(struct Player *player, struct GameLevel *level) {
-    init_player(player);  // Primeiro inicializa
-    load_player_sprites(player);  // Depois carrega sprites
+    init_player(player);
+    load_player_sprites(player);
     
-    // Posição inicial
+    // Posição inicial 
     player->entity.x = 100.0f;
     player->entity.y = level->ground_level;
+    
+    update_hitbox_position(&player->entity, player->facing_right);
 }
 
 void start_level(struct GameLevel *level) {
@@ -134,7 +137,7 @@ void reset_game(struct Player *player, struct GameLevel *level) {
 // dependendo da posição do jogador na tela
 void update_game(struct Player *player, struct GameLevel *level) {
     float screen_width = al_get_display_width(al_get_current_display());
-    float threshold = screen_width * 0.6f; // 60% da tela
+    float threshold = screen_width * BACKGROUND_THRESHOLD; // 60% da tela
     
     // Movimento para a direita
     if (player->entity.vel_x > 0) {
@@ -178,8 +181,8 @@ void draw_game(struct Player *player, struct GameLevel *level) {
     }
     
     // Desenha o jogador (posição relativa à tela)
-    float player_screen_x = (player->entity.x > screen_w * 0.6f) 
-                          ? screen_w * 0.6f 
+    float player_screen_x = (player->entity.x > screen_w * BACKGROUND_THRESHOLD) 
+                          ? screen_w * BACKGROUND_THRESHOLD 
                           : player->entity.x;
     
     draw_player_at_position(player, player_screen_x, player->entity.y, player->hitbox_show);
@@ -201,9 +204,8 @@ void draw_pause_menu(struct GameLevel *level) {
     ALLEGRO_COLOR text_color = al_map_rgb(255, 255, 255);
     ALLEGRO_COLOR highlight_color = al_map_rgb(180, 180, 255);  // Cor de destaque
     
-    // Use sua fonte customizada ou a built-in
-    ALLEGRO_FONT *font = al_load_font("assets/fonts/DirtyWar.otf", MENU_TEXT_FONT_SIZE, 0);
-    ALLEGRO_FONT *title_font = al_load_font("assets/fonts/DirtyWar.otf", MENU_TITLE_FONT_SIZE, 0);
+    ALLEGRO_FONT *font = al_load_font("assets/fonts/DirtyWar.otf", PAUSE_MENU_TEXT_FONT_SIZE, 0);
+    ALLEGRO_FONT *title_font = al_load_font("assets/fonts/DirtyWar.otf", PAUSE_MENU_TITLE_FONT_SIZE, 0);
     
     // Dimensões
     int display_w = al_get_display_width(al_get_current_display());

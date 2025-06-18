@@ -8,19 +8,7 @@
 
 // ---- Funções Auxiliares ----
 
-void update_hitbox_position(struct Entity *entity) {
-    entity->hitbox.x = entity->x + entity->hitbox.offset_x;
-    entity->hitbox.y = entity->y + entity->hitbox.offset_y;
-}
-
-bool check_collision(struct Entity *a, struct Entity *b) {
-    return (a->hitbox.x < b->hitbox.x + b->hitbox.width &&
-            a->hitbox.x + a->hitbox.width > b->hitbox.x &&
-            a->hitbox.y < b->hitbox.y + b->hitbox.height &&
-            a->hitbox.y + a->hitbox.height > b->hitbox.y);
-}
-
-void handle_ground_collision(struct Player *player, struct GameLevel *level) {
+void handle_player_ground_collision(struct Player *player, struct GameLevel *level) {
     if (player->entity.hitbox.y > level->ground_level) {
         // Calcula quanto o player afundou no chão
         float penetration_depth = player->entity.hitbox.y - level->ground_level;
@@ -30,7 +18,7 @@ void handle_ground_collision(struct Player *player, struct GameLevel *level) {
         player->entity.vel_y = 0;
         player->is_jumping = false;
         
-        update_hitbox_position(&player->entity);
+        update_hitbox_position(&player->entity, player->facing_right);
     }
 }
 
@@ -285,9 +273,9 @@ void update_player(struct Player *player, float delta_time, struct GameLevel *le
     player->entity.vel_y += GRAVITY * delta_time * 4;                // Aumentar para aumentar gravidade
     player->entity.y += player->entity.vel_y * delta_time * 12;      // Aumentar para pular mais alto
     
-    update_hitbox_position(&player->entity);
+    update_hitbox_position(&player->entity, player->facing_right);
 
-    handle_ground_collision(player, level);
+    handle_player_ground_collision(player, level);
 
     // Máquina de estados para animações
     if (player->is_crouching) {
@@ -381,14 +369,13 @@ void draw_player_at_position(struct Player *player, float x, float y, bool hitbo
     if (hitbox_show)
         show_player_hitbox(player); 
 
-    int flags = player->facing_right ? 0 : ALLEGRO_FLIP_HORIZONTAL;
     set_player_scale(player, PLAYER_SCALE);
     al_draw_scaled_bitmap(
         frame,
         0, 0, // Origem
         al_get_bitmap_width(frame), al_get_bitmap_height(frame), // Dimensões originais
-        player->entity.x,
-        player->entity.y - (al_get_bitmap_height(frame) * player->scale), // Ajuste Y
+        player->entity.hitbox.x - (player->facing_right ? PLAYER_RSPRITE_OFFSET_X : PLAYER_LSPRITE_OFFSET_X),  // Ajuste X
+        player->entity.hitbox.y - (al_get_bitmap_height(frame) * player->scale), // Ajuste Y
         al_get_bitmap_width(frame) * player->scale,
         al_get_bitmap_height(frame) * player->scale,
         player->facing_right ? 0 : ALLEGRO_FLIP_HORIZONTAL
@@ -398,7 +385,7 @@ void draw_player_at_position(struct Player *player, float x, float y, bool hitbo
 void show_player_hitbox(struct Player *player) {
     if (!player) return;
 
-    update_hitbox_position(&player->entity);
+    update_hitbox_position(&player->entity, player->facing_right);
 
     // Desenha a hitbox atualizada
     al_draw_rectangle(

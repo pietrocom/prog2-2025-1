@@ -16,4 +16,8 @@ bool file_exists (const char* filename);
 
 void draw_ground_line(struct GameLevel *level);
 
+void update_hitbox_position(struct Entity *entity, bool facing_right);
+
+bool check_collision(struct Entity *a, struct Entity *b);
+
 #endif

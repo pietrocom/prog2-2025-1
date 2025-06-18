@@ -6,14 +6,15 @@
 
 #define PLAYER_WIDTH 40
 #define PLAYER_HEIGHT 105
-#define PLAYER_HITBOX_OFFSET_X 77.0f
+
+#define PLAYER_RSPRITE_OFFSET_X 73.0f
+#define PLAYER_LSPRITE_OFFSET_X 85.0f
+#define PLAYER_HITBOX_OFFSET_X 00.0f
 #define PLAYER_HITBOX_OFFSET_Y 00.0f
 
 #define PLAYER_SCALE 1.5f
 
 #define MAX_FRAMES 10 
-
-#define SPRITE_SIZE 128
 
 #define RUN_THRESHOLD 3.0f
 
@@ -24,14 +25,6 @@ typedef enum {
     SOLDIER_2,
     SOLDIER_3
 } SoldierType;
-
-struct Animation {
-    ALLEGRO_BITMAP *frames[MAX_FRAMES];
-    int frame_count;      // Quantos frames tem a animação
-    int current_frame;    // Frame atual sendo exibido
-    float frame_delay;    // Tempo entre frames (em segundos)
-    float elapsed_time;   // Tempo acumulado desde a última troca de frame
-};
 
 struct Player {
     struct Entity entity;
