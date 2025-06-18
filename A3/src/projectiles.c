@@ -80,6 +80,11 @@ void draw_projectiles(struct ProjectileSystem *system) {
 void spawn_projectile(struct ProjectileSystem *system, float x, float y, 
                      bool facing_right, ProjectileType type, 
                      ProjectileBehavior behavior, int damage) {
+
+    if (system->active_count >= MAX_PROJECTILES) {
+        return;
+    }
+    
     // Encontra slot vazio
     for (int i = 0; i < MAX_PROJECTILES; i++) {
         if (!system->projectiles[i].is_active) {

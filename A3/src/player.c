@@ -166,33 +166,40 @@ void load_player_sprites(struct Player *player) {
 }
 
 void unload_player_sprites(struct Player *player) {
-    for (int i = 0; i < 5; i++) {
-        al_destroy_bitmap(player->sprites[i]);
-    }
+    // Array para simplificar a limpeza de todas as animações
+    struct Animation* all_animations[] = {
+        &player->idle, &player->walking, &player->running,
+        &player->jumping, &player->shooting, 
+        &player->crouching, &player->crouch_shot
+    };
 
-    // Libera as animações
-    for (int i = 0; i < player->idle.frame_count; i++) {
-        if (player->idle.frames[i]) al_destroy_bitmap(player->idle.frames[i]);
-    }
-    for (int i = 0; i < player->walking.frame_count; i++) {
-        if (player->walking.frames[i]) al_destroy_bitmap(player->walking.frames[i]);
-    }
-    for (int i = 0; i < player->running.frame_count; i++) {
-        if (player->running.frames[i]) al_destroy_bitmap(player->running.frames[i]);
-    }
-    for (int i = 0; i < player->jumping.frame_count; i++) {
-        if (player->jumping.frames[i]) al_destroy_bitmap(player->jumping.frames[i]);
-    }
-    for (int i = 0; i < player->shooting.frame_count; i++) {
-        if (player->shooting.frames[i]) al_destroy_bitmap(player->shooting.frames[i]);
-    }
-    
-    if (soldier_supports_crouch(player->soldier_type)) {
-        for (int i = 0; i < player->crouching.frame_count; i++) {
-            if (player->crouching.frames[i]) al_destroy_bitmap(player->crouching.frames[i]);
-        }
-        for (int i = 0; i < player->crouch_shot.frame_count; i++) {
-            if (player->crouch_shot.frames[i]) al_destroy_bitmap(player->crouch_shot.frames[i]);
+    // Uma lista de tamanho máximo
+    ALLEGRO_BITMAP* freed_pointers[MAX_FRAMES * 7] = { NULL }; 
+    int freed_count = 0;
+
+    for (int anim_idx = 0; anim_idx < 7; anim_idx++) {
+        struct Animation* anim = all_animations[anim_idx];
+        for (int i = 0; i < anim->frame_count; i++) {
+            if (anim->frames[i]) {
+                bool already_freed = false;
+                // Verifica se este ponteiro já foi liberado
+                for (int j = 0; j < freed_count; j++) {
+                    if (freed_pointers[j] == anim->frames[i]) {
+                        already_freed = true;
+                        break;
+                    }
+                }
+
+                if (!already_freed) {
+                    al_destroy_bitmap(anim->frames[i]);
+                    // Adiciona o ponteiro à lista de ponteiros já liberados
+                    if (freed_count < MAX_FRAMES * 7) {
+                        freed_pointers[freed_count++] = anim->frames[i];
+                    }
+                }
+                // Define como NULL para evitar problemas futuros
+                anim->frames[i] = NULL;
+            }
         }
     }
 }

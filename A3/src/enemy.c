@@ -74,8 +74,8 @@ void spawn_enemy_wave(struct EnemySystem *system, struct GameLevel *level) {
         // Encontra um slot vazio
         for (int j = 0; j < MAX_ENEMIES; j++) {
             if (!system->enemies[j].is_active) {
-                // Posição X aleatória (direita da tela)
-                float spawn_x = level->scroll_x + al_get_display_width(al_get_current_display()) + 100;
+                // Posição X aleatória (fora da tela, à direita)
+                float spawn_x = level->scroll_x + al_get_display_width(al_get_current_display()) + (rand() % 200 + 100);
                 
                 // Posição Y no chão
                 float spawn_y = level->ground_level;
@@ -85,17 +85,21 @@ void spawn_enemy_wave(struct EnemySystem *system, struct GameLevel *level) {
                 if (system->wave_number < 2) {
                     type = ENEMY_MELEE; // Waves iniciais só tem melee
                 } else if (system->wave_number < 5) {
-                    // Waves 2-4 podem ter ranged
+                    // Waves 2-4 podem ter melee ou ranged
                     type = (rand() % 2) ? ENEMY_MELEE : ENEMY_RANGED;
-                } 
-                // Implementar com flying enemies
+                } else {
+                    // --> CORREÇÃO ADICIONADA AQUI <--
+                    // Garante que para todas as waves futuras, um tipo seja escolhido.
+                    // Previne o uso de variável não inicializada que causava o crash.
+                    type = (rand() % 2) ? ENEMY_MELEE : ENEMY_RANGED;
+                }
                 
                 // Inicializa o inimigo
                 init_enemy(&system->enemies[j], type, spawn_x, spawn_y);
-                system->enemies[j].facing_right = false; // Inimigos virados para esquerda
+                system->enemies[j].facing_right = false; // Inimigos sempre spawnan virados para o jogador (esquerda)
                 
                 system->active_count++;
-                break;
+                break; // Sai do loop interno, pois já achamos um slot e spawnamos um inimigo
             }
         }
     }
@@ -266,7 +270,9 @@ void unload_enemy_sprites(struct Enemy *enemy) {
 // Controle
 
 void update_enemy(struct Enemy *enemy, struct Player *player, float delta_time) {
-    if (!enemy->is_active || enemy->is_dead) return;
+    if (!enemy->is_active || enemy->is_dead) {
+        return;
+    }
 
     // Atualiza cooldown de disparo
     if (enemy->current_shoot_cooldown > 0) {
@@ -286,13 +292,19 @@ void update_enemy(struct Enemy *enemy, struct Player *player, float delta_time) 
         enemy->current_animation->elapsed_time += delta_time;
         if (enemy->current_animation->elapsed_time >= enemy->current_animation->frame_delay) {
             enemy->current_animation->elapsed_time = 0;
-            enemy->current_animation->current_frame = 
-                (enemy->current_animation->current_frame + 1) % enemy->current_animation->frame_count;
             
-            // Verifica se a animação de morte terminou
-            if (enemy->is_dead && enemy->current_animation == &enemy->animations[ENEMY_ANIM_DEATH] &&
-                enemy->current_animation->current_frame == enemy->current_animation->frame_count - 1) {
-                enemy->is_active = false;
+            // Verifica se a animação tem frames antes de tentar acessá-los.
+            // Isso previne o crash de divisão por zero (% 0).
+            if (enemy->current_animation->frame_count > 0) {
+                enemy->current_animation->current_frame = 
+                    (enemy->current_animation->current_frame + 1) % enemy->current_animation->frame_count;
+            
+                // A verificação da animação de morte só faz sentido se o frame foi atualizado.
+                if (enemy->is_dead && 
+                    enemy->current_animation == &enemy->animations[ENEMY_ANIM_DEATH] &&
+                    enemy->current_animation->current_frame == enemy->current_animation->frame_count - 1) {
+                    enemy->is_active = false;
+                }
             }
         }
     }
@@ -429,35 +441,56 @@ void kill_enemy(struct Enemy *enemy) {
 // Renderização
 
 void draw_enemy(struct Enemy *enemy) {
-    if (!enemy->is_active) return;
-    
-    ALLEGRO_BITMAP *frame = enemy->current_animation->frames[enemy->current_animation->current_frame];
-    if (!frame) return;
-    
-    // Calcula posição de renderização
-    float draw_x = enemy->entity.x - (enemy->facing_right ? ENEMY_RSPRITE_OFFSET_X : ENEMY_LSPRITE_OFFSET_X);
-    float draw_y = enemy->entity.y - enemy->entity.height;
-    
-    // Flags de desenho (inverte horizontalmente se necessário)
-    int flags = enemy->facing_right ? ALLEGRO_FLIP_HORIZONTAL : 0;
-    
-    // Desenha o sprite
-    al_draw_scaled_bitmap(frame,
-                        0, 0, SPRITE_SIZE, SPRITE_SIZE,
-                        draw_x, draw_y, 
-                        enemy->entity.width * ENEMY_SCALE, 
-                        enemy->entity.height * ENEMY_SCALE,
-                        flags);
-    
-    // Desenha a hitbox se ativada
-    if (enemy->hitbox_show) {
-        al_draw_rectangle(enemy->entity.hitbox.x, enemy->entity.hitbox.y,
-                         enemy->entity.hitbox.x + enemy->entity.hitbox.width,
-                         enemy->entity.hitbox.y + enemy->entity.hitbox.height,
-                         al_map_rgb(255, 0, 0), 2);
+    // Verificações de segurança para evitar crashes
+    if (!enemy || !enemy->is_active || !enemy->current_animation) {
+        return; 
     }
     
-    // Desenha a barra de vida
+    // Garante que o frame atual seja um índice válido para o array de frames
+    if (enemy->current_animation->current_frame >= enemy->current_animation->frame_count) {
+        return;
+    }
+
+    ALLEGRO_BITMAP *frame = enemy->current_animation->frames[enemy->current_animation->current_frame];
+    if (!frame) {
+        return;
+    }
+    
+    // --- LÓGICA DE ESCALA E POSICIONAMENTO CORRIGIDA ---
+
+    // 1. A altura da entidade (ex: 105) é nossa referência visual de tamanho.
+    float scaled_height = enemy->entity.height * ENEMY_SCALE;
+    
+    // 2. --> CORRIGIDO: A largura escalada é igual à altura para manter a proporção de um sprite quadrado (128x128)
+    float scaled_width = scaled_height; 
+    
+    // 3. O ponto de âncora do inimigo (entity.x) é o centro da base dele.
+    //    Calculamos o canto superior esquerdo para que o sprite fique centralizado na âncora.
+    float draw_x = enemy->entity.x - (scaled_width / 2);
+    float draw_y = enemy->entity.y - scaled_height;
+    
+    // Define se o sprite deve ser virado horizontalmente
+    int flags = enemy->facing_right ? 0 : ALLEGRO_FLIP_HORIZONTAL;
+    
+    // Desenha o sprite com a escala e posição corretas
+    al_draw_scaled_bitmap(frame,
+                        0, 0,                     // Origem x, y no bitmap do frame
+                        SPRITE_SIZE, SPRITE_SIZE,  // Largura e altura da origem
+                        draw_x, draw_y,            // Posição x, y na tela
+                        scaled_width,              // Largura final na tela
+                        scaled_height,             // Altura final na tela
+                        flags);
+    
+    // O código para desenhar a hitbox e a barra de vida não muda
+    if (enemy->hitbox_show) {
+        al_draw_rectangle(
+            enemy->entity.hitbox.x, 
+            enemy->entity.hitbox.y - enemy->entity.hitbox.height,
+            enemy->entity.hitbox.x + enemy->entity.hitbox.width,
+            enemy->entity.hitbox.y,
+            al_map_rgb(255, 0, 0), 2);
+    }
+    
     draw_enemy_health_bar(enemy);
 }
 
