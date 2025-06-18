@@ -20,12 +20,15 @@
 
 // Estruturas gerais principais
 
+
+// ---- Estados do Menu ----
 typedef enum {
     MENU_MAIN,
     MENU_OPTIONS,
     MENU_PAUSE
 } MenuState;
 
+// ---- Estados do Jogo ----
 typedef enum {
     MENU,
     PLAYING,
@@ -34,6 +37,7 @@ typedef enum {
     QUIT
 } GameState;
 
+// ---- Estruturas de Dados ----
 struct Entity {
     float x, y;          // Posição do canto inferior esquerdo (base do personagem)
     float width, height; 
@@ -74,5 +78,16 @@ struct GameLevel {
     float background_scale;
     bool draw_ground_line; 
 };
+
+typedef enum {
+    PROJECTILE_PLAYER,
+    PROJECTILE_ENEMY
+} ProjectileType;
+
+typedef enum {
+    PROJECTILE_NORMAL,
+    PROJECTILE_EXPLOSIVE,
+    PROJECTILE_PIERCING
+} ProjectileBehavior;
 
 #endif

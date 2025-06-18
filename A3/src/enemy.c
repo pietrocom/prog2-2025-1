@@ -1,3 +1,4 @@
+#include <allegro5/allegro_primitives.h>
 #include <math.h>
 #include <stdio.h>
 
@@ -115,6 +116,20 @@ void spawn_enemy_wave(struct EnemySystem *system, struct GameLevel *level) {
     }
 }
 
+void destroy_enemy_system(struct EnemySystem *system) {
+    // Descarrega os sprites de todos os inimigos que foram inicializados
+    for (int i = 0; i < MAX_ENEMIES; i++) {
+        // Uma checagem simples para ver se o inimigo foi usado
+        if (system->enemies[i].animations[ENEMY_ANIM_IDLE].frame_count > 0) {
+             unload_enemy_sprites(&system->enemies[i]);
+        }
+    }
+    // Descarrega o boss
+    if (system->boss.animations[ENEMY_ANIM_IDLE].frame_count > 0) {
+        unload_enemy_sprites(&system->boss);
+    }
+}
+
 
 // Inimigos individuais
 void init_enemy(struct Enemy *enemy, EnemyType type, float x, float y) {
@@ -157,6 +172,11 @@ void init_enemy(struct Enemy *enemy, EnemyType type, float x, float y) {
             // Será implementado separadamente em init_boss()
             break;
     }
+
+    // Confirguração dos projeteis
+    enemy->can_shoot = (type == ENEMY_RANGED || type == ENEMY_BOSS);
+    enemy->shoot_cooldown = ENEMY_PROJECTILE_COOLDOWN;
+    enemy->current_shoot_cooldown = 0;
     
     // Configuração da hitbox (proporcional ao tamanho do sprite)
     enemy->entity.hitbox.width = enemy->entity.width * 0.7f;
@@ -248,6 +268,11 @@ void unload_enemy_sprites(struct Enemy *enemy) {
 void update_enemy(struct Enemy *enemy, struct Player *player, float delta_time) {
     if (!enemy->is_active || enemy->is_dead) return;
 
+    // Atualiza cooldown de disparo
+    if (enemy->current_shoot_cooldown > 0) {
+        enemy->current_shoot_cooldown -= delta_time;
+    }
+
     // Atualiza cooldown do ataque
     if (enemy->current_cooldown > 0) {
         enemy->current_cooldown -= delta_time;
@@ -321,6 +346,9 @@ void enemy_ai(struct Enemy *enemy, struct Player *player, float delta_time) {
                 else if (enemy->current_cooldown <= 0) {
                     // Ataque ranged
                     enemy->current_animation = &enemy->animations[ENEMY_ANIM_ATTACK];
+                    // Aqui você chamaria a função para criar um novo projétil
+                    // spawn_enemy_projectile(projectile_system, enemy);
+                    enemy->current_cooldown = enemy->attack_cooldown;
                 }
             } else {
                 enemy->current_animation = &enemy->animations[ENEMY_ANIM_IDLE];
@@ -333,7 +361,10 @@ void enemy_ai(struct Enemy *enemy, struct Player *player, float delta_time) {
     }
 }
 
-void enemy_move(struct Enemy *enemy, float dx, float dy) {}
+void enemy_move(struct Enemy *enemy, float dx, float dy) {
+    enemy->entity.x += dx;
+    enemy->entity.y += dy;
+}
 
 void enemy_attack(struct Enemy *enemy, struct Player *player) {
     enemy->is_attacking = true;
@@ -350,21 +381,22 @@ void enemy_attack(struct Enemy *enemy, struct Player *player) {
 }
 
 void enemy_ranged_attack(struct Enemy *enemy, struct ProjectileSystem *projectile_system) {
-    if (!enemy->is_active || enemy->current_cooldown > 0) return;
+    if (!enemy->is_active || enemy->current_shoot_cooldown > 0) return;
     
     // Configuração do projétil
     float direction = enemy->facing_right ? 1.0f : -1.0f;
     float start_x = enemy->entity.x + (direction * enemy->entity.width/2);
     float start_y = enemy->entity.y - enemy->entity.height/2;
     
-    // Adiciona o projétil ao sistema
-    add_projectile(projectile_system, 
-                  start_x, start_y,
-                  direction * 300.0f,  // velocidade x
-                  0,                  // velocidade y
-                  false);             // não é projétil do jogador
+    // Cria o projétil
+    spawn_projectile(projectile_system, 
+                    start_x, start_y,
+                    direction, 
+                    PROJECTILE_ENEMY, 
+                    PROJECTILE_NORMAL,
+                    enemy->damage);
     
-    enemy->current_cooldown = enemy->attack_cooldown;
+    enemy->current_shoot_cooldown = enemy->shoot_cooldown;
     enemy->current_animation = &enemy->animations[ENEMY_ANIM_ATTACK];
 }
 
@@ -453,6 +485,27 @@ void draw_enemy_health_bar(struct Enemy *enemy) {
                             al_map_rgb(255, 0, 0));
 }
 
+void draw_enemies(struct EnemySystem *system, struct GameLevel *level) {
+    // Desenha todos os inimigos normais
+    for (int i = 0; i < MAX_ENEMIES; i++) {
+        if (system->enemies[i].is_active) {
+            // Para desenhar o inimigo na posição correta da tela,
+            // subtraímos o deslocamento do cenário (scroll_x).
+            float original_x = system->enemies[i].entity.x;
+            system->enemies[i].entity.x -= level->scroll_x;
+            draw_enemy(&system->enemies[i]);
+            system->enemies[i].entity.x = original_x; // Restaura a posição global
+        }
+    }
+
+    // Desenha o boss se estiver ativo
+    if (system->boss.is_active) {
+        float original_x = system->boss.entity.x;
+        system->boss.entity.x -= level->scroll_x;
+        draw_enemy(&system->boss);
+        system->boss.entity.x = original_x;
+    }
+}
 
 // Chefe
 

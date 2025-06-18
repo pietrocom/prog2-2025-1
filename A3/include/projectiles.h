@@ -4,41 +4,55 @@
 #include "types.h"
 
 #define MAX_PROJECTILES 50
-
-
-// ---- Estruturas de Dados Básica ----
+#define PROJECTILE_SPEED 300.0f
+#define PROJECTILE_WIDTH 10.0f
+#define PROJECTILE_HEIGHT 5.0f
+#define PLAYER_PROJECTILE_COOLDOWN 0.5f
+#define ENEMY_PROJECTILE_COOLDOWN 2.0f
 
 struct Projectile {
     struct Entity entity;
-    ALLEGRO_BITMAP *sprite;
+    ProjectileType type;
+    ProjectileBehavior behavior;
     bool is_active;
-    bool is_player_projectile;
+    int damage;
+    float lifetime;
+    float max_lifetime;
+    ALLEGRO_BITMAP *sprite;
+    ALLEGRO_COLOR color;
 };
 
-// Estrutura de gerenciamento
 struct ProjectileSystem {
     struct Projectile projectiles[MAX_PROJECTILES];
-    int count;
+    int active_count;
 };
 
+// ---- Forward declarations ----
+struct Player;
+struct Enemy;
+struct EnemySystem;
 
-// ---- Funções ----
 
-// Inicialização
+// ---- Funções do Sistema de Projéteis ----
+
 void init_projectile_system(struct ProjectileSystem *system);
-
-// Controle
-void add_projectile(struct ProjectileSystem *system, float x, float y, 
-                   float vel_x, float vel_y, bool is_player_projectile);
-void update_projectiles(struct ProjectileSystem *system);
-void clear_projectiles(struct ProjectileSystem *system);
-
-// Colisão
-void check_projectile_collisions(struct ProjectileSystem *projectiles, 
-                               struct Player *player, 
-                               struct Enemy *enemies[], int enemy_count);
-
-// Renderização
+void update_projectile_system(struct ProjectileSystem *system, float delta_time, struct Player *player, struct EnemySystem *enemy_system);
 void draw_projectiles(struct ProjectileSystem *system);
+
+// ---- Funções de Controle de Projéteis ----
+
+void spawn_projectile(struct ProjectileSystem *system, float x, float y, bool facing_right, ProjectileType type, ProjectileBehavior behavior, int damage);
+void spawn_player_projectile(struct ProjectileSystem *system, struct Player *player);
+void spawn_enemy_projectile(struct ProjectileSystem *system, struct Enemy *enemy);
+
+// ---- Funções de Colisão ----
+
+void check_projectile_collisions(struct ProjectileSystem *system, struct Player *player, struct EnemySystem *enemy_system);
+bool check_projectile_hit(struct Projectile *projectile, struct Entity *target);
+
+// ---- Funções de Limpeza ----
+
+void clear_projectiles(struct ProjectileSystem *system);
+void destroy_projectile_system(struct ProjectileSystem *system);
 
 #endif

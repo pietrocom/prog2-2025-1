@@ -2,8 +2,6 @@
 #define ENEMY_H
 
 #include "types.h"
-#include "player.h"
-#include "projectiles.h"
 
 #define MAX_ENEMIES 20
 #define MAX_ENEMY_TYPES 3
@@ -15,12 +13,19 @@
 
 #define ENEMY_HITBOX_OFFSET_X 10.0f
 #define ENEMY_HITBOX_OFFSET_Y 20.0f
-#define ENEMY_LSPRITE_OFFSET_X 15.0f  // Adicionei essa que faltava
+#define ENEMY_LSPRITE_OFFSET_X 15.0f 
 #define ENEMY_RSPRITE_OFFSET_X 00.0f
 
 #define ENEMY_SCALE 1.5f
 
 #define SPRITE_SIZE 128
+
+// ---- Forward declarations ----
+struct Player;
+struct Projectile;
+struct ProjectileSystem;
+struct GameLevel;
+
 
 // ---- Estruturas de dados básica ----
 
@@ -65,6 +70,11 @@ struct Enemy {
     bool is_attacking;
     bool hitbox_show;
     bool is_dead;
+
+    // Sistema de projetéis
+    float shoot_cooldown;
+    float current_shoot_cooldown;
+    bool can_shoot;
 };
 
 // Sistema de inimigos
@@ -82,6 +92,7 @@ struct EnemySystem {
 void init_enemy_system(struct EnemySystem *system);
 void update_enemy_system(struct EnemySystem *system, struct Player *player, struct GameLevel *level, float delta_time);
 void spawn_enemy_wave(struct EnemySystem *system, struct GameLevel *level);
+void destroy_enemy_system(struct EnemySystem *system);
 
 // Inimigos individuais
 void init_enemy(struct Enemy *enemy, EnemyType type, float x, float y);
@@ -103,6 +114,7 @@ void kill_enemy(struct Enemy *enemy);
 // Renderização
 void draw_enemy(struct Enemy *enemy);
 void draw_enemy_health_bar(struct Enemy *enemy);
+void draw_enemies(struct EnemySystem *system, struct GameLevel *level);
 
 // Chefe
 void init_boss(struct Enemy *boss);

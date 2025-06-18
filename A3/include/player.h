@@ -2,7 +2,6 @@
 #define PLAYER_H
 
 #include "types.h"
-#include "projectiles.h"
 
 #define PLAYER_WIDTH 40
 #define PLAYER_HEIGHT 105
@@ -17,6 +16,11 @@
 #define MAX_FRAMES 10 
 
 #define RUN_THRESHOLD 3.0f
+
+// ---- Forward declarations ----
+struct ProjectileSystem;
+struct GameLevel;
+
 
 // ---- Estruturas de dados básica ----
 
@@ -55,6 +59,11 @@ struct Player {
     bool is_shooting;
     bool facing_right;
     bool hitbox_show; 
+
+    // Sistema de projetéis
+    float shoot_cooldown;
+    float current_shoot_cooldown;
+    bool can_shoot;
 };
 
 
@@ -67,7 +76,7 @@ void unload_player_sprites(struct Player *player);
 
 // Controles
 void handle_player_input(struct Player *player, ALLEGRO_EVENT *event, struct GameLevel *level);
-void update_player(struct Player *player, float delta_time, struct GameLevel *level);
+void update_player(struct Player *player, float delta_time, struct GameLevel *level, struct ProjectileSystem *projectile_system);
 
 // Estado
 void damage_player(struct Player *player, int amount);
@@ -75,7 +84,6 @@ bool is_player_dead(struct Player *player);
 
 // Renderização
 void draw_player(struct Player *player);
-void draw_player_at_position(struct Player *player, float x, float y, bool hitbox_show);
 void show_player_hitbox(struct Player *player);
 
 #endif

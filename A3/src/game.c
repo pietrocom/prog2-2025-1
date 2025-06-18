@@ -180,13 +180,20 @@ void draw_game(struct Player *player, struct GameLevel *level) {
             0);
     }
     
-    // Desenha o jogador (posição relativa à tela)
-    float player_screen_x = (player->entity.x > screen_w * BACKGROUND_THRESHOLD) 
-                          ? screen_w * BACKGROUND_THRESHOLD 
+    // Calcula a posição de desenho do jogador na tela
+    float player_screen_x = (player->entity.x > al_get_display_width(al_get_current_display()) * BACKGROUND_THRESHOLD) 
+                          ? al_get_display_width(al_get_current_display()) * BACKGROUND_THRESHOLD 
                           : player->entity.x;
     
-    draw_player_at_position(player, player_screen_x, player->entity.y, player->hitbox_show);
+    // Salva a posição global real do jogador
+    float original_x = player->entity.x;
     
+    // Define posição relativa
+    player->entity.x = player_screen_x;
+    draw_player(player);
+    
+    // Restaura posição original 
+    player->entity.x = original_x;
     draw_ground_line(level);  
 }
 

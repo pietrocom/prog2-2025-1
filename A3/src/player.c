@@ -5,6 +5,7 @@
 #include "types.h"
 #include "player.h"
 #include "utils.h"
+#include "projectiles.h"
 
 // ---- Funções Auxiliares ----
 
@@ -64,6 +65,11 @@ void init_player (struct Player * player) {
     player->is_shooting = false;
     player->facing_right = true;
     player->hitbox_show = false;
+
+    // Disparos
+    player->shoot_cooldown = PLAYER_PROJECTILE_COOLDOWN;
+    player->current_shoot_cooldown = 0;
+    player->can_shoot = true;
 
     // Inicializa animações
     player->idle.frame_delay = 0.1f;
@@ -263,7 +269,7 @@ void handle_player_input(struct Player *player, ALLEGRO_EVENT *event, struct Gam
     }
 }
 
-void update_player(struct Player *player, float delta_time, struct GameLevel *level) {
+void update_player(struct Player *player, float delta_time, struct GameLevel *level, struct ProjectileSystem *projectile_system) {
     if (!player || !level) {
         fprintf(stderr, "Invalid player or level in update_player\n");
         return;
@@ -276,6 +282,18 @@ void update_player(struct Player *player, float delta_time, struct GameLevel *le
     update_hitbox_position(&player->entity, player->facing_right);
 
     handle_player_ground_collision(player, level);
+
+    // Lógica para disparos
+    if (player->current_shoot_cooldown > 0) {
+        player->current_shoot_cooldown -= delta_time;
+    } else {
+        player->can_shoot = true;
+    }
+    if (player->is_shooting && player->can_shoot) {
+        player->can_shoot = false;
+        player->current_shoot_cooldown = PLAYER_PROJECTILE_COOLDOWN;
+        spawn_player_projectile(projectile_system, player);
+    }
 
     // Máquina de estados para animações
     if (player->is_crouching) {
@@ -334,30 +352,6 @@ void damage_player(struct Player *player, int amount) {
 
 void draw_player(struct Player *player) {
     if (!player || !player->current_animation || 
-        !player->current_animation->frames || 
-        player->current_animation->frame_count <= 0 ||
-        player->current_animation->current_frame < 0 ||
-        player->current_animation->current_frame >= player->current_animation->frame_count) {
-        fprintf(stderr, "Invalid animation state in draw_player\n");
-        return;
-    }
-
-    ALLEGRO_BITMAP *frame = player->current_animation->frames[player->current_animation->current_frame];
-    if (!frame) {
-        fprintf(stderr, "Invalid frame in animation\n");
-        return;
-    }
-
-    int flags = player->facing_right ? 0 : ALLEGRO_FLIP_HORIZONTAL;
-    // x e y sao coordenadas do canto superior esquerdo
-    al_draw_bitmap(frame, 
-                  player->entity.x, 
-                  player->entity.y - player->entity.height, 
-                  flags);
-}
-
-void draw_player_at_position(struct Player *player, float x, float y, bool hitbox_show) {
-    if (!player || !player->current_animation || 
         player->current_animation->current_frame < 0 ||
         player->current_animation->current_frame >= player->current_animation->frame_count) {
         return;
@@ -366,7 +360,7 @@ void draw_player_at_position(struct Player *player, float x, float y, bool hitbo
     ALLEGRO_BITMAP *frame = player->current_animation->frames[player->current_animation->current_frame];
     if (!frame) return;
 
-    if (hitbox_show)
+    if (player->hitbox_show)
         show_player_hitbox(player); 
 
     set_player_scale(player, PLAYER_SCALE);
