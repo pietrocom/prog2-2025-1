@@ -281,13 +281,12 @@ void update_player(struct Player *player, float delta_time, struct GameLevel *le
     // Lógica para disparos
     if (player->current_shoot_cooldown > 0) {
         player->current_shoot_cooldown -= delta_time;
-    } else {
-        player->can_shoot = true;
     }
-    if (player->is_shooting && player->can_shoot) {
-        player->can_shoot = false;
-        player->current_shoot_cooldown = PLAYER_PROJECTILE_COOLDOWN;
+
+    if (player->is_shooting && player->current_shoot_cooldown <= 0) {
         spawn_player_projectile(projectile_system, player, level);
+
+        player->current_shoot_cooldown = PLAYER_PROJECTILE_COOLDOWN;
     }
 
     // Máquina de estados para animações

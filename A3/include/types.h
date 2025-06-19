@@ -9,7 +9,7 @@
 
 // Definições de constantes físicas
 #define PLAYER_JUMP_VEL -1200.0f
-#define PLAYER_MOVE_SPEED 4.0f
+#define PLAYER_MOVE_SPEED 240.0f
 #define GRAVITY 2600.0f
 #define GROUND_LEVEL 150 // Distância do teto até a base da tela
 

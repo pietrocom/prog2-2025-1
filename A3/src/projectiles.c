@@ -170,7 +170,6 @@ void spawn_enemy_projectile(struct ProjectileSystem *system, struct Enemy *enemy
     );
 }
 
-// Verifica colisões com jogador e inimigos
 void check_projectile_collisions(struct ProjectileSystem *system, 
                                struct Player *player, 
                                struct EnemySystem *enemy_system) {
@@ -200,7 +199,6 @@ void check_projectile_collisions(struct ProjectileSystem *system,
                     
                     damage_enemy(&enemy_system->enemies[j], p->damage, player);
                     hit_someone = true;
-                    // Não damos break aqui ainda, caso o projétil seja perfurante no futuro
                 }
             }
             

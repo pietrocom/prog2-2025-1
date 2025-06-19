@@ -518,13 +518,13 @@ void kill_enemy(struct Enemy *enemy, struct Player *player) {
     // --- LÓGICA DE PONTUAÇÃO ---
     switch(enemy->type) {
         case ENEMY_MELEE:
-            player->score += 10;
+            player->score += 100;
             break;
         case ENEMY_RANGED:
-            player->score += 15;
+            player->score += 150;
             break;
         case ENEMY_BOSS:
-            player->score += 100;
+            player->score += 1000;
             break;
     }
 

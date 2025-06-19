@@ -149,35 +149,40 @@ void update_game(struct Player *player, struct GameLevel *level, float delta_tim
     level->game_time += delta_time;
 
     float screen_width = al_get_display_width(al_get_current_display());
-    // A "fronteira" onde a câmera começa a se mover
+    
+    float left_threshold = screen_width * (1 - BACKGROUND_THRESHOLD); 
     float right_threshold = screen_width * BACKGROUND_THRESHOLD;
-    float left_threshold = screen_width * 0.4f;
 
-    // A posição global do jogador é player->entity.x + level->scroll_x
     float player_screen_pos = player->entity.x;
+    
+    float move_delta = player->entity.vel_x * delta_time;
 
-    // Movimento para a direita
-    if (player->entity.vel_x > 0 && player_screen_pos > right_threshold) {
-        // Se o player ultrapassa a fronteira, move a câmera em vez do player
-        level->scroll_x += player->entity.vel_x;
-    } else {
-        // Senão, move o player normalmente
-        player->entity.x += player->entity.vel_x;
+    // Movimento para a direita (esta parte já estava correta)
+    if (player->entity.vel_x > 0) {
+        if (player_screen_pos > right_threshold) {
+            level->scroll_x += move_delta;
+        } else {
+            player->entity.x += move_delta;
+        }
     }
-
     // Movimento para a esquerda
-    if (player->entity.vel_x < 0 && player_screen_pos < left_threshold) {
-        // Move a câmera para a esquerda, até o limite de 0
-        level->scroll_x += player->entity.vel_x;
-        if (level->scroll_x < 0) level->scroll_x = 0;
-    } else if (player->entity.vel_x < 0) {
-        // Move o player para a esquerda
-        player->entity.x += player->entity.vel_x;
+    else if (player->entity.vel_x < 0) {
+        if (player_screen_pos < left_threshold && level->scroll_x > 0) {
+            level->scroll_x += move_delta;
+            // Garante que o scroll não ultrapasse o limite 0 neste mesmo quadro
+            if (level->scroll_x < 0) {
+                level->scroll_x = 0;
+            }
+        } else {
+            // Se a câmera estiver no limite (ou o jogador fora da zona de scroll),
+            // movemos o próprio jogador na tela.
+            player->entity.x += move_delta;
+        }
     }
 
     // Limites para o jogador não sair da tela
     if (player->entity.x < 0) player->entity.x = 0;
-    if (player->entity.x > screen_width) player->entity.x = screen_width;
+    if (player->entity.x + player->entity.width > screen_width) player->entity.x = screen_width - player->entity.width;
 }
 
 
