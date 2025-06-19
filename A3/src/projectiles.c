@@ -198,7 +198,7 @@ void check_projectile_collisions(struct ProjectileSystem *system,
                 if (enemy_system->enemies[j].is_active && !is_enemy_dead(&enemy_system->enemies[j]) &&
                     check_collision(&p->entity, &enemy_system->enemies[j].entity)) {
                     
-                    damage_enemy(&enemy_system->enemies[j], p->damage);
+                    damage_enemy(&enemy_system->enemies[j], p->damage, player);
                     hit_someone = true;
                     // Não damos break aqui ainda, caso o projétil seja perfurante no futuro
                 }
@@ -208,7 +208,7 @@ void check_projectile_collisions(struct ProjectileSystem *system,
             if (enemy_system->boss.is_active && !is_enemy_dead(&enemy_system->boss) &&
                 check_collision(&p->entity, &enemy_system->boss.entity)) {
                 
-                damage_enemy(&enemy_system->boss, p->damage);
+                damage_enemy(&enemy_system->boss, p->damage, player);
                 hit_someone = true;
             }
 

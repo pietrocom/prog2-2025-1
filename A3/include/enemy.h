@@ -3,6 +3,10 @@
 
 #include "types.h"
 
+#define DEATH_FADEOUT_DELAY 2.0f
+
+#define DETECTION_RANGE 700.0f
+
 #define MAX_ENEMIES 20
 #define MAX_ENEMY_TYPES 3
 #define ENEMY_SPAWN_COOLDOWN 2.0f
@@ -70,6 +74,7 @@ struct Enemy {
     bool is_attacking;
     bool hitbox_show;
     bool is_dead;
+    float death_timer;
 
     // Sistema de projetéis
     float shoot_cooldown;
@@ -100,16 +105,16 @@ void load_enemy_sprites(struct Enemy *enemy, EnemyType type);
 void unload_enemy_sprites(struct Enemy *enemy);
 
 // Controle
-void update_enemy(struct Enemy *enemy, struct Player *player, float delta_time);
-void enemy_ai(struct Enemy *enemy, struct Player *player, float delta_time);
+void update_enemy(struct Enemy *enemy, struct Player *player, struct GameLevel *level, float delta_time);
+void enemy_ai(struct Enemy *enemy, struct Player *player, struct GameLevel *level, float delta_time);
 void enemy_move(struct Enemy *enemy, float dx, float dy);
 void enemy_attack(struct Enemy *enemy, struct Player *player);
 void enemy_ranged_attack(struct Enemy *enemy, struct ProjectileSystem *projectile_system);
 
 // Estado
-void damage_enemy(struct Enemy *enemy, int amount);
+void damage_enemy(struct Enemy *enemy, int amount, struct Player *player);
 bool is_enemy_dead(struct Enemy *enemy);
-void kill_enemy(struct Enemy *enemy);
+void kill_enemy(struct Enemy *enemy, struct Player *player);
 
 // Renderização
 void draw_enemy(struct Enemy *enemy);

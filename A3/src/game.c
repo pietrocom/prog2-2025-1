@@ -40,6 +40,13 @@ void start_level(struct GameLevel *level) {
     level->scroll_x = 0.0f;
     level->enemy_count = 0;
     level->boss_active = false;
+    level->game_time = 0.0; 
+
+    // Carrega a fonte para o HUD
+    level->hud_font = al_load_font("assets/fonts/DirtyWar.otf", 36, 0);
+    if (!level->hud_font) {
+        fprintf(stderr, "Falha ao carregar a fonte do HUD!\n");
+    }
 }
 
 
@@ -52,6 +59,9 @@ void destroy_player(struct Player *player) {
 void destroy_level(struct GameLevel *level) {
     if (level->background) {
         al_destroy_bitmap(level->background);
+    }
+    if (level->hud_font) {
+        al_destroy_font(level->hud_font);
     }
 }
 
@@ -135,10 +145,12 @@ void reset_game(struct Player *player, struct GameLevel *level) {
 
 // Tanto o jogador quanto o background vao se mover
 // dependendo da posição do jogador na tela
-void update_game(struct Player *player, struct GameLevel *level) {
+void update_game(struct Player *player, struct GameLevel *level, float delta_time) {
+    level->game_time += delta_time;
+
     float screen_width = al_get_display_width(al_get_current_display());
     // A "fronteira" onde a câmera começa a se mover
-    float right_threshold = screen_width * 0.6f;
+    float right_threshold = screen_width * BACKGROUND_THRESHOLD;
     float left_threshold = screen_width * 0.4f;
 
     // A posição global do jogador é player->entity.x + level->scroll_x
@@ -278,4 +290,24 @@ void draw_pause_menu(struct GameLevel *level) {
 
     // 5. Limpeza
     al_destroy_font(font);
+}
+
+void draw_hud(struct Player *player, struct GameLevel *level) {
+    if (!level->hud_font) return;
+
+    // Formata o tempo de segundos para Minutos:Segundos
+    int total_seconds = (int)level->game_time;
+    int minutes = total_seconds / 60;
+    int seconds = total_seconds % 60;
+
+    ALLEGRO_COLOR text_color = al_map_rgb(255, 255, 255);
+    
+    // Desenha o Score no canto superior esquerdo
+    al_draw_textf(level->hud_font, text_color, 20, 10, ALLEGRO_ALIGN_LEFT, 
+                  "SCORE: %06d", player->score);
+                  
+    // Desenha o Tempo no canto superior direito
+    int screen_w = al_get_display_width(al_get_current_display());
+    al_draw_textf(level->hud_font, text_color, screen_w - 20, 10, ALLEGRO_ALIGN_RIGHT, 
+                  "TEMPO: %02d:%02d", minutes, seconds);
 }

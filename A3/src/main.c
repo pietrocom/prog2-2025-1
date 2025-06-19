@@ -108,12 +108,13 @@ int main() {
                 update_player(&player, 1.0/FPS, &level, &projectile_system);
                 update_enemy_system(&enemy_system, &player, &level, 1.0/FPS);
                 update_projectile_system(&projectile_system, 1.0/FPS, &player, &enemy_system);
-                update_game(&player, &level);
+                update_game(&player, &level, 1.0/FPS);
                 
                 if (redraw) {
                     draw_game(&player, &level);
                     draw_enemies(&enemy_system, &level, &player); 
                     draw_projectiles(&projectile_system, &level);
+                    draw_hud(&player, &level);
                     al_flip_display();
                     redraw = false;
                 }
@@ -124,6 +125,7 @@ int main() {
                     draw_game(&player, &level);
                     draw_enemies(&enemy_system, &level, &player);
                     draw_projectiles(&projectile_system, &level);
+                    draw_hud(&player, &level);
                     draw_pause_menu(&level);
                     al_flip_display();
                     redraw = false;

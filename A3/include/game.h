@@ -30,9 +30,10 @@ void handle_game_over_events(ALLEGRO_EVENT *event, GameState *state);
 
 // ---- Renderização ----
 void reset_game(struct Player *player, struct GameLevel *level);
-void update_game(struct Player *player, struct GameLevel *level);
+void update_game(struct Player *player, struct GameLevel *level, float delta_time);
 void draw_game(struct Player *player, struct GameLevel *level);
 void draw_game_over(int score);
 void draw_pause_menu(struct GameLevel *level);
+void draw_hud(struct Player *player, struct GameLevel *level);
 
 #endif

@@ -13,121 +13,142 @@
 // Inicialização do sistema de inimigos
 
 void init_enemy_system(struct EnemySystem *system) {
-    // Limpa o array de inimigos normais para começar
     memset(system->enemies, 0, sizeof(system->enemies));
-
-    // Configuração inicial do sistema
-    system->spawn_timer = ENEMY_SPAWN_COOLDOWN;
     system->active_count = 0;
-    system->wave_number = 0;
+    system->wave_number = 0; // Inicia em 0. A primeira leva de spawns será a wave 1.
     
-    // Limpa a estrutura do boss e o inicializa
     memset(&system->boss, 0, sizeof(struct Enemy));
-    init_boss(&system->boss);
-    system->boss.is_active = false; // Desativa até que a wave correta chegue
+    system->boss.is_active = false;
     
-    // Seed para números aleatórios (usado no spawn)
-    srand(al_get_time());
+    srand(time(NULL));
 }
 
 void update_enemy_system(struct EnemySystem *system, struct Player *player, struct GameLevel *level, float delta_time) {
-    // Atualiza timer de spawn
-    system->spawn_timer -= delta_time;
     
-    // Verifica se é hora de spawnar uma nova wave
-    if (system->spawn_timer <= 0 && system->active_count < MAX_ENEMIES) {
-        spawn_enemy_wave(system, level);
-        system->spawn_timer = ENEMY_SPAWN_COOLDOWN;
-    }
-    
-    // Atualiza cada inimigo ativo
+    // 1. ATUALIZAÇÃO DOS INIMIGOS E BOSS ATIVOS
+    // Primeiro, atualiza o estado de todos os inimigos que já estão na tela.
     for (int i = 0; i < MAX_ENEMIES; i++) {
         if (system->enemies[i].is_active) {
-            update_enemy(&system->enemies[i], player, delta_time);
-            
-            // Remove inimigos mortos
-            if (is_enemy_dead(&system->enemies[i])) {
-                kill_enemy(&system->enemies[i]);
-                system->active_count--;
-            }
+            update_enemy(&system->enemies[i], player, level, delta_time);
+        }
+    }
+
+    // Atualiza o boss se ele estiver ativo
+    if (system->boss.is_active) {
+        update_boss(&system->boss, player, delta_time);
+        // Desativa o boss após sua animação de morte terminar
+        if (is_enemy_dead(&system->boss) &&
+            system->boss.current_animation == &system->boss.animations[ENEMY_ANIM_DEATH] &&
+            system->boss.current_animation->current_frame >= system->boss.current_animation->frame_count - 1) {
+                system->boss.is_active = false; 
+                // Aqui você poderia adicionar uma lógica de vitória do jogo
         }
     }
     
-    // Atualiza o boss se estiver ativo
-    if (system->boss.is_active) {
-        update_boss(&system->boss, player, delta_time);
+    // 2. RECONTAGEM DE INIMIGOS ATIVOS
+    // Conta quantos inimigos realmente estão ativos. Esta contagem só diminui
+    // depois que a animação de morte do inimigo termina, garantindo que uma
+    // wave só seja considerada "eliminada" quando todos os corpos sumiram.
+    int current_active_enemies = 0;
+    for (int i = 0; i < MAX_ENEMIES; i++) {
+        if (system->enemies[i].is_active) {
+            current_active_enemies++;
+        }
+    }
+    system->active_count = current_active_enemies;
+
+    // 3. LÓGICA DE SPAWN DE WAVES
+    // Se não há inimigos na tela e o boss ainda não apareceu...
+    if (system->active_count == 0 && !system->boss.is_active) {
+        
+        // CONDIÇÃO INICIAL: Se for a primeira vez, spawna as duas primeiras waves
+        if (system->wave_number == 0) {
+            printf("Iniciando o jogo: Spawning waves 1 e 2.\n");
+            spawn_enemy_wave(system, level); // Spawna a Wave 1
+            spawn_enemy_wave(system, level); // Spawna a Wave 2
+        } 
+        // CONDIÇÕES NORMAIS: Para as waves seguintes
+        else if (system->wave_number > 0) {
+            
+            // CONDIÇÃO DO BOSS: Verifica se a 5ª wave foi eliminada
+            if (system->wave_number >= 5) {
+                printf("Wave 5 eliminada. O CHEFE ESTA CHEGANDO!\n");
+                
+                // Posição de spawn do boss
+                float boss_x = level->scroll_x + al_get_display_width(al_get_current_display()) + 200;
+                float boss_y = level->ground_level;
+                
+                // Inicializa e ativa o boss
+                init_boss(&system->boss);
+                system->boss.entity.x = boss_x;
+                system->boss.entity.y = boss_y;
+                system->boss.is_active = true;
+                update_hitbox_position(&system->boss.entity, false);
+
+                // Incrementa a wave para não entrar mais nesta lógica
+                system->wave_number++; 
+            } 
+            // CONDIÇÃO DE WAVE NORMAL: Spawna a próxima wave regular
+            else {
+                printf("Wave %d eliminada. Spawning proxima wave.\n", system->wave_number);
+                spawn_enemy_wave(system, level);
+            }
+        }
     }
 }
 
 void spawn_enemy_wave(struct EnemySystem *system, struct GameLevel *level) {
-    // Define quantos inimigos spawnar nesta wave (mínimo 1, máximo 4)
-    int enemies_to_spawn = 1 + (system->wave_number % 4);
-    
-    // Ajusta para não ultrapassar o limite máximo
+    system->wave_number++; // Incrementa o contador para a wave que está sendo criada
+
+    // Define quantos inimigos criar (aumenta progressivamente com as waves)
+    int enemies_to_spawn = 2 + (system->wave_number / 2); 
+    if (enemies_to_spawn > 7) enemies_to_spawn = 7; // Limita o nro de inimigos por wave
+
+    // Garante que não vamos ultrapassar o limite total de inimigos
     if (system->active_count + enemies_to_spawn > MAX_ENEMIES) {
         enemies_to_spawn = MAX_ENEMIES - system->active_count;
     }
     
-    // Spawna os inimigos
-    for (int i = 0; i < enemies_to_spawn; i++) {
-        // Encontra um slot vazio
-        for (int j = 0; j < MAX_ENEMIES; j++) {
-            if (!system->enemies[j].is_active) {
-                // Posição X aleatória (fora da tela, à direita)
-                float spawn_x = level->scroll_x + al_get_display_width(al_get_current_display()) + (rand() % 200 + 100);
-                
-                // Posição Y no chão
-                float spawn_y = level->ground_level;
-                
-                // Escolhe tipo de inimigo baseado na wave
-                EnemyType type;
-                if (system->wave_number < 2) {
-                    type = ENEMY_MELEE; // Waves iniciais só tem melee
-                } else if (system->wave_number < 5) {
-                    // Waves 2-4 podem ter melee ou ranged
-                    type = (rand() % 2) ? ENEMY_MELEE : ENEMY_RANGED;
-                } else {
-                    // --> CORREÇÃO ADICIONADA AQUI <--
-                    // Garante que para todas as waves futuras, um tipo seja escolhido.
-                    // Previne o uso de variável não inicializada que causava o crash.
-                    type = (rand() % 2) ? ENEMY_MELEE : ENEMY_RANGED;
-                }
-                
-                // Inicializa o inimigo
-                init_enemy(&system->enemies[j], type, spawn_x, spawn_y);
-                system->enemies[j].facing_right = false; // Inimigos sempre spawnan virados para o jogador (esquerda)
-                
-                system->active_count++;
-                break; // Sai do loop interno, pois já achamos um slot e spawnamos um inimigo
+    if (enemies_to_spawn <= 0) return;
+
+    // --- Lógica de Spawn em Proximidade ---
+    const float GAP_BETWEEN_ENEMIES = 40.0f; // Espaço em pixels entre cada inimigo
+
+    // Posição de spawn base (para o primeiro inimigo), fora da tela à direita
+    float base_spawn_x = level->scroll_x + al_get_display_width(al_get_current_display()) + (rand() % 150 + 100);
+    float spawn_y = level->ground_level;
+
+    int spawned_count = 0;
+    for (int i = 0; i < MAX_ENEMIES && spawned_count < enemies_to_spawn; i++) {
+        // Encontra um slot de inimigo vazio no array
+        if (!system->enemies[i].is_active) {
+            
+            // Calcula a posição X deste inimigo, colocando-o ao lado do anterior
+            float spawn_x = base_spawn_x + (spawned_count * (ENEMY_WIDTH + GAP_BETWEEN_ENEMIES));
+            
+            // Define o tipo de inimigo com base na wave atual
+            EnemyType type;
+            if (system->wave_number < 2) { // Wave 1 só tem inimigos melee
+                type = ENEMY_MELEE; 
+            } else { // Waves seguintes introduzem inimigos ranged
+                type = (rand() % 3 == 0) ? ENEMY_RANGED : ENEMY_MELEE; // 33% de chance de ser ranged
             }
+            
+            // Inicializa o inimigo na posição calculada
+            init_enemy(&system->enemies[i], type, spawn_x, spawn_y);
+            system->enemies[i].facing_right = false; // Nascem virados para o jogador
+            
+            spawned_count++;
         }
-    }
-    
-    // Incrementa o número da wave
-    system->wave_number++;
-    
-    // Ativa o boss a cada 10 waves
-    if (system->wave_number % 10 == 0 && !system->boss.is_active) {
-        float boss_x = level->scroll_x + al_get_display_width(al_get_current_display()) + 200;
-        float boss_y = level->ground_level - 100; // Boss fica um pouco acima do chão
-        
-        init_boss(&system->boss);
-        system->boss.entity.x = boss_x;
-        system->boss.entity.y = boss_y;
-        system->boss.is_active = true;
-        update_hitbox_position(&system->boss.entity, false);
     }
 }
 
 void destroy_enemy_system(struct EnemySystem *system) {
-    // Descarrega os sprites de todos os inimigos que foram inicializados
     for (int i = 0; i < MAX_ENEMIES; i++) {
-        // Uma checagem simples para ver se o inimigo foi usado
         if (system->enemies[i].animations[ENEMY_ANIM_IDLE].frame_count > 0) {
              unload_enemy_sprites(&system->enemies[i]);
         }
     }
-    // Descarrega o boss
     if (system->boss.animations[ENEMY_ANIM_IDLE].frame_count > 0) {
         unload_enemy_sprites(&system->boss);
     }
@@ -157,7 +178,7 @@ void init_enemy(struct Enemy *enemy, EnemyType type, float x, float y) {
             enemy->damage = 20;
             enemy->speed = 80.0f;
             enemy->attack_range = 60.0f;
-            enemy->detection_range = 300.0f;
+            enemy->detection_range = DETECTION_RANGE;
             enemy->attack_cooldown = 1.2f;
             break;
             
@@ -169,7 +190,7 @@ void init_enemy(struct Enemy *enemy, EnemyType type, float x, float y) {
             enemy->damage = 15;
             enemy->speed = 60.0f;
             enemy->attack_range = 250.0f;
-            enemy->detection_range = 400.0f;
+            enemy->detection_range = DETECTION_RANGE;
             enemy->attack_cooldown = 2.0f;
             break;
             
@@ -299,98 +320,119 @@ void unload_enemy_sprites(struct Enemy *enemy) {
 
 // Controle
 
-void update_enemy(struct Enemy *enemy, struct Player *player, float delta_time) {
-    if (!enemy->is_active || enemy->is_dead) {
-        return;
+void update_enemy(struct Enemy *enemy, struct Player *player, struct GameLevel *level, float delta_time) {
+    if (!enemy->is_active) {
+        return; 
     }
 
-    // Atualiza cooldown de disparo
-    if (enemy->current_shoot_cooldown > 0) {
-        enemy->current_shoot_cooldown -= delta_time;
+    if (enemy->is_dead) {
+        bool death_anim_finished = (enemy->current_animation->current_frame == enemy->current_animation->frame_count - 1);
+        if (death_anim_finished) {
+            enemy->death_timer -= delta_time;
+            if (enemy->death_timer <= 0) {
+                enemy->is_active = false;
+            }
+        }
+    } else {
+        if (enemy->current_cooldown > 0) {
+            enemy->current_cooldown -= delta_time;
+        }
+        if (enemy->current_shoot_cooldown > 0) {
+            enemy->current_shoot_cooldown -= delta_time;
+        }
+        
+        enemy_ai(enemy, player, level, delta_time); 
     }
 
-    // Atualiza cooldown do ataque
-    if (enemy->current_cooldown > 0) {
-        enemy->current_cooldown -= delta_time;
-    }
-
-    // Executa a lógica de IA
-    enemy_ai(enemy, player, delta_time);
-
-    // Atualiza animação
-    if (enemy->current_animation) {
+    if (enemy->current_animation && enemy->current_animation->frame_count > 0) {
         enemy->current_animation->elapsed_time += delta_time;
         if (enemy->current_animation->elapsed_time >= enemy->current_animation->frame_delay) {
             enemy->current_animation->elapsed_time = 0;
-            
-            // Verifica se a animação tem frames antes de tentar acessá-los.
-            // Isso previne o crash de divisão por zero (% 0).
-            if (enemy->current_animation->frame_count > 0) {
+
+            if (enemy->is_dead && enemy->current_animation == &enemy->animations[ENEMY_ANIM_DEATH]) {
+                if (enemy->current_animation->current_frame < enemy->current_animation->frame_count - 1) {
+                    enemy->current_animation->current_frame++;
+                }
+            } else {
                 enemy->current_animation->current_frame = 
                     (enemy->current_animation->current_frame + 1) % enemy->current_animation->frame_count;
-            
-                // A verificação da animação de morte só faz sentido se o frame foi atualizado.
-                if (enemy->is_dead && 
-                    enemy->current_animation == &enemy->animations[ENEMY_ANIM_DEATH] &&
-                    enemy->current_animation->current_frame == enemy->current_animation->frame_count - 1) {
-                    enemy->is_active = false;
-                }
             }
         }
     }
 
-    // Atualiza posição da hitbox
     update_hitbox_position(&enemy->entity, enemy->facing_right);
 }
 
-void enemy_ai(struct Enemy *enemy, struct Player *player, float delta_time) {
-    float dx = player->entity.x - enemy->entity.x;
-    float dy = player->entity.y - enemy->entity.y;
-    float distance = sqrtf(dx*dx + dy*dy);
+void enemy_ai(struct Enemy *enemy, struct Player *player, struct GameLevel *level, float delta_time) {
+    if (enemy->current_animation == &enemy->animations[ENEMY_ANIM_HURT]) {
+        if (enemy->current_animation->current_frame >= enemy->current_animation->frame_count - 1) {
+            enemy->current_animation = &enemy->animations[ENEMY_ANIM_IDLE];
+        }
+        return;
+    }
 
-    // Atualiza direção que o inimigo está olhando
+    if (enemy->is_attacking) {
+        if (enemy->current_animation->current_frame >= enemy->current_animation->frame_count - 1) {
+            enemy->is_attacking = false;
+            enemy->current_animation = &enemy->animations[ENEMY_ANIM_IDLE];
+        }
+        return;
+    }
+    
+    // 1. Calcula a posição REAL do jogador no mundo do jogo
+    float player_world_x = player->entity.x + level->scroll_x;
+
+    // 2. Calcula a distância e a direção usando a coordenada de mundo do jogador
+    float dx = player_world_x - enemy->entity.x;
+    float distance = fabs(dx);
+
     enemy->facing_right = (dx > 0);
 
     // Comportamento baseado no tipo de inimigo
     switch(enemy->type) {
         case ENEMY_MELEE:
             if (distance < enemy->detection_range) {
+                // Se estiver fora do alcance de ataque, APROXIME-SE
                 if (distance > enemy->attack_range) {
-                    // Persegue o jogador
-                    float move_x = (dx / distance) * enemy->speed * delta_time;
+                    float move_x = (dx > 0 ? 1 : -1) * enemy->speed * delta_time;
                     enemy_move(enemy, move_x, 0);
                     enemy->current_animation = &enemy->animations[ENEMY_ANIM_WALK];
                 } 
+                // Se estiver no alcance e puder atacar, ATAQUE
                 else if (enemy->current_cooldown <= 0) {
-                    // Ataque melee
                     enemy_attack(enemy, player);
+                } 
+                // Se estiver no alcance mas esperando o cooldown, fique IDLE
+                else {
+                    enemy->current_animation = &enemy->animations[ENEMY_ANIM_IDLE];
                 }
             } else {
+                // Se o jogador estiver muito longe, fique IDLE
                 enemy->current_animation = &enemy->animations[ENEMY_ANIM_IDLE];
             }
             break;
 
         case ENEMY_RANGED:
-            if (distance < enemy->detection_range) {
-                // Mantém distância do jogador
+             if (distance < enemy->detection_range) {
+                // Se o jogador estiver perto demais, recue
                 if (distance < enemy->attack_range * 0.7f) {
-                    // Recua se o jogador chegar muito perto
-                    float move_x = (-dx / distance) * enemy->speed * delta_time;
+                    float move_x = (dx > 0 ? -1 : 1) * enemy->speed * delta_time;
                     enemy_move(enemy, move_x, 0);
                     enemy->current_animation = &enemy->animations[ENEMY_ANIM_WALK];
                 } 
-                else if (distance > enemy->attack_range * 1.2f) {
-                    // Aproxima se estiver muito longe
-                    float move_x = (dx / distance) * enemy->speed * delta_time;
+                // Se estiver muito longe para atirar, aproxime-se
+                else if (distance > enemy->attack_range) { 
+                    float move_x = (dx > 0 ? 1 : -1) * enemy->speed * delta_time;
                     enemy_move(enemy, move_x, 0);
                     enemy->current_animation = &enemy->animations[ENEMY_ANIM_WALK];
                 }
+                // Se estiver na distância ideal e puder atacar, ATAQUE
                 else if (enemy->current_cooldown <= 0) {
-                    // Ataque ranged
-                    enemy->current_animation = &enemy->animations[ENEMY_ANIM_ATTACK];
-                    // Aqui você chamaria a função para criar um novo projétil
-                    // spawn_enemy_projectile(projectile_system, enemy);
-                    enemy->current_cooldown = enemy->attack_cooldown;
+                    enemy_attack(enemy, player);
+                } 
+                // Se na distância ideal mas esperando cooldown, fique IDLE
+                else {
+                    enemy->current_animation = &enemy->animations[ENEMY_ANIM_IDLE];
                 }
             } else {
                 enemy->current_animation = &enemy->animations[ENEMY_ANIM_IDLE];
@@ -398,7 +440,7 @@ void enemy_ai(struct Enemy *enemy, struct Player *player, float delta_time) {
             break;
 
         case ENEMY_BOSS:
-            // Comportamento especial será implementado em update_boss()
+            // update_boss() cuida da IA do chefe
             break;
     }
 }
@@ -411,15 +453,20 @@ void enemy_move(struct Enemy *enemy, float dx, float dy) {
 void enemy_attack(struct Enemy *enemy, struct Player *player) {
     enemy->is_attacking = true;
     enemy->current_animation = &enemy->animations[ENEMY_ANIM_ATTACK];
+    enemy->current_animation->current_frame = 0; // Reinicia a animação de ataque
+    enemy->current_animation->elapsed_time = 0;
     enemy->current_cooldown = enemy->attack_cooldown;
     
-    // Verifica se o jogador está dentro do range de ataque
-    float dx = player->entity.x - enemy->entity.x;
-    float distance = fabs(dx);
-    
-    if (distance <= enemy->attack_range) {
-        damage_player(player, enemy->damage);
+    // Para inimigos melee, o dano pode ser aplicado em um frame específico da animação.
+    // Para simplificar por agora, aplicamos o dano se o jogador estiver no alcance no início do ataque.
+    if (enemy->type == ENEMY_MELEE) {
+        float distance = fabs(player->entity.x - enemy->entity.x);
+        if (distance <= enemy->attack_range) {
+            damage_player(player, enemy->damage);
+        }
     }
+    // Para inimigos RANGED, a lógica de spawnar projétil seria chamada aqui ou na IA
+    // baseada em um frame da animação de ataque.
 }
 
 void enemy_ranged_attack(struct Enemy *enemy, struct ProjectileSystem *projectile_system) {
@@ -445,15 +492,19 @@ void enemy_ranged_attack(struct Enemy *enemy, struct ProjectileSystem *projectil
 
 // Estado
 
-void damage_enemy(struct Enemy *enemy, int amount) {
+void damage_enemy(struct Enemy *enemy, int amount, struct Player *player) {
     if (enemy->is_dead) return;
     
     enemy->health -= amount;
-    enemy->current_animation = &enemy->animations[ENEMY_ANIM_HURT];
     
-    if (enemy->health <= 0) {
-        enemy->health = 0;
-        kill_enemy(enemy);
+    // Se ainda estiver vivo após o dano, executa o hurt
+    if (enemy->health > 0) {
+        enemy->current_animation = &enemy->animations[ENEMY_ANIM_HURT];
+        enemy->current_animation->current_frame = 0;
+        enemy->current_animation->elapsed_time = 0;
+    } else {
+        // Se o dano for fatal, chama a função de morte, passando o jogador para dar os pontos
+        kill_enemy(enemy, player);
     }
 }
 
@@ -461,11 +512,31 @@ bool is_enemy_dead(struct Enemy *enemy) {
     return enemy->is_dead || enemy->health <= 0;
 }
 
-void kill_enemy(struct Enemy *enemy) {
+void kill_enemy(struct Enemy *enemy, struct Player *player) {
+    if (enemy->is_dead) return;
+
+    // --- LÓGICA DE PONTUAÇÃO ---
+    switch(enemy->type) {
+        case ENEMY_MELEE:
+            player->score += 10;
+            break;
+        case ENEMY_RANGED:
+            player->score += 15;
+            break;
+        case ENEMY_BOSS:
+            player->score += 100;
+            break;
+    }
+
     enemy->is_dead = true;
+    enemy->health = 0; 
+    enemy->entity.vel_x = 0; 
+    
     enemy->current_animation = &enemy->animations[ENEMY_ANIM_DEATH];
     enemy->current_animation->current_frame = 0;
     enemy->current_animation->elapsed_time = 0;
+
+    enemy->death_timer = DEATH_FADEOUT_DELAY;
 }
 
 // Renderização
