@@ -23,13 +23,13 @@ void init_enemy_system(struct EnemySystem *system) {
     srand(time(NULL));
 }
 
-void update_enemy_system(struct EnemySystem *system, struct Player *player, struct GameLevel *level, float delta_time) {
+void update_enemy_system(struct EnemySystem *system, struct Player *player, struct GameLevel *level, struct ProjectileSystem *projectile_system, float delta_time) {
     
     // 1. ATUALIZAÇÃO DOS INIMIGOS E BOSS ATIVOS
     // Primeiro, atualiza o estado de todos os inimigos que já estão na tela.
     for (int i = 0; i < MAX_ENEMIES; i++) {
         if (system->enemies[i].is_active) {
-            update_enemy(&system->enemies[i], player, level, delta_time);
+            update_enemy(&system->enemies[i], player, level, projectile_system, delta_time);
         }
     }
 
@@ -203,7 +203,7 @@ void init_enemy(struct Enemy *enemy, EnemyType type, float x, float y) {
     
     // Configuração da hitbox (proporcional ao tamanho do sprite)
     enemy->entity.hitbox.width = enemy->entity.width * 0.7f;
-    enemy->entity.hitbox.height = enemy->entity.height * 0.8f;
+    enemy->entity.hitbox.height = enemy->entity.height;
     enemy->entity.hitbox.offset_x = ENEMY_HITBOX_OFFSET_X;
     enemy->entity.hitbox.offset_y = ENEMY_HITBOX_OFFSET_Y;
     
@@ -320,9 +320,19 @@ void unload_enemy_sprites(struct Enemy *enemy) {
 
 // Controle
 
-void update_enemy(struct Enemy *enemy, struct Player *player, struct GameLevel *level, float delta_time) {
+void update_enemy(struct Enemy *enemy, struct Player *player, struct GameLevel *level, struct ProjectileSystem *projectile_system, float delta_time) {
     if (!enemy->is_active) {
         return; 
+    }
+
+    if (enemy->is_attacking && enemy->type == ENEMY_RANGED &&
+        enemy->current_animation->current_frame == 3) { // Dispara no 4º frame (índice 3)
+        
+        // Verifica se o cooldown de tiro já passou para evitar múltiplos disparos por animação
+        if (enemy->current_shoot_cooldown <= 0) {
+            spawn_enemy_projectile(projectile_system, enemy);
+            enemy->current_shoot_cooldown = enemy->attack_cooldown; // Usa o cooldown de ataque 
+        }
     }
 
     if (enemy->is_dead) {
@@ -341,7 +351,7 @@ void update_enemy(struct Enemy *enemy, struct Player *player, struct GameLevel *
             enemy->current_shoot_cooldown -= delta_time;
         }
         
-        enemy_ai(enemy, player, level, delta_time); 
+        enemy_ai(enemy, player, level, projectile_system, delta_time); 
     }
 
     if (enemy->current_animation && enemy->current_animation->frame_count > 0) {
@@ -363,7 +373,7 @@ void update_enemy(struct Enemy *enemy, struct Player *player, struct GameLevel *
     update_hitbox_position(&enemy->entity, enemy->facing_right);
 }
 
-void enemy_ai(struct Enemy *enemy, struct Player *player, struct GameLevel *level, float delta_time) {
+void enemy_ai(struct Enemy *enemy, struct Player *player, struct GameLevel *level, struct ProjectileSystem *projectile_system, float delta_time) {
     if (enemy->current_animation == &enemy->animations[ENEMY_ANIM_HURT]) {
         if (enemy->current_animation->current_frame >= enemy->current_animation->frame_count - 1) {
             enemy->current_animation = &enemy->animations[ENEMY_ANIM_IDLE];
@@ -400,7 +410,7 @@ void enemy_ai(struct Enemy *enemy, struct Player *player, struct GameLevel *leve
                 } 
                 // Se estiver no alcance e puder atacar, ATAQUE
                 else if (enemy->current_cooldown <= 0) {
-                    enemy_attack(enemy, player);
+                    enemy_attack(enemy, player, level, projectile_system);
                 } 
                 // Se estiver no alcance mas esperando o cooldown, fique IDLE
                 else {
@@ -428,7 +438,7 @@ void enemy_ai(struct Enemy *enemy, struct Player *player, struct GameLevel *leve
                 }
                 // Se estiver na distância ideal e puder atacar, ATAQUE
                 else if (enemy->current_cooldown <= 0) {
-                    enemy_attack(enemy, player);
+                    enemy_attack(enemy, player, level, projectile_system);
                 } 
                 // Se na distância ideal mas esperando cooldown, IDLE
                 else {
@@ -450,17 +460,17 @@ void enemy_move(struct Enemy *enemy, float dx, float dy) {
     enemy->entity.y += dy;
 }
 
-void enemy_attack(struct Enemy *enemy, struct Player *player) {
+void enemy_attack(struct Enemy *enemy, struct Player *player, struct GameLevel *level, struct ProjectileSystem *projectile_system) {
     enemy->is_attacking = true;
     enemy->current_animation = &enemy->animations[ENEMY_ANIM_ATTACK];
-    enemy->current_animation->current_frame = 0; // Reinicia a animação de ataque
+    enemy->current_animation->current_frame = 0;
     enemy->current_animation->elapsed_time = 0;
     enemy->current_cooldown = enemy->attack_cooldown;
     
-    // Para inimigos melee, o dano pode ser aplicado em um frame específico da animação.
-    // Para simplificar por agora, aplicamos o dano se o jogador estiver no alcance no início do ataque.
+    // Inimigos MELEE causam dano instantâneo se estiverem no alcance
     if (enemy->type == ENEMY_MELEE) {
-        float distance = fabs(player->entity.x - enemy->entity.x);
+        float player_world_x = player->entity.x + level->scroll_x;
+        float distance = fabs(player_world_x - enemy->entity.x);
         if (distance <= enemy->attack_range) {
             damage_player(player, enemy->damage);
         }

@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <math.h>
 #include <sys/stat.h> 
 #include <allegro5/allegro_primitives.h>
 
@@ -55,7 +56,12 @@ void init_player (struct Player * player) {
     // Disparos
     player->shoot_cooldown = PLAYER_PROJECTILE_COOLDOWN;
     player->current_shoot_cooldown = 0;
-    player->can_shoot = true;
+
+    // Reload
+    player->max_ammo = MAX_AMMO;
+    player->current_ammo = MAX_AMMO;
+    player->is_reloading = false;
+    player->current_reload_time = 0.0f;
 
     // Inicializa animações
     player->idle.frame_delay = 0.1f;
@@ -77,6 +83,10 @@ void init_player (struct Player * player) {
     player->shooting.frame_delay = 0.1f;
     player->shooting.elapsed_time = 0;
     player->shooting.current_frame = 0;
+
+    player->reloading.frame_delay = 0.1f;
+    player->reloading.elapsed_time = 0;
+    player->reloading.current_frame = 0;
     
     player->crouching.frame_delay = 0.1f;
     player->crouching.elapsed_time = 0;
@@ -102,15 +112,16 @@ void load_player_sprites(struct Player *player) {
         "Run.png",     // 2
         "Jump.png",    // 3
         "Shot_1.png",  // 4
-        "Crouch.png",  // 5 (opcional)
-        "Crouch_Shot.png" // 6 (opcional)
+        "Recharge.png",// 5
+        "Crouch.png",  // 6 (opcional)
+        "Crouch_Shot.png" // 7 (opcional)
     };
 
     SoldierType type = player->soldier_type;
     char full_path[256];
 
     // Carrega cada animação
-    for (int i = 0; i < 5; i++) { // Idle, Walk, Run, Jump, Shoot
+    for (int i = 0; i < 6; i++) { // Idle, Walk, Run, Jump, Shoot, Reload
         snprintf(full_path, sizeof(full_path), "%s%s", soldier_folders[type], animation_files[i]);
         
         struct Animation* target_anim = NULL;
@@ -120,6 +131,7 @@ void load_player_sprites(struct Player *player) {
             case 2: target_anim = &player->running; break;
             case 3: target_anim = &player->jumping; break;
             case 4: target_anim = &player->shooting; break;
+            case 5: target_anim = &player->reloading; break;
         }
 
         if (target_anim) {
@@ -131,12 +143,12 @@ void load_player_sprites(struct Player *player) {
     // Carrega animações opcionais (crouch)
     if (soldier_supports_crouch(type)) {
         // Crouch
-        snprintf(full_path, sizeof(full_path), "%s%s", soldier_folders[type], animation_files[5]);
+        snprintf(full_path, sizeof(full_path), "%s%s", soldier_folders[type], animation_files[6]);
         split_spritesheet(full_path, SPRITE_SIZE, SPRITE_SIZE,
                          player->crouching.frames, &player->crouching.frame_count);
 
         // Crouch Shot (se existir)
-        snprintf(full_path, sizeof(full_path), "%s%s", soldier_folders[type], animation_files[6]);
+        snprintf(full_path, sizeof(full_path), "%s%s", soldier_folders[type], animation_files[7]);
         if (file_exists(full_path)) {
             split_spritesheet(full_path, SPRITE_SIZE, SPRITE_SIZE,
                             player->crouch_shot.frames, &player->crouch_shot.frame_count);
@@ -228,6 +240,9 @@ void handle_player_input(struct Player *player, ALLEGRO_EVENT *event, struct Gam
             case ALLEGRO_KEY_SPACE:
                 player->is_shooting = true; // Atirar
                 break;
+            case ALLEGRO_KEY_R:
+                start_reload(player);
+                break;
             case ALLEGRO_KEY_H:
                 player->hitbox_show = !player->hitbox_show; // Alterna exibição da hitbox
                 level->draw_ground_line = !level->draw_ground_line; 
@@ -268,6 +283,17 @@ void update_player(struct Player *player, float delta_time, struct GameLevel *le
         return;
     }
 
+    if (player->is_reloading) {
+        player->current_reload_time -= delta_time;
+        if (player->current_reload_time <= 0) {
+            // Terminou de recarregar
+            player->is_reloading = false;
+            player->current_ammo = player->max_ammo;
+            player->current_animation = &player->idle;
+            printf("Recarga completa!\n");
+        }
+    }
+
     // Aplica gravidade e atualiza posição Y
     player->entity.vel_y += GRAVITY * delta_time;
     player->entity.y += player->entity.vel_y * delta_time;
@@ -283,27 +309,35 @@ void update_player(struct Player *player, float delta_time, struct GameLevel *le
         player->current_shoot_cooldown -= delta_time;
     }
 
-    if (player->is_shooting && player->current_shoot_cooldown <= 0) {
+    // Condições para atirar: quer atirar, cooldown zerado, TEM MUNIÇÃO e NÃO ESTÁ RECARREGANDO
+    if (player->is_shooting && player->current_shoot_cooldown <= 0 && player->current_ammo > 0 && !player->is_reloading) {
         spawn_player_projectile(projectile_system, player, level);
-
         player->current_shoot_cooldown = PLAYER_PROJECTILE_COOLDOWN;
+        player->current_ammo--; 
+
+        printf("Balas: %d/%d\n", player->current_ammo, player->max_ammo);
+
+        // Inicia a recarga automática se sem municao
+        if (player->current_ammo <= 0) {
+            start_reload(player);
+        }
     }
 
-    // Máquina de estados para animações
-    if (player->is_crouching) {
-        player->current_animation = player->is_shooting ? &player->crouch_shot : &player->crouching;
+    // Maquina de estados para animações
+    if (player->is_reloading) {
+        player->current_animation = &player->reloading;
+    }
+    else if (player->is_crouching) {
+        player->current_animation = player->is_shooting && player->current_ammo > 0 ? &player->crouch_shot : &player->crouching;
     } 
-    else if (player->is_shooting) {
+    else if (player->is_shooting && player->current_ammo > 0) {
         player->current_animation = &player->shooting;
     }
     else if (player->is_jumping) {
         player->current_animation = &player->jumping;
     } 
-    // Vai definir uma velocidade mínima para estar correndo
-    else if (player->entity.vel_x > 0.1f || player->entity.vel_x < -0.1f) { 
-        player->current_animation = (player->entity.vel_x > RUN_THRESHOLD || player->entity.vel_x < -RUN_THRESHOLD) 
-                                 ? &player->running 
-                                 : &player->walking;
+    else if (fabs(player->entity.vel_x) > 0.1f) { 
+        player->current_animation = (fabs(player->entity.vel_x) > RUN_THRESHOLD) ? &player->running : &player->walking;
     } 
     else {
         player->current_animation = &player->idle;
@@ -348,6 +382,17 @@ void damage_player(struct Player *player, int amount) {
     if (player->health < 0) {
         player->health = 0; // Não deixa a vida ficar negativa
     }
+}
+
+void start_reload(struct Player *player) {
+    // Não recarrega se já estiver recarregando ou se o pente estiver cheio
+    if (player->is_reloading || player->current_ammo == player->max_ammo) {
+        return;
+    }
+    printf("Recarregando!\n");
+    player->is_reloading = true;
+    player->current_reload_time = RELOAD_TIME;
+    player->current_animation = &player->reloading; // Troca para a animação de recarga
 }
 
 

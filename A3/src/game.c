@@ -306,7 +306,8 @@ void draw_hud(struct Player *player, struct GameLevel *level) {
     int seconds = total_seconds % 60;
 
     ALLEGRO_COLOR text_color = al_map_rgb(255, 255, 255);
-    
+    ALLEGRO_COLOR ammo_color = al_map_rgb(255, 255, 0);
+
     // Desenha o Score no canto superior esquerdo
     al_draw_textf(level->hud_font, text_color, 20, 10, ALLEGRO_ALIGN_LEFT, 
                   "SCORE: %06d", player->score);
@@ -314,5 +315,14 @@ void draw_hud(struct Player *player, struct GameLevel *level) {
     // Desenha o Tempo no canto superior direito
     int screen_w = al_get_display_width(al_get_current_display());
     al_draw_textf(level->hud_font, text_color, screen_w - 20, 10, ALLEGRO_ALIGN_RIGHT, 
-                  "TEMPO: %02d:%02d", minutes, seconds);
+                  "TIME: %02d:%02d", minutes, seconds);
+
+    // Se estiver recarregando, mostra a mensagem
+    if(player->is_reloading) {
+         al_draw_text(level->hud_font, ammo_color, 20, 50, ALLEGRO_ALIGN_LEFT, "RELOADING...");
+    } else {
+        // Senão, mostra a contagem de balas
+        al_draw_textf(level->hud_font, ammo_color, 20, 50, ALLEGRO_ALIGN_LEFT, 
+                      "AMMO: %02d / %d", player->current_ammo, player->max_ammo);
+    }
 }

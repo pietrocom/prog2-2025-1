@@ -18,6 +18,9 @@
 
 #define RUN_THRESHOLD 3.0f
 
+#define MAX_AMMO 20
+#define RELOAD_TIME 1.5f
+
 // ---- Forward declarations ----
 struct ProjectileSystem;
 struct GameLevel;
@@ -50,6 +53,7 @@ struct Player {
     struct Animation running;
     struct Animation jumping;
     struct Animation shooting;
+    struct Animation reloading;
     struct Animation crouching; 
     struct Animation crouch_shot;
 
@@ -58,13 +62,18 @@ struct Player {
     bool is_jumping;
     bool is_crouching;
     bool is_shooting;
+    bool is_reloading;
     bool facing_right;
     bool hitbox_show; 
 
     // Sistema de projetéis
     float shoot_cooldown;
     float current_shoot_cooldown;
-    bool can_shoot;
+
+    // Sistema de recharge
+    int current_ammo; 
+    int max_ammo; 
+    float current_reload_time;
 };
 
 
@@ -83,6 +92,7 @@ void handle_player_ground_collision(struct Player *player, struct GameLevel *lev
 // Estado
 void damage_player(struct Player *player, int amount);
 bool is_player_dead(struct Player *player);
+void start_reload(struct Player *player);
 
 // Renderização
 void draw_player(struct Player *player);

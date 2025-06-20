@@ -106,7 +106,7 @@ int main() {
                 
                 // Atualiza entidades
                 update_player(&player, 1.0/FPS, &level, &projectile_system);
-                update_enemy_system(&enemy_system, &player, &level, 1.0/FPS);
+                update_enemy_system(&enemy_system, &player, &level, &projectile_system, 1.0/FPS);
                 update_projectile_system(&projectile_system, 1.0/FPS, &player, &enemy_system);
                 update_game(&player, &level, 1.0/FPS);
                 

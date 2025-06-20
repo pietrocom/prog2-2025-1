@@ -95,7 +95,7 @@ struct EnemySystem {
 
 // Sistema
 void init_enemy_system(struct EnemySystem *system);
-void update_enemy_system(struct EnemySystem *system, struct Player *player, struct GameLevel *level, float delta_time);
+void update_enemy_system(struct EnemySystem *system, struct Player *player, struct GameLevel *level, struct ProjectileSystem *projectile_system, float delta_time);
 void spawn_enemy_wave(struct EnemySystem *system, struct GameLevel *level);
 void destroy_enemy_system(struct EnemySystem *system);
 
@@ -105,10 +105,10 @@ void load_enemy_sprites(struct Enemy *enemy, EnemyType type);
 void unload_enemy_sprites(struct Enemy *enemy);
 
 // Controle
-void update_enemy(struct Enemy *enemy, struct Player *player, struct GameLevel *level, float delta_time);
-void enemy_ai(struct Enemy *enemy, struct Player *player, struct GameLevel *level, float delta_time);
+void update_enemy(struct Enemy *enemy, struct Player *player, struct GameLevel *level, struct ProjectileSystem *projectile_system, float delta_time);
+void enemy_ai(struct Enemy *enemy, struct Player *player, struct GameLevel *level, struct ProjectileSystem *projectile_system, float delta_time);
 void enemy_move(struct Enemy *enemy, float dx, float dy);
-void enemy_attack(struct Enemy *enemy, struct Player *player);
+void enemy_attack(struct Enemy *enemy, struct Player *player, struct GameLevel *level, struct ProjectileSystem *projectile_system);
 void enemy_ranged_attack(struct Enemy *enemy, struct ProjectileSystem *projectile_system);
 
 // Estado
