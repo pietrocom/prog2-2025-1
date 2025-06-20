@@ -257,5 +257,6 @@ void destroy_projectile_system(struct ProjectileSystem *system) {
     clear_projectiles(system);
     if (system->player_bullet_sprite) {
         al_destroy_bitmap(system->player_bullet_sprite);
+        system->player_bullet_sprite = NULL;
     }
 }

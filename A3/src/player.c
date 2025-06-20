@@ -164,23 +164,23 @@ void load_player_sprites(struct Player *player) {
 }
 
 void unload_player_sprites(struct Player *player) {
-    // Array para simplificar a limpeza de todas as animações
     struct Animation* all_animations[] = {
         &player->idle, &player->walking, &player->running,
-        &player->jumping, &player->shooting, 
+        &player->jumping, &player->shooting, &player->reloading,
         &player->crouching, &player->crouch_shot
     };
+    int num_animations = sizeof(all_animations) / sizeof(all_animations[0]);
 
-    // Uma lista de tamanho máximo
-    ALLEGRO_BITMAP* freed_pointers[MAX_FRAMES * 7] = { NULL }; 
+    // Lista para rastrear ponteiros já liberados e evitar "double free"
+    ALLEGRO_BITMAP* freed_pointers[MAX_FRAMES * num_animations];
     int freed_count = 0;
+    for(int i = 0; i < MAX_FRAMES * num_animations; i++) freed_pointers[i] = NULL;
 
-    for (int anim_idx = 0; anim_idx < 7; anim_idx++) {
+    for (int anim_idx = 0; anim_idx < num_animations; anim_idx++) {
         struct Animation* anim = all_animations[anim_idx];
         for (int i = 0; i < anim->frame_count; i++) {
             if (anim->frames[i]) {
                 bool already_freed = false;
-                // Verifica se este ponteiro já foi liberado
                 for (int j = 0; j < freed_count; j++) {
                     if (freed_pointers[j] == anim->frames[i]) {
                         already_freed = true;
@@ -190,15 +190,14 @@ void unload_player_sprites(struct Player *player) {
 
                 if (!already_freed) {
                     al_destroy_bitmap(anim->frames[i]);
-                    // Adiciona o ponteiro à lista de ponteiros já liberados
-                    if (freed_count < MAX_FRAMES * 7) {
+                    if (freed_count < MAX_FRAMES * num_animations) {
                         freed_pointers[freed_count++] = anim->frames[i];
                     }
                 }
-                // Define como NULL para evitar problemas futuros
                 anim->frames[i] = NULL;
             }
         }
+        anim->frame_count = 0;
     }
 }
 

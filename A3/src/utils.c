@@ -56,7 +56,6 @@ ALLEGRO_DISPLAY * create_display (int width, int height) {
 void split_spritesheet(const char *filename, int frame_width, int frame_height,
                       ALLEGRO_BITMAP **frames, int *frame_count) 
 {
-    // Carrega a spritesheet completa
     ALLEGRO_BITMAP *sheet = al_load_bitmap(filename);
     if (!sheet) {
         fprintf(stderr, "Failed to load spritesheet: %s\n", filename);
@@ -64,43 +63,36 @@ void split_spritesheet(const char *filename, int frame_width, int frame_height,
         return;
     }
 
-    // Calcula quantos frames existem na imagem
     int sheet_width = al_get_bitmap_width(sheet);
     *frame_count = sheet_width / frame_width;
 
-    // Salva o alvo de desenho atual para restaurá-lo depois
     ALLEGRO_BITMAP *old_target = al_get_target_bitmap();
 
     for (int i = 0; i < *frame_count; i++) {
-        // --> CORREÇÃO 1: Evita o buffer overflow se o spritesheet for muito grande
         if (i >= MAX_FRAMES) {
-            fprintf(stderr, "Warning: Spritesheet %s has more frames than MAX_FRAMES (%d). Truncating.\n", filename, MAX_FRAMES);
-            *frame_count = MAX_FRAMES; // Corrige a contagem de frames para o valor máximo permitido
-            break; // Sai do loop para não escrever fora da memória do array
+            fprintf(stderr, "Warning: Spritesheet %s has more frames than MAX_FRAMES. Truncating.\n", filename);
+            *frame_count = MAX_FRAMES;
+            break;
         }
 
-        // Cria um bitmap novo e independente para cada frame
         frames[i] = al_create_bitmap(frame_width, frame_height);
         if (!frames[i]) {
             fprintf(stderr, "Failed to create frame %d for %s\n", i, filename);
             continue;
         }
 
-        // Define o novo bitmap como alvo do desenho
         al_set_target_bitmap(frames[i]);
         
-        // --> CORREÇÃO 2: Limpa o novo bitmap com transparência para evitar "lixo" gráfico (chiado)
+        // CORREÇÃO: Limpa o bitmap com transparência para evitar "lixo" gráfico.
         al_clear_to_color(al_map_rgba(0, 0, 0, 0)); 
 
-        // Copia a região correta da spritesheet para o novo frame
         al_draw_bitmap_region(sheet, i * frame_width, 0, 
                              frame_width, frame_height,
                              0, 0, 0);
     }
 
-    // Restaura o alvo de desenho original
     al_set_target_bitmap(old_target);
-    // Libera a memória da spritesheet original, que não é mais necessária
+    
     al_destroy_bitmap(sheet);
 }
 

@@ -275,16 +275,15 @@ void load_enemy_sprites(struct Enemy *enemy, EnemyType type) {
 }
 
 void unload_enemy_sprites(struct Enemy *enemy) {
-    // Lista para rastrear ponteiros de bitmap que já foram liberados, evitando "double free".
-    // O tamanho máximo é o número de tipos de animação vezes o máximo de frames.
-    ALLEGRO_BITMAP* freed_pointers[ENEMY_ANIM_COUNT * MAX_FRAMES] = {NULL};
-    int freed_count = 0;
-
-    // Array para iterar sobre todas as animações do inimigo
     struct Animation* all_animations[ENEMY_ANIM_COUNT];
     for (int i = 0; i < ENEMY_ANIM_COUNT; i++) {
         all_animations[i] = &enemy->animations[i];
     }
+
+    // Lista para rastrear ponteiros já liberados e evitar "double free"
+    ALLEGRO_BITMAP* freed_pointers[ENEMY_ANIM_COUNT * MAX_FRAMES];
+    int freed_count = 0;
+    for(int i = 0; i < ENEMY_ANIM_COUNT * MAX_FRAMES; i++) freed_pointers[i] = NULL;
 
     for (int anim_idx = 0; anim_idx < ENEMY_ANIM_COUNT; anim_idx++) {
         struct Animation* anim = all_animations[anim_idx];
@@ -292,8 +291,6 @@ void unload_enemy_sprites(struct Enemy *enemy) {
         for (int i = 0; i < anim->frame_count; i++) {
             if (anim->frames[i]) {
                 bool already_freed = false;
-                
-                // 1. Verifica se este ponteiro já está na nossa lista de liberados
                 for (int j = 0; j < freed_count; j++) {
                     if (freed_pointers[j] == anim->frames[i]) {
                         already_freed = true;
@@ -301,16 +298,12 @@ void unload_enemy_sprites(struct Enemy *enemy) {
                     }
                 }
 
-                // 2. Se não foi liberado ainda, libere-o e adicione à lista
                 if (!already_freed) {
                     al_destroy_bitmap(anim->frames[i]);
-                    
                     if (freed_count < ENEMY_ANIM_COUNT * MAX_FRAMES) {
                         freed_pointers[freed_count++] = anim->frames[i];
                     }
                 }
-                
-                // 3. Define o ponteiro como NULL para segurança
                 anim->frames[i] = NULL;
             }
         }
