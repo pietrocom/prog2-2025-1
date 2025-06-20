@@ -84,7 +84,7 @@ void init_player (struct Player * player) {
     player->shooting.elapsed_time = 0;
     player->shooting.current_frame = 0;
 
-    player->reloading.frame_delay = 0.1f;
+    player->reloading.frame_delay = 0.22f;
     player->reloading.elapsed_time = 0;
     player->reloading.current_frame = 0;
     
@@ -301,23 +301,25 @@ void update_player(struct Player *player, float delta_time, struct GameLevel *le
     // Checa colisão com o chão ANTES de atualizar a hitbox
     handle_player_ground_collision(player, level);
 
+    // Lógica de hitbox caso esteja agachado
+    if (player->is_crouching) {
+        player->entity.hitbox.height = PLAYER_CROUCH_HEIGHT;
+    } else {
+        player->entity.hitbox.height = PLAYER_HEIGHT;
+    }
     // Atualiza a posição da hitbox com base na posição final da entidade
     update_hitbox_position(&player->entity, player->facing_right);
 
-    // Lógica para disparos
+    // Lógica dos disparos
     if (player->current_shoot_cooldown > 0) {
         player->current_shoot_cooldown -= delta_time;
     }
-
     // Condições para atirar: quer atirar, cooldown zerado, TEM MUNIÇÃO e NÃO ESTÁ RECARREGANDO
     if (player->is_shooting && player->current_shoot_cooldown <= 0 && player->current_ammo > 0 && !player->is_reloading) {
         spawn_player_projectile(projectile_system, player, level);
         player->current_shoot_cooldown = PLAYER_PROJECTILE_COOLDOWN;
         player->current_ammo--; 
 
-        printf("Balas: %d/%d\n", player->current_ammo, player->max_ammo);
-
-        // Inicia a recarga automática se sem municao
         if (player->current_ammo <= 0) {
             start_reload(player);
         }

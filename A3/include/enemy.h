@@ -74,6 +74,7 @@ struct Enemy {
     bool is_attacking;
     bool hitbox_show;
     bool is_dead;
+    bool has_been_aggroed;
     float death_timer;
 
     // Sistema de projetéis

@@ -167,6 +167,7 @@ void init_enemy(struct Enemy *enemy, EnemyType type, float x, float y) {
     enemy->type = type;
     enemy->is_active = true;
     enemy->facing_right = false;
+    enemy->has_been_aggroed = false;
     
     // Configuração específica por tipo (seu código original)
     switch(type) {
@@ -389,10 +390,9 @@ void enemy_ai(struct Enemy *enemy, struct Player *player, struct GameLevel *leve
         return;
     }
     
-    // 1. Calcula a posição REAL do jogador no mundo do jogo
+    // Calcula a posição real do jogador no mundo do jogo
     float player_world_x = player->entity.x + level->scroll_x;
 
-    // 2. Calcula a distância e a direção usando a coordenada de mundo do jogador
     float dx = player_world_x - enemy->entity.x;
     float distance = fabs(dx);
 
@@ -401,7 +401,7 @@ void enemy_ai(struct Enemy *enemy, struct Player *player, struct GameLevel *leve
     // Comportamento baseado no tipo de inimigo
     switch(enemy->type) {
         case ENEMY_MELEE:
-            if (distance < enemy->detection_range) {
+            if (distance < enemy->detection_range || enemy->has_been_aggroed) {
                 // Se estiver fora do alcance de ataque, APROXIME-SE
                 if (distance > enemy->attack_range) {
                     float move_x = (dx > 0 ? 1 : -1) * enemy->speed * delta_time;
@@ -423,7 +423,7 @@ void enemy_ai(struct Enemy *enemy, struct Player *player, struct GameLevel *leve
             break;
 
         case ENEMY_RANGED:
-             if (distance < enemy->detection_range) {
+             if (distance < enemy->detection_range || enemy->has_been_aggroed) {
                 // Se o jogador estiver perto demais, recue
                 if (distance < enemy->attack_range * 0.7f) {
                     float move_x = (dx > 0 ? -1 : 1) * enemy->speed * delta_time;
@@ -507,6 +507,8 @@ void damage_enemy(struct Enemy *enemy, int amount, struct Player *player) {
     
     enemy->health -= amount;
     
+    enemy->has_been_aggroed = true;
+
     // Se ainda estiver vivo após o dano, executa o hurt
     if (enemy->health > 0) {
         enemy->current_animation = &enemy->animations[ENEMY_ANIM_HURT];

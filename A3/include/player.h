@@ -6,12 +6,6 @@
 #define PLAYER_WIDTH 40
 #define PLAYER_HEIGHT 105
 
-#define PLAYER_HITBOX_OFFSET_X 5.0f  
-#define PLAYER_HITBOX_OFFSET_Y 0.0f  
-
-#define PLAYER_SPRITE_OFFSET_X 0.0f
-#define PLAYER_SPRITE_OFFSET_Y 0.0f
-
 #define PLAYER_SCALE 1.7f
 
 #define MAX_FRAMES 10 
@@ -19,11 +13,29 @@
 #define RUN_THRESHOLD 3.0f
 
 #define MAX_AMMO 20
-#define RELOAD_TIME 1.5f
+#define RELOAD_TIME 2.25f
+
+// ---- Constantes de ajuste ----
+
+#define PLAYER_HITBOX_OFFSET_X 0.0f  
+#define PLAYER_HITBOX_OFFSET_Y 0.0f  
+
+#define PLAYER_SPRITE_OFFSET_X 0.0f
+#define PLAYER_SPRITE_OFFSET_Y 0.0f
+
+#define PLAYER_CROUCH_HEIGHT (PLAYER_HEIGHT * 0.8f) 
+
+#define STANDING_PROJECTILE_OFFSET_Y (PLAYER_HEIGHT * 0.75f)
+
+#define CROUCH_PROJECTILE_OFFSET_Y (PLAYER_HEIGHT * 0.55f)
+
 
 // ---- Forward declarations ----
+
 struct ProjectileSystem;
 struct GameLevel;
+
+
 
 
 // ---- Estruturas de dados básica ----

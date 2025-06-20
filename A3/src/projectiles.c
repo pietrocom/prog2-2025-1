@@ -140,7 +140,14 @@ void spawn_player_projectile(struct ProjectileSystem *system, struct Player *pla
         (player->entity.width / 2) : 
         (-player->entity.width / 2);
     
-    float spawn_y = player->entity.y - (player->entity.height) + PLAYER_PROJECTILE_OFFSET_Y;
+    // Usa um offset vertical diferente para cada estado
+    float vertical_offset = player->is_crouching ?
+        CROUCH_PROJECTILE_OFFSET_Y :
+        STANDING_PROJECTILE_OFFSET_Y;
+
+    // A posição Y é a base do jogador menos o offset vertical
+    float spawn_y = player->entity.y - vertical_offset;
+
 
     spawn_projectile(
         system,
