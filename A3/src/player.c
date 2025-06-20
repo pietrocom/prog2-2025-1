@@ -29,8 +29,8 @@ void init_player (struct Player * player) {
 
     player->entity.hitbox.width = PLAYER_WIDTH; 
     player->entity.hitbox.height = PLAYER_HEIGHT; 
-    player->entity.hitbox.offset_x = 0; 
-    player->entity.hitbox.offset_y = 0;
+    player->entity.hitbox.offset_x = PLAYER_HITBOX_OFFSET_X; 
+    player->entity.hitbox.offset_y = PLAYER_HITBOX_OFFSET_Y;
 
     player->entity.vel_x = 0;
     player->entity.vel_y = 0;
@@ -39,7 +39,7 @@ void init_player (struct Player * player) {
     player->scale = 1.0f;
 
     // Vai carregar o soldado correto (padrão é o 2)
-    player->soldier_type = SOLDIER_1;
+    player->soldier_type = SOLDIER_2;
 
     // Status
     player->health = 100;
@@ -374,7 +374,8 @@ void draw_player(struct Player *player) {
 
     // 2. Calcula a posição do canto superior esquerdo (draw_x, draw_y) para desenhar o sprite,
     //    baseado no ponto de âncora (entity.x, entity.y) que é o CENTRO da BASE.
-    float draw_x = player->entity.x - (scaled_w / 2);
+    float final_offset_x = player->facing_right ? PLAYER_SPRITE_OFFSET_X : -PLAYER_SPRITE_OFFSET_X;
+    float draw_x = player->entity.x - (scaled_w / 2) + final_offset_x;
     float draw_y = player->entity.y - scaled_h;
 
     // 3. Define se o sprite deve ser espelhado

@@ -133,9 +133,11 @@ void draw_ground_line(struct GameLevel *level) {
 }
 
 void update_hitbox_position(struct Entity *entity, bool facing_right) {
-    entity->hitbox.x = entity->x - (entity->hitbox.width / 2) + entity->hitbox.offset_x;
+    float directional_offset_x = facing_right ? entity->hitbox.offset_x : -entity->hitbox.offset_x;
+
+    entity->hitbox.x = entity->x + directional_offset_x - (entity->hitbox.width / 2);
     
-    entity->hitbox.y = entity->y - entity->hitbox.height + entity->hitbox.offset_y;
+    entity->hitbox.y = entity->y - entity->hitbox.height - entity->hitbox.offset_y;
 }
 
 bool check_collision(struct Entity *a, struct Entity *b) {

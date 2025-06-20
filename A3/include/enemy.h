@@ -3,26 +3,26 @@
 
 #include "types.h"
 
-#define DEATH_FADEOUT_DELAY 2.0f
-
-#define DETECTION_RANGE 700.0f
-
 #define MAX_ENEMIES 20
 #define MAX_ENEMY_TYPES 3
 #define ENEMY_SPAWN_COOLDOWN 2.0f
 #define MAX_FRAMES 10
 
 #define ENEMY_WIDTH 40
-#define ENEMY_HEIGHT 105
+#define ENEMY_HEIGHT 110
 
-#define ENEMY_HITBOX_OFFSET_X 10.0f
-#define ENEMY_HITBOX_OFFSET_Y 20.0f
-#define ENEMY_LSPRITE_OFFSET_X 15.0f 
-#define ENEMY_RSPRITE_OFFSET_X 00.0f
+#define ENEMY_HITBOX_OFFSET_X 0.0f
+#define ENEMY_HITBOX_OFFSET_Y 0.0f 
+#define ENEMY_SPRITE_OFFSET_X 0.0f
+#define ENEMY_SPRITE_OFFSET_Y 0.0f
 
-#define ENEMY_SCALE 1.5f
+#define ENEMY_SCALE 1.7f
 
 #define SPRITE_SIZE 128
+
+#define DEATH_FADEOUT_DELAY 2.0f
+
+#define DETECTION_RANGE 950.0f
 
 // ---- Forward declarations ----
 struct Player;

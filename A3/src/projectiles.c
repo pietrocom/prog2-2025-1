@@ -140,7 +140,7 @@ void spawn_player_projectile(struct ProjectileSystem *system, struct Player *pla
         (player->entity.width / 2) : 
         (-player->entity.width / 2);
     
-    float spawn_y = player->entity.y - (player->entity.height * 0.55f);
+    float spawn_y = player->entity.y - (player->entity.height) + PROJECTILE_OFFSET_Y;
 
     spawn_projectile(
         system,

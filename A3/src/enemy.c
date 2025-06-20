@@ -171,25 +171,25 @@ void init_enemy(struct Enemy *enemy, EnemyType type, float x, float y) {
     // Configuração específica por tipo (seu código original)
     switch(type) {
         case ENEMY_MELEE:
-            enemy->entity.width = 40;
-            enemy->entity.height = 105;
-            enemy->health = 100;
-            enemy->max_health = 100;
+            enemy->entity.width = ENEMY_WIDTH;
+            enemy->entity.height = ENEMY_HEIGHT;
+            enemy->health = 150;
+            enemy->max_health = 150;
             enemy->damage = 20;
-            enemy->speed = 80.0f;
+            enemy->speed = 120.0f;
             enemy->attack_range = 60.0f;
             enemy->detection_range = DETECTION_RANGE;
             enemy->attack_cooldown = 1.2f;
             break;
             
         case ENEMY_RANGED:
-            enemy->entity.width = 45;
-            enemy->entity.height = 100;
-            enemy->health = 70;
-            enemy->max_health = 70;
+            enemy->entity.width = ENEMY_WIDTH;
+            enemy->entity.height = ENEMY_HEIGHT - 5;
+            enemy->health = 100;
+            enemy->max_health = 100;
             enemy->damage = 15;
-            enemy->speed = 60.0f;
-            enemy->attack_range = 250.0f;
+            enemy->speed = 90.0f;
+            enemy->attack_range = 450.0f;
             enemy->detection_range = DETECTION_RANGE;
             enemy->attack_cooldown = 2.0f;
             break;
@@ -430,7 +430,7 @@ void enemy_ai(struct Enemy *enemy, struct Player *player, struct GameLevel *leve
                 else if (enemy->current_cooldown <= 0) {
                     enemy_attack(enemy, player);
                 } 
-                // Se na distância ideal mas esperando cooldown, fique IDLE
+                // Se na distância ideal mas esperando cooldown, IDLE
                 else {
                     enemy->current_animation = &enemy->animations[ENEMY_ANIM_IDLE];
                 }
@@ -562,8 +562,9 @@ void draw_enemy(struct Enemy *enemy) {
     
     // 2. O ponto de âncora do inimigo (entity.x, entity.y) é o centro da base dele.
     //    Calculamos o canto superior esquerdo (draw_x, draw_y) para desenhar o sprite.
-    float draw_x = enemy->entity.x - (scaled_w / 2);
-    float draw_y = enemy->entity.y - scaled_h;
+    float final_offset_x = enemy->facing_right ? ENEMY_SPRITE_OFFSET_X : -ENEMY_SPRITE_OFFSET_X;
+    float draw_x = enemy->entity.x - (scaled_w / 2) + final_offset_x;
+    float draw_y = enemy->entity.y - scaled_h + ENEMY_SPRITE_OFFSET_Y;
     
     // 3. Define se o sprite deve ser virado horizontalmente
     int flags = enemy->facing_right ? 0 : ALLEGRO_FLIP_HORIZONTAL;
@@ -621,23 +622,37 @@ void draw_enemies(struct EnemySystem *system, struct GameLevel *level, struct Pl
             // Sincroniza a flag de exibição da hitbox do inimigo com a do player
             system->enemies[i].hitbox_show = player->hitbox_show;
 
-            // Converte a posição de mundo para posição de tela para desenhar
-            float original_x = system->enemies[i].entity.x;
+            // Salva as posições ORIGINAIS (de mundo)
+            float original_entity_x = system->enemies[i].entity.x;
+            float original_hitbox_x = system->enemies[i].entity.hitbox.x; // NOVO: Salva a pos da hitbox
+
+            // Converte a posição da entidade E da hitbox para coordenadas de TELA
             system->enemies[i].entity.x -= level->scroll_x;
+            system->enemies[i].entity.hitbox.x -= level->scroll_x; // NOVO: Converte a pos da hitbox também
+
+            // Desenha tudo (agora ambos estão na mesma coordenada de tela)
             draw_enemy(&system->enemies[i]);
-            system->enemies[i].entity.x = original_x; // Restaura a posição de mundo
+
+            // Restaura as posições ORIGINAIS (de mundo) para a próxima atualização lógica
+            system->enemies[i].entity.x = original_entity_x;
+            system->enemies[i].entity.hitbox.x = original_hitbox_x; // NOVO: Restaura a pos da hitbox também
         }
     }
 
-    // Desenha o boss se estiver ativo
+    // Desenha o boss se estiver ativo (aplicando a mesma lógica)
     if (system->boss.is_active) {
-        // Sincroniza a flag do boss também
         system->boss.hitbox_show = player->hitbox_show;
         
-        float original_x = system->boss.entity.x;
+        float original_entity_x = system->boss.entity.x;
+        float original_hitbox_x = system->boss.entity.hitbox.x;
+
         system->boss.entity.x -= level->scroll_x;
+        system->boss.entity.hitbox.x -= level->scroll_x;
+        
         draw_enemy(&system->boss);
-        system->boss.entity.x = original_x;
+        
+        system->boss.entity.x = original_entity_x;
+        system->boss.entity.hitbox.x = original_hitbox_x;
     }
 }
 
