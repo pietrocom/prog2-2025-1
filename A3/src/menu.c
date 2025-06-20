@@ -124,7 +124,7 @@ void draw_main_menu(struct Menu *menu) {
     int title_x = screen_w / 2;
     int title_y = screen_h / 5;
     int shadow_offset = 5;
-    const char *title = "LISBOA DE ALMEIDA REBORN";
+    const char *title = "SHOOTER BORN IN HEAVEN";
 
     // Sombra do título do jogo
     al_draw_text(menu->title_font, shadow, 

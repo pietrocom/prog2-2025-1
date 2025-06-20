@@ -2,6 +2,7 @@
 #define ENEMY_H
 
 #include "types.h"
+#include "boss.h"
 
 #define MAX_ENEMIES 20
 #define MAX_ENEMY_TYPES 3
@@ -24,6 +25,7 @@
 
 #define DETECTION_RANGE 950.0f
 
+
 // ---- Forward declarations ----
 struct Player;
 struct Projectile;
@@ -36,8 +38,7 @@ struct GameLevel;
 // Tipos de inimigos
 typedef enum {
     ENEMY_MELEE,   // Gangster 2
-    ENEMY_RANGED,  // Gangster 1
-    ENEMY_BOSS 
+    ENEMY_RANGED   // Gangster 1
 } EnemyType;
 
 // Estados de animação do inimigo
@@ -66,7 +67,6 @@ struct Enemy {
     float detection_range;
     float attack_cooldown;
     float current_cooldown;
-    float ground_level; 
     
     // Controle
     bool is_active;
@@ -77,16 +77,15 @@ struct Enemy {
     bool has_been_aggroed;
     float death_timer;
 
-    // Sistema de projetéis
+    // Sistema de projéteis
     float shoot_cooldown;
     float current_shoot_cooldown;
-    bool can_shoot;
 };
 
 // Sistema de inimigos
 struct EnemySystem {
     struct Enemy enemies[MAX_ENEMIES];
-    struct Enemy boss;
+    struct Boss boss; // <-- MUDANÇA CRUCIAL AQUI
     float spawn_timer;
     int active_count;
     int wave_number;
@@ -118,13 +117,7 @@ bool is_enemy_dead(struct Enemy *enemy);
 void kill_enemy(struct Enemy *enemy, struct Player *player);
 
 // Renderização
-void draw_enemy(struct Enemy *enemy);
-void draw_enemy_health_bar(struct Enemy *enemy);
+void draw_enemy(struct Enemy *enemy, float scroll_x);
 void draw_enemies(struct EnemySystem *system, struct GameLevel *level, struct Player *player);
-
-// Chefe
-void init_boss(struct Enemy *boss);
-void update_boss(struct Enemy *boss, struct Player *player, float delta_time);
-void boss_attack_pattern(struct Enemy *boss, struct Player *player, struct Projectile *projectiles[], int *projectile_count);
 
 #endif
