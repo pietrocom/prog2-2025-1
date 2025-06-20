@@ -5,13 +5,18 @@
 
 #define MAX_PROJECTILES 50
 #define PROJECTILE_SPEED 500.0f
+
 #define PROJECTILE_WIDTH 10.0f
 #define PROJECTILE_HEIGHT 5.0f
 #define PLAYER_PROJECTILE_OFFSET_Y 24.0f
 #define ENEMY_PROJECTILE_OFFSET_Y 33.0f
+
 #define PLAYER_PROJECTILE_COOLDOWN 0.5f
 #define ENEMY_PROJECTILE_COOLDOWN 2.0f
+
 #define PROJECTILE_LIFETIME 3.0f
+
+#define BULLET_SCALE (1.0f / 6.0f)
 
 struct Projectile {
     struct Entity entity;
@@ -28,6 +33,7 @@ struct Projectile {
 struct ProjectileSystem {
     struct Projectile projectiles[MAX_PROJECTILES];
     int active_count;
+    ALLEGRO_BITMAP *player_bullet_sprite;
 };
 
 // ---- Forward declarations ----

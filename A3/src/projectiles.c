@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_primitives.h>
 
@@ -14,6 +15,11 @@ void init_projectile_system(struct ProjectileSystem *system) {
         system->projectiles[i].color = al_map_rgb(255, 255, 255); // Cor padrão branca
     }
     system->active_count = 0;
+
+    system->player_bullet_sprite = al_load_bitmap("assets/bullets/Bullet_5.56.png");
+    if (!system->player_bullet_sprite) {
+        fprintf(stderr, "Falha ao carregar a sprite 'assets/bullets/Bullet_5.56.png'\n");
+    }
 }
 
 // Atualiza todos os projéteis ativos
@@ -48,15 +54,19 @@ void draw_projectiles(struct ProjectileSystem *system, struct GameLevel *level) 
     for (int i = 0; i < MAX_PROJECTILES; i++) {
         if (system->projectiles[i].is_active) {
             
-            // Converte a posição de mundo do projétil para uma posição de tela
-            float draw_x = system->projectiles[i].entity.x - level->scroll_x;
-            float draw_y = system->projectiles[i].entity.y;
+            struct Projectile *p = &system->projectiles[i];
+            float draw_x = p->entity.x - level->scroll_x;
+            float draw_y = p->entity.y;
 
-            if (system->projectiles[i].sprite) {
-                // Desenha com sprite
-                al_draw_bitmap(system->projectiles[i].sprite, 
-                             draw_x, 
-                             draw_y, 0);
+            if (p->sprite) {
+                float sw = al_get_bitmap_width(p->sprite);
+                float sh = al_get_bitmap_height(p->sprite);
+                
+                al_draw_scaled_bitmap(p->sprite, 
+                                     0, 0, sw, sh,     // Região de origem da sprite
+                                     draw_x, draw_y,   // Posição na tela
+                                     p->entity.hitbox.width, p->entity.hitbox.height, // Tamanho final na tela
+                                     0);
             } else {
                 // Desenha primitiva (retângulo ou círculo)
                 ALLEGRO_COLOR color = system->projectiles[i].color;
@@ -90,40 +100,44 @@ void spawn_projectile(struct ProjectileSystem *system, float x, float y,
         return;
     }
     
-    // Encontra slot vazio
     for (int i = 0; i < MAX_PROJECTILES; i++) {
         if (!system->projectiles[i].is_active) {
             struct Projectile *p = &system->projectiles[i];
             
-            // Configura entidade
             p->entity.x = x;
             p->entity.y = y;
-            p->entity.width = PROJECTILE_WIDTH;
-            p->entity.height = PROJECTILE_HEIGHT;
             p->entity.vel_x = facing_right ? PROJECTILE_SPEED : -PROJECTILE_SPEED;
             p->entity.vel_y = 0;
             
-            // Configura hitbox
-            p->entity.hitbox.width = PROJECTILE_WIDTH;
-            p->entity.hitbox.height = PROJECTILE_HEIGHT;
-            p->entity.hitbox.offset_x = 0;
-            p->entity.hitbox.offset_y = 0;
-            update_hitbox_position(&p->entity, facing_right);
-            
-            // Configura propriedades do projétil
             p->type = type;
             p->behavior = behavior;
             p->is_active = true;
             p->damage = damage;
-            p->lifetime = PROJECTILE_LIFETIME; // 2 segundos por padrão
+            p->lifetime = PROJECTILE_LIFETIME;
             p->max_lifetime = PROJECTILE_LIFETIME;
-            
-            // Configura aparência baseada no tipo
+
             if (type == PROJECTILE_PLAYER) {
-                p->color = al_map_rgb(0, 255, 0); // Verde para jogador
+                p->sprite = system->player_bullet_sprite;
             } else {
-                p->color = al_map_rgb(255, 0, 0); // Vermelho para inimigos
+                p->sprite = NULL;
             }
+
+            // Se uma sprite foi atribuída, ajusta o tamanho da entidade e da hitbox para ela.
+            if (p->sprite) {
+                // Aplica a escala para obter o tamanho visual final
+                p->entity.width = al_get_bitmap_width(p->sprite) * BULLET_SCALE;
+                p->entity.height = al_get_bitmap_height(p->sprite) * BULLET_SCALE;
+            } else {
+                p->entity.width = PROJECTILE_WIDTH;
+                p->entity.height = PROJECTILE_HEIGHT;
+            }
+            
+            p->entity.hitbox.width = p->entity.width;
+            p->entity.hitbox.height = p->entity.height;
+            p->entity.hitbox.offset_x = 0;
+            p->entity.hitbox.offset_y = 0;
+            
+            update_hitbox_position(&p->entity, facing_right);
             
             system->active_count++;
             break;
@@ -133,26 +147,25 @@ void spawn_projectile(struct ProjectileSystem *system, float x, float y,
 
 // Cria projétil do jogador
 void spawn_player_projectile(struct ProjectileSystem *system, struct Player *player, struct GameLevel *level) {
-
     float player_world_x = player->entity.x + level->scroll_x;
 
+    // Ajusta a posição de saída da bala para a frente do jogador
     float offset_x = player->facing_right ? 
-        (player->entity.width / 2) : 
-        (-player->entity.width / 2);
+        (player->entity.width / 2 + 10.0f) : // Um pouco à frente
+        (-player->entity.width / 2 - 10.0f);
     
-    // Usa um offset vertical diferente para cada estado
+    // Usa as constantes de player.h para um ajuste fino e preciso.
     float vertical_offset = player->is_crouching ?
         CROUCH_PROJECTILE_OFFSET_Y :
         STANDING_PROJECTILE_OFFSET_Y;
 
-    // A posição Y é a base do jogador menos o offset vertical
+    // A posição Y é a base do jogador menos o offset vertical para subir até a arma
     float spawn_y = player->entity.y - vertical_offset;
-
 
     spawn_projectile(
         system,
         player_world_x + offset_x,
-        spawn_y,
+        spawn_y, 
         player->facing_right,
         PROJECTILE_PLAYER,
         PROJECTILE_NORMAL,
@@ -241,10 +254,8 @@ void clear_projectiles(struct ProjectileSystem *system) {
 
 // Libera recursos do sistema de projéteis
 void destroy_projectile_system(struct ProjectileSystem *system) {
-    for (int i = 0; i < MAX_PROJECTILES; i++) {
-        if (system->projectiles[i].sprite) {
-            al_destroy_bitmap(system->projectiles[i].sprite);
-        }
-    }
     clear_projectiles(system);
+    if (system->player_bullet_sprite) {
+        al_destroy_bitmap(system->player_bullet_sprite);
+    }
 }
