@@ -52,6 +52,11 @@ void init_player (struct Player * player) {
     player->is_shooting = false;
     player->facing_right = true;
     player->hitbox_show = false;
+    player->is_running = false;
+
+    // Estamina
+    player->stamina = MAX_STAMINA;
+    player->max_stamina = MAX_STAMINA;
 
     // Disparos
     player->shoot_cooldown = PLAYER_PROJECTILE_COOLDOWN;
@@ -207,49 +212,57 @@ void unload_player_sprites(struct Player *player) {
 void handle_player_input(struct Player *player, ALLEGRO_EVENT *event, struct GameLevel *level) {
     if (event->type == ALLEGRO_EVENT_KEY_DOWN) {
         switch (event->keyboard.keycode) {
+            case ALLEGRO_KEY_LSHIFT:
+            case ALLEGRO_KEY_RSHIFT:
+                player->is_running = true;
+                break;
+
             case ALLEGRO_KEY_UP:
             case ALLEGRO_KEY_W:
-                if (!player->is_jumping) {  // Só permite pular se não estiver no ar
+                if (!player->is_jumping) {
                     player->entity.vel_y = PLAYER_JUMP_VEL;
                     player->is_jumping = true;
                 }
                 break;
+
             case ALLEGRO_KEY_DOWN:
             case ALLEGRO_KEY_S:
                 if (soldier_supports_crouch(player->soldier_type)) {
-                    player->is_crouching = true; // Agachar
+                    player->is_crouching = true;
                 }
                 break;
+
             case ALLEGRO_KEY_LEFT:
             case ALLEGRO_KEY_A:
-                player->entity.vel_x = player->is_crouching ? 
-                    (-PLAYER_MOVE_SPEED * 0.2f) : // Movimento mais caso agachado
-                    (-PLAYER_MOVE_SPEED);
-                player->is_moving = true;
+                player->entity.vel_x = -PLAYER_MOVE_SPEED;
                 player->facing_right = false;
                 break;
+
             case ALLEGRO_KEY_RIGHT:
             case ALLEGRO_KEY_D:
-                player->entity.vel_x = player->is_crouching ? 
-                    (PLAYER_MOVE_SPEED * 0.2f) : // Movimento mais caso agachado
-                    (PLAYER_MOVE_SPEED);
-                player->is_moving = true;
+                player->entity.vel_x = PLAYER_MOVE_SPEED;
                 player->facing_right = true;
                 break;
+
             case ALLEGRO_KEY_SPACE:
-                player->is_shooting = true; // Atirar
+                player->is_shooting = true;
                 break;
             case ALLEGRO_KEY_R:
                 start_reload(player);
                 break;
             case ALLEGRO_KEY_H:
-                player->hitbox_show = !player->hitbox_show; // Alterna exibição da hitbox
-                level->draw_ground_line = !level->draw_ground_line; 
+                player->hitbox_show = !player->hitbox_show;
+                level->draw_ground_line = !level->draw_ground_line;
                 break;
         }
     } 
     else if (event->type == ALLEGRO_EVENT_KEY_UP) {
         switch (event->keyboard.keycode) {
+            case ALLEGRO_KEY_LSHIFT:
+            case ALLEGRO_KEY_RSHIFT:
+                player->is_running = false;
+                break;
+
             case ALLEGRO_KEY_DOWN:
             case ALLEGRO_KEY_S:
                 player->is_crouching = false;
@@ -257,16 +270,12 @@ void handle_player_input(struct Player *player, ALLEGRO_EVENT *event, struct Gam
                 
             case ALLEGRO_KEY_LEFT:
             case ALLEGRO_KEY_A:
-                if (player->entity.vel_x < 0) // Só zera se ainda estiver indo para esquerda
-                    player->entity.vel_x = 0;
-                player->is_moving = false;
+                if (player->entity.vel_x < 0) player->entity.vel_x = 0;
                 break;
-                
+
             case ALLEGRO_KEY_RIGHT:
             case ALLEGRO_KEY_D:
-                if (player->entity.vel_x > 0) // Só zera se ainda estiver indo para direita
-                    player->entity.vel_x = 0;
-                player->is_moving = false;
+                if (player->entity.vel_x > 0) player->entity.vel_x = 0;
                 break;
                 
             case ALLEGRO_KEY_SPACE:
@@ -282,6 +291,39 @@ void update_player(struct Player *player, float delta_time, struct GameLevel *le
         return;
     }
 
+    player->is_moving = (fabs(player->entity.vel_x) > 0.1f);
+
+    if (player->is_moving) {
+        float target_speed;
+        if (player->is_running && player->stamina > 0 && !player->is_crouching) {
+            target_speed = PLAYER_RUN_SPEED;
+        } else {
+            target_speed = PLAYER_MOVE_SPEED;
+        }
+        
+        // Aplica a velocidade correta à direção atual
+        player->entity.vel_x = (player->entity.vel_x > 0) ? target_speed : -target_speed;
+    }
+
+    // --- Lógica de Estamina ---
+    // Gasta estamina se estiver correndo E se movendo
+    if (player->is_running && player->is_moving && !player->is_crouching) {
+        player->stamina -= STAMINA_DEPLETION_RATE * delta_time;
+        if (player->stamina <= 0) {
+            player->stamina = 0;
+            player->is_running = false; // Força a parada da corrida quando a estamina acaba
+        }
+    } else {
+        // Regenera estamina se não estiver correndo
+        if (player->stamina < player->max_stamina) {
+            player->stamina += STAMINA_REGEN_RATE * delta_time;
+            if (player->stamina > player->max_stamina) {
+                player->stamina = player->max_stamina;
+            }
+        }
+    }
+
+    // Lógica de recarga
     if (player->is_reloading) {
         player->current_reload_time -= delta_time;
         if (player->current_reload_time <= 0) {
@@ -313,6 +355,7 @@ void update_player(struct Player *player, float delta_time, struct GameLevel *le
     if (player->current_shoot_cooldown > 0) {
         player->current_shoot_cooldown -= delta_time;
     }
+
     // Condições para atirar: quer atirar, cooldown zerado, TEM MUNIÇÃO e NÃO ESTÁ RECARREGANDO
     if (player->is_shooting && player->current_shoot_cooldown <= 0 && player->current_ammo > 0 && !player->is_reloading) {
         spawn_player_projectile(projectile_system, player, level);
@@ -327,30 +370,27 @@ void update_player(struct Player *player, float delta_time, struct GameLevel *le
     // Maquina de estados para animações
     if (player->is_reloading) {
         player->current_animation = &player->reloading;
-    }
-    else if (player->is_crouching) {
+    } else if (player->is_crouching) {
         player->current_animation = player->is_shooting && player->current_ammo > 0 ? &player->crouch_shot : &player->crouching;
-    } 
-    else if (player->is_shooting && player->current_ammo > 0) {
+    } else if (player->is_shooting && player->current_ammo > 0) {
         player->current_animation = &player->shooting;
-    }
-    else if (player->is_jumping) {
+    } else if (player->is_jumping) {
         player->current_animation = &player->jumping;
-    } 
-    else if (fabs(player->entity.vel_x) > 0.1f) { 
-        player->current_animation = (fabs(player->entity.vel_x) > RUN_THRESHOLD) ? &player->running : &player->walking;
-    } 
-    else {
+    } else if (player->is_moving) {
+        player->current_animation = (player->is_running && player->stamina > 0) ? &player->running : &player->walking;
+    } else {
         player->current_animation = &player->idle;
     }
 
-    // Atualiza frame da animação
-    player->current_animation->elapsed_time += delta_time;
-    if (player->current_animation->elapsed_time >= player->current_animation->frame_delay) {
-        player->current_animation->current_frame = 
-            (player->current_animation->current_frame + 1) % 
-            player->current_animation->frame_count;
-        player->current_animation->elapsed_time = 0;
+    // --- Atualização do Frame da Animação ---
+    if (player->current_animation && player->current_animation->frame_count > 0) {
+        player->current_animation->elapsed_time += delta_time;
+        if (player->current_animation->elapsed_time >= player->current_animation->frame_delay) {
+            player->current_animation->elapsed_time = 0;
+            player->current_animation->current_frame = 
+                (player->current_animation->current_frame + 1) % 
+                player->current_animation->frame_count;
+        }
     }
 }
 

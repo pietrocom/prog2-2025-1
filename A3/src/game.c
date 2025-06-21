@@ -387,29 +387,42 @@ void draw_pause_menu(struct GameLevel *level) {
 void draw_hud(struct Player *player, struct GameLevel *level) {
     if (!level->hud_font) return;
 
-    // Formata o tempo de segundos para Minutos:Segundos
     int total_seconds = (int)level->game_time;
     int minutes = total_seconds / 60;
     int seconds = total_seconds % 60;
 
     ALLEGRO_COLOR text_color = al_map_rgb(255, 255, 255);
     ALLEGRO_COLOR ammo_color = al_map_rgb(255, 255, 0);
+    ALLEGRO_COLOR stamina_color = al_map_rgb(0, 255, 100);
 
-    // Desenha o Score no canto superior esquerdo
-    al_draw_textf(level->hud_font, text_color, 20, 10, ALLEGRO_ALIGN_LEFT, 
-                  "SCORE: %06d", player->score);
-                  
-    // Desenha o Tempo no canto superior direito
     int screen_w = al_get_display_width(al_get_current_display());
-    al_draw_textf(level->hud_font, text_color, screen_w - 20, 10, ALLEGRO_ALIGN_RIGHT, 
-                  "TIME: %02d:%02d", minutes, seconds);
 
-    // Se estiver recarregando, mostra a mensagem
+    // Score
+    al_draw_textf(level->hud_font, text_color, 20, 10, ALLEGRO_ALIGN_LEFT, "SCORE: %06d", player->score);
+                  
+    // Tempo
+    al_draw_textf(level->hud_font, text_color, screen_w - 20, 10, ALLEGRO_ALIGN_RIGHT, "TIME: %02d:%02d", minutes, seconds);
+
+    // Munição
     if(player->is_reloading) {
-         al_draw_text(level->hud_font, ammo_color, 20, 50, ALLEGRO_ALIGN_LEFT, "RELOADING...");
+         al_draw_text(level->hud_font, ammo_color, 20, 50, ALLEGRO_ALIGN_LEFT, "RECARREGANDO...");
     } else {
-        // Senão, mostra a contagem de balas
-        al_draw_textf(level->hud_font, ammo_color, 20, 50, ALLEGRO_ALIGN_LEFT, 
-                      "AMMO: %02d / %d", player->current_ammo, player->max_ammo);
+        al_draw_textf(level->hud_font, ammo_color, 20, 50, ALLEGRO_ALIGN_LEFT, "MUNICAO: %02d / %d", player->current_ammo, player->max_ammo);
     }
+    
+    // Barra de Estamina
+    float stamina_bar_w = 200;
+    float stamina_bar_h = 20;
+    float stamina_bar_x = 20;
+    float stamina_bar_y = 90; // abaixo da munição
+    
+    float stamina_percent = player->stamina / player->max_stamina;
+    float current_stamina_w = stamina_bar_w * stamina_percent;
+
+    // Fundo da barra
+    al_draw_filled_rectangle(stamina_bar_x, stamina_bar_y, stamina_bar_x + stamina_bar_w, stamina_bar_y + stamina_bar_h, al_map_rgba(50, 50, 50, 150));
+    // Preenchimento da barra
+    al_draw_filled_rectangle(stamina_bar_x, stamina_bar_y, stamina_bar_x + current_stamina_w, stamina_bar_y + stamina_bar_h, stamina_color);
+    // Borda da barra
+    al_draw_rectangle(stamina_bar_x, stamina_bar_y, stamina_bar_x + stamina_bar_w, stamina_bar_y + stamina_bar_h, al_map_rgb(200, 200, 200), 2);
 }

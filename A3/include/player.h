@@ -8,10 +8,16 @@
 
 #define PLAYER_SCALE 1.7f
 
-#define RUN_THRESHOLD 3.0f
+#define PLAYER_RUN_SPEED 380.0f
 
 #define MAX_AMMO 20
 #define RELOAD_TIME 2.25f
+
+// ---- Constantes de estamina
+
+#define MAX_STAMINA 100.0f
+#define STAMINA_DEPLETION_RATE 25.0f // Pontos de estamina por segundo ao correr
+#define STAMINA_REGEN_RATE 15.0f
 
 // ---- Constantes de ajuste ----
 
@@ -32,8 +38,6 @@
 
 struct ProjectileSystem;
 struct GameLevel;
-
-
 
 
 // ---- Estruturas de dados básica ----
@@ -75,6 +79,7 @@ struct Player {
     bool is_reloading;
     bool facing_right;
     bool hitbox_show; 
+    bool is_running;
 
     // Sistema de projetéis
     float shoot_cooldown;
@@ -84,6 +89,10 @@ struct Player {
     int current_ammo; 
     int max_ammo; 
     float current_reload_time;
+
+    // Variáveis de Estamina
+    float stamina;
+    float max_stamina;
 };
 
 
