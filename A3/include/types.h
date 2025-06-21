@@ -13,7 +13,7 @@
 #define GRAVITY 2600.0f
 #define GROUND_LEVEL 150 // Distância do teto até a base da tela
 
-#define MAX_FRAMES 10 
+#define MAX_FRAMES 14 
 
 #define SPRITE_SIZE 128
 

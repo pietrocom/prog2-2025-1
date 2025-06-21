@@ -465,7 +465,7 @@ void draw_enemies(struct EnemySystem *system, struct GameLevel *level, struct Pl
         }
     }
     if (system->boss.is_active) {
-        draw_boss(&system->boss, level->scroll_x);
+        draw_boss(&system->boss, level->scroll_x, player->hitbox_show);
     }
 }
 

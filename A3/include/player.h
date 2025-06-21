@@ -8,8 +8,6 @@
 
 #define PLAYER_SCALE 1.7f
 
-#define MAX_FRAMES 10 
-
 #define RUN_THRESHOLD 3.0f
 
 #define MAX_AMMO 20

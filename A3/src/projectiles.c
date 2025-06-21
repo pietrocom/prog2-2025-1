@@ -222,11 +222,10 @@ void check_projectile_collisions(struct ProjectileSystem *system,
                 }
             }
             
-            // Checa colisão com o boss
-            if (enemy_system->boss.is_active && !is_enemy_dead(&enemy_system->boss) &&
+            if (enemy_system->boss.is_active && !is_boss_dead(&enemy_system->boss) &&
                 check_collision(&p->entity, &enemy_system->boss.entity)) {
                 
-                damage_enemy(&enemy_system->boss, p->damage, player);
+                damage_boss(&enemy_system->boss, p->damage, player);
                 hit_someone = true;
             }
 

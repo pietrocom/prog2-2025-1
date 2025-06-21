@@ -7,7 +7,6 @@
 #define MAX_ENEMIES 20
 #define MAX_ENEMY_TYPES 3
 #define ENEMY_SPAWN_COOLDOWN 2.0f
-#define MAX_FRAMES 10
 
 #define ENEMY_WIDTH 40
 #define ENEMY_HEIGHT 110
@@ -85,7 +84,7 @@ struct Enemy {
 // Sistema de inimigos
 struct EnemySystem {
     struct Enemy enemies[MAX_ENEMIES];
-    struct Boss boss; // <-- MUDANÇA CRUCIAL AQUI
+    struct Boss boss; 
     float spawn_timer;
     int active_count;
     int wave_number;
