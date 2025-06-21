@@ -204,8 +204,7 @@ void update_boss(struct Boss *boss, struct Player *player, struct GameLevel *lev
                 boss->current_animation = &boss->animations[BOSS_ANIM_SHOOT];
                 boss->entity.vel_x = 0;
                 if (shoot_cooldown <= 0) {
-                    struct Enemy temp_enemy_view = {.entity = boss->entity, .damage = boss->projectile_damage, .facing_right = boss->facing_right};
-                    spawn_enemy_projectile(projectile_system, &temp_enemy_view);
+                    spawn_boss_projectile(projectile_system, boss);
                     shoot_cooldown = boss->is_enraged ? BOSS_ENRAGED_SHOOT_COOLDOWN : BOSS_SHOOT_COOLDOWN;
                 }
                 if (boss->state_timer <= 0) {

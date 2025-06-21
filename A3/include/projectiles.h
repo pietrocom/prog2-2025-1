@@ -8,15 +8,14 @@
 
 #define PROJECTILE_WIDTH 10.0f
 #define PROJECTILE_HEIGHT 5.0f
-#define PLAYER_PROJECTILE_OFFSET_Y 24.0f
-#define ENEMY_PROJECTILE_OFFSET_Y 33.0f
 
 #define PLAYER_PROJECTILE_COOLDOWN 0.5f
 #define ENEMY_PROJECTILE_COOLDOWN 2.0f
 
 #define PROJECTILE_LIFETIME 3.0f
 
-#define BULLET_SCALE (1.0f / 6.0f)
+#define PLAYER_BULLET_SCALE (1.0f / 6.0f) 
+#define ENEMY_BULLET_SCALE  (1.0f / 9.0f)
 
 struct Projectile {
     struct Entity entity;
@@ -34,11 +33,13 @@ struct ProjectileSystem {
     struct Projectile projectiles[MAX_PROJECTILES];
     int active_count;
     ALLEGRO_BITMAP *player_bullet_sprite;
+    ALLEGRO_BITMAP *enemy_bullet_sprite;
 };
 
 // ---- Forward declarations ----
 struct Player;
 struct Enemy;
+struct Boss;
 struct EnemySystem;
 
 
@@ -53,6 +54,7 @@ void draw_projectiles(struct ProjectileSystem *system, struct GameLevel *level);
 void spawn_projectile(struct ProjectileSystem *system, float x, float y, bool facing_right, ProjectileType type, ProjectileBehavior behavior, int damage);
 void spawn_player_projectile(struct ProjectileSystem *system, struct Player *player, struct GameLevel *level);
 void spawn_enemy_projectile(struct ProjectileSystem *system, struct Enemy *enemy);
+void spawn_boss_projectile(struct ProjectileSystem *system, struct Boss *boss);
 
 // ---- Funções de Colisão ----
 

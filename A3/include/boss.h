@@ -11,6 +11,7 @@
 
 #define BOSS_HEALTH 2500
 #define BOSS_PROJECTILE_DAMAGE 25
+#define BOSS_PROJECTILE_OFFSET_Y (128 * 0.75f) 
 
 // --- Ataques ---
 #define BOSS_LUNGE_SPEED 520.0f
@@ -19,7 +20,6 @@
 #define BOSS_PUNCH_DAMAGE 50
 #define BOSS_PUNCH_DURATION 0.8f
 
-// NOVO MECANISMO: Postura (Poise)
 // O chefe contra-ataca após ser atingido este número de vezes seguidas.
 #define BOSS_POISE_THRESHOLD 3
 

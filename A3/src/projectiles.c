@@ -20,6 +20,11 @@ void init_projectile_system(struct ProjectileSystem *system) {
     if (!system->player_bullet_sprite) {
         fprintf(stderr, "Falha ao carregar a sprite 'assets/bullets/Bullet_5.56.png'\n");
     }
+
+    system->enemy_bullet_sprite = al_load_bitmap("assets/bullets/Bullet_.45ACP.png");
+    if (!system->enemy_bullet_sprite) {
+        fprintf(stderr, "Falha ao carregar a sprite 'assets/bullets/Bullet_.45ACP.png'\n");
+    }
 }
 
 // Atualiza todos os projéteis ativos
@@ -61,16 +66,18 @@ void draw_projectiles(struct ProjectileSystem *system, struct GameLevel *level) 
             if (p->sprite) {
                 float sw = al_get_bitmap_width(p->sprite);
                 float sh = al_get_bitmap_height(p->sprite);
+
+                int flags = (p->entity.vel_x < 0) ? ALLEGRO_FLIP_HORIZONTAL : 0;
                 
                 al_draw_scaled_bitmap(p->sprite, 
                                      0, 0, sw, sh,     // Região de origem da sprite
                                      draw_x, draw_y,   // Posição na tela
                                      p->entity.hitbox.width, p->entity.hitbox.height, // Tamanho final na tela
-                                     0);
+                                     flags);           // Usa a flag calculada aqui
             } else {
-                // Desenha primitiva (retângulo ou círculo)
-                ALLEGRO_COLOR color = system->projectiles[i].color;
-                if (system->projectiles[i].type == PROJECTILE_PLAYER) {
+                // Desenha primitiva 
+                ALLEGRO_COLOR color = p->color;
+                if (p->type == PROJECTILE_PLAYER) {
                     al_draw_filled_rectangle(
                         draw_x,
                         draw_y,
@@ -114,20 +121,25 @@ void spawn_projectile(struct ProjectileSystem *system, float x, float y,
             p->is_active = true;
             p->damage = damage;
             p->lifetime = PROJECTILE_LIFETIME;
-            p->max_lifetime = PROJECTILE_LIFETIME;
 
             if (type == PROJECTILE_PLAYER) {
                 p->sprite = system->player_bullet_sprite;
             } else {
-                p->sprite = NULL;
+                p->sprite = system->enemy_bullet_sprite;
             }
 
-            // Se uma sprite foi atribuída, ajusta o tamanho da entidade e da hitbox para ela.
             if (p->sprite) {
-                // Aplica a escala para obter o tamanho visual final
-                p->entity.width = al_get_bitmap_width(p->sprite) * BULLET_SCALE;
-                p->entity.height = al_get_bitmap_height(p->sprite) * BULLET_SCALE;
-            } else {
+                float scale = 1.0f; // Escala padrão caso não seja definida
+                if (p->type == PROJECTILE_PLAYER) {
+                    scale = PLAYER_BULLET_SCALE;
+                } else { 
+                    scale = ENEMY_BULLET_SCALE;
+                }
+                
+                // Calcula o tamanho da entidade/hitbox usando a escala correta
+                p->entity.width = al_get_bitmap_width(p->sprite) * scale;
+                p->entity.height = al_get_bitmap_height(p->sprite) * scale;
+            } else { 
                 p->entity.width = PROJECTILE_WIDTH;
                 p->entity.height = PROJECTILE_HEIGHT;
             }
@@ -147,19 +159,14 @@ void spawn_projectile(struct ProjectileSystem *system, float x, float y,
 
 // Cria projétil do jogador
 void spawn_player_projectile(struct ProjectileSystem *system, struct Player *player, struct GameLevel *level) {
-    float player_world_x = player->entity.x + level->scroll_x;
+    float player_world_x = player->entity.x;
+    if (level) { // Se o level for passado, considera o scroll
+        player_world_x += level->scroll_x;
+    }
 
-    // Ajusta a posição de saída da bala para a frente do jogador
-    float offset_x = player->facing_right ? 
-        (player->entity.width / 2 + 10.0f) : // Um pouco à frente
-        (-player->entity.width / 2 - 10.0f);
+    float offset_x = player->facing_right ? (player->entity.width / 2) : (-player->entity.width / 2);
     
-    // Usa as constantes de player.h para um ajuste fino e preciso.
-    float vertical_offset = player->is_crouching ?
-        CROUCH_PROJECTILE_OFFSET_Y :
-        STANDING_PROJECTILE_OFFSET_Y;
-
-    // A posição Y é a base do jogador menos o offset vertical para subir até a arma
+    float vertical_offset = player->is_crouching ? CROUCH_PROJECTILE_OFFSET_Y : STANDING_PROJECTILE_OFFSET_Y;
     float spawn_y = player->entity.y - vertical_offset;
 
     spawn_projectile(
@@ -175,18 +182,34 @@ void spawn_player_projectile(struct ProjectileSystem *system, struct Player *pla
 
 // Cria projétil do inimigo
 void spawn_enemy_projectile(struct ProjectileSystem *system, struct Enemy *enemy) {
-    float offset_x = enemy->facing_right ? 
-        enemy->entity.width - 10 : 
-        -PROJECTILE_WIDTH;
+    float offset_x = enemy->facing_right ? (enemy->entity.width / 2) : (-enemy->entity.width / 2);
+    
+    float spawn_y = enemy->entity.y - ENEMY_PROJECTILE_OFFSET_Y;
     
     spawn_projectile(
         system,
         enemy->entity.x + offset_x,
-        enemy->entity.y - enemy->entity.height + ENEMY_PROJECTILE_OFFSET_Y,
+        spawn_y,
         enemy->facing_right,
         PROJECTILE_ENEMY,
         PROJECTILE_NORMAL,
         enemy->damage
+    );
+}
+
+void spawn_boss_projectile(struct ProjectileSystem *system, struct Boss *boss) {
+    float offset_x = boss->facing_right ? (boss->entity.width / 2) : (-boss->entity.width / 2);
+
+    float spawn_y = boss->entity.y - BOSS_PROJECTILE_OFFSET_Y;
+
+    spawn_projectile(
+        system,
+        boss->entity.x + offset_x,
+        spawn_y,
+        boss->facing_right,
+        PROJECTILE_ENEMY, // Ainda é um projétil de inimigo
+        PROJECTILE_NORMAL,
+        boss->projectile_damage
     );
 }
 
@@ -257,5 +280,10 @@ void destroy_projectile_system(struct ProjectileSystem *system) {
     if (system->player_bullet_sprite) {
         al_destroy_bitmap(system->player_bullet_sprite);
         system->player_bullet_sprite = NULL;
+    }
+
+    if (system->enemy_bullet_sprite) {
+        al_destroy_bitmap(system->enemy_bullet_sprite);
+        system->enemy_bullet_sprite = NULL;
     }
 }
