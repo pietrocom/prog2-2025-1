@@ -77,7 +77,7 @@ int main() {
                 break;
 
             case PAUSED:
-                handle_pause_input(&event, &game_state, &player, &level); 
+                handle_pause_input(&event, &game_state, &player, &level, &enemy_system, &projectile_system);
                 break;
                 
             case GAME_OVER:

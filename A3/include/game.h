@@ -8,6 +8,8 @@
 
 #include "types.h"
 #include "player.h"
+#include "enemy.h"
+#include "projectiles.h"
 #include <allegro5/allegro.h>
 
 // ---- Inicialização ----
@@ -23,13 +25,13 @@ void handle_game_events(ALLEGRO_EVENT *event, GameState *state);
 
 // ---- Controle de Pausa ----
 void toggle_pause(GameState *current_state);
-void handle_pause_input(ALLEGRO_EVENT *event, GameState *state, struct Player *player, struct GameLevel *level);
+void handle_pause_input(ALLEGRO_EVENT *event, GameState *state, struct Player *player, struct GameLevel *level, struct EnemySystem *enemy_system, struct ProjectileSystem *projectile_system);
 
 // ---- Controle de Game Over ----
 void handle_game_over_events(ALLEGRO_EVENT *event, GameState *state);
 
 // ---- Renderização ----
-void reset_game(struct Player *player, struct GameLevel *level);
+void reset_game(struct Player *player, struct GameLevel *level, struct EnemySystem *enemy_system, struct ProjectileSystem *projectile_system);
 void update_game(struct Player *player, struct GameLevel *level, float delta_time);
 void draw_game(struct Player *player, struct GameLevel *level);
 void draw_game_over(int score);

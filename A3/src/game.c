@@ -97,7 +97,7 @@ void toggle_pause(GameState *current_state) {
 }
 
 void handle_pause_input(ALLEGRO_EVENT *event, GameState *state, 
-    struct Player *player, struct GameLevel *level) {
+    struct Player *player, struct GameLevel *level, struct EnemySystem *enemy_system, struct ProjectileSystem *projectile_system) {
 
     if (event->type == ALLEGRO_EVENT_KEY_DOWN) {
         switch (event->keyboard.keycode) {
@@ -107,12 +107,10 @@ void handle_pause_input(ALLEGRO_EVENT *event, GameState *state,
                 break;
                 
             case ALLEGRO_KEY_M:
-                // Exemplo: Mute durante a pausa
-                // toggle_audio_mute();
                 break;
-                
+            
             case ALLEGRO_KEY_Q:
-                reset_game(player, level);
+                reset_game(player, level, enemy_system, projectile_system);
                 *state = MENU;  // Volta ao menu
                 break;
         }
@@ -127,20 +125,30 @@ void handle_game_over_events (ALLEGRO_EVENT *event, GameState *state) {}
 
 // ---- Funções de Atualização e Renderização ----
 
-void reset_game(struct Player *player, struct GameLevel *level) {
-    init_player(player);  // Reinicializa o jogador
+void reset_game(struct Player *player, struct GameLevel *level, struct EnemySystem *enemy_system, struct ProjectileSystem *projectile_system) {
+    printf("Reiniciando o jogo por completo...\n");
 
+    // Reinicializa o jogador
+    init_player(player);
     player->entity.x = 100.0f;
-    player->entity.y = level->ground_level;
-
+    
+    // Reinicializa o level
     int screen_h = al_get_display_height(al_get_current_display());
     int bg_height = al_get_bitmap_height(level->background);
     
     level->ground_level = screen_h - GROUND_LEVEL; 
+    player->entity.y = level->ground_level; // Posição do jogador depende do ground_level
     level->background_scale = (float)screen_h / (float)bg_height;
     level->scroll_x = 0.0f;
     level->enemy_count = 0;
     level->boss_active = false;
+    level->game_time = 0.0; // Reinicia o tempo de jogo
+
+    // Reinicializa o sistema de inimigos
+    destroy_enemy_system(enemy_system);
+    init_enemy_system(enemy_system);
+
+    init_projectile_system(projectile_system);
 }
 
 // Tanto o jogador quanto o background vao se mover
