@@ -50,6 +50,14 @@ void update_enemy_system(struct EnemySystem *system, struct Player *player, stru
     }
     system->active_count = current_active_enemies;
 
+    if (system->active_count == 0 && !system->boss.is_active && level->player_won) {
+        printf("Modo Freeplay: Novo chefe a caminho!\n");
+        float boss_x = level->scroll_x + al_get_display_width(al_get_current_display()) + 200;
+        float boss_y = level->ground_level;
+        // Reinicializa a estrutura do chefe para a nova batalha
+        init_boss(&system->boss, boss_x, boss_y);
+    }
+
     // Se o jogo acabou de começar, spawna as waves iniciais.
     if (system->wave_number == 0) {
         printf("Iniciando o jogo: Spawning waves 1 e 2.\n");

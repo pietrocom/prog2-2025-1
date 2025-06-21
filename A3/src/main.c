@@ -1,7 +1,7 @@
 #include <stdio.h>
-#include <allegro5/allegro5.h>											
-#include <allegro5/allegro_font.h>	
-#include <allegro5/allegro_image.h>		
+#include <allegro5/allegro5.h>                                          
+#include <allegro5/allegro_font.h>  
+#include <allegro5/allegro_image.h>     
 #include <allegro5/allegro_ttf.h>
 #include <allegro5/allegro_primitives.h>
 
@@ -56,93 +56,94 @@ int main() {
         ALLEGRO_EVENT event;
         al_wait_for_event(event_queue, &event);
 
-        // Verifica se quer sair do jogo
-        if (game_state == QUIT) {
+        if (game_state == QUIT || event.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
             break; 
         }
 
-        // Trata eventos gerais (fechar janela)
-        if (event.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
-            break;
-        }
-
-        // Chama o handler de eventos específico para cada estado
+        // --- MANIPULAÇÃO DE INPUTS POR ESTADO ---
+        // Este switch cuida apenas da entrada do usuário (teclado, etc.)
         switch (game_state) {
             case MENU:
                 handle_menu_input(&game_menu, &game_state, &event);
                 break;
-                
             case PLAYING:
-                handle_game_events(&event, &game_state); 
+                handle_game_events(&event, &game_state);
+                // O input do jogador é tratado dentro da lógica de atualização do PLAYING
+                handle_player_input(&player, &event, &level);
                 break;
-
             case PAUSED:
                 handle_pause_input(&event, &game_state, &player, &level, &enemy_system, &projectile_system);
                 break;
-                
             case GAME_OVER:
-                handle_game_over_events(&event, &game_state);
+                // MUDANÇA: Chama a nova função que lida com os inputs da tela de Game Over
+                handle_game_over_input(&event, &game_state, &player, &level, &enemy_system, &projectile_system);
                 break;
         }
 
-        // Atualizações de estado
-        switch (game_state) {
-            case MENU:
-                if (redraw) {
-                    if (game_menu.current_state == MENU_MAIN) {
-                        draw_main_menu(&game_menu);
-                    } 
-                    else if (game_menu.current_state == MENU_OPTIONS) {
-                        draw_options_menu(&game_menu);
-                    }
-                    al_flip_display();
-                    redraw = false;
-                }
-                break;
-                
-            case PLAYING:
-                // Processa input
-                handle_player_input(&player, &event, &level);
-                
-                // Atualiza entidades
+        // --- ATUALIZAÇÃO DE ESTADOS E LÓGICA DO JOGO ---
+        // Este switch cuida da lógica de atualização (movimento, IA) e do desenho.
+        // Ele só executa quando o timer dispara um "redraw".
+        if (event.type == ALLEGRO_EVENT_TIMER) {
+            redraw = true;
+
+            if (game_state == PLAYING) {
+                // Atualiza todas as entidades do jogo
                 update_player(&player, 1.0/FPS, &level, &projectile_system);
                 update_enemy_system(&enemy_system, &player, &level, &projectile_system, 1.0/FPS);
                 update_projectile_system(&projectile_system, 1.0/FPS, &player, &enemy_system);
                 update_game(&player, &level, 1.0/FPS);
                 
-                if (redraw) {
+                // NOVO: Verifica as condições de fim de jogo APÓS as atualizações
+                // GATILHO DE DERROTA
+                if (is_player_dead(&player)) {
+                    game_state = GAME_OVER;
+                    level.player_won = false;
+                    level.game_over_selection = 0;
+                }
+                
+                // GATILHO DE VITÓRIA: Ocorre se o chefe está morto e sua animação de morte terminou
+                // A flag level.player_won impede que a tela de vitória seja re-acionada no modo freeplay
+                if (enemy_system.boss.is_dead && !enemy_system.boss.is_active && !level.player_won) {
+                    game_state = GAME_OVER;
+                    level.player_won = true;
+                    level.game_over_selection = 0;
+                }
+            }
+        }
+        
+        // --- DESENHO NA TELA ---
+        if (redraw) {
+            redraw = false;
+            switch (game_state) {
+                case MENU:
+                    if (game_menu.current_state == MENU_MAIN) {
+                        draw_main_menu(&game_menu);
+                    } else if (game_menu.current_state == MENU_OPTIONS) {
+                        draw_options_menu(&game_menu);
+                    }
+                    break;
+                    
+                case PLAYING:
                     draw_game(&player, &level);
                     draw_enemies(&enemy_system, &level, &player); 
                     draw_projectiles(&projectile_system, &level);
                     draw_hud(&player, &level);
-                    al_flip_display();
-                    redraw = false;
-                }
-                break;
+                    break;
 
-            case PAUSED:
-                if (redraw) {
+                case PAUSED:
                     draw_game(&player, &level);
                     draw_enemies(&enemy_system, &level, &player);
                     draw_projectiles(&projectile_system, &level);
                     draw_hud(&player, &level);
                     draw_pause_menu(&level);
-                    al_flip_display();
-                    redraw = false;
-                }
-                break;
-                
-            case GAME_OVER:
-                if (redraw) {
-                    draw_game_over(player.score);
-                    al_flip_display();
-                    redraw = false;
-                }
-                break;
-        }
-
-        if (event.type == ALLEGRO_EVENT_TIMER) {
-            redraw = true;
+                    break;
+                    
+                case GAME_OVER:
+                    // MUDANÇA: Chama a nova função de desenho que mostra as estatísticas e opções
+                    draw_game_over_screen(&player, &level);
+                    break;
+            }
+            al_flip_display();
         }
     }
 

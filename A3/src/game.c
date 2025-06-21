@@ -120,7 +120,35 @@ void handle_pause_input(ALLEGRO_EVENT *event, GameState *state,
 
 // ---- Funções de Controle de Game Over ----
 
-void handle_game_over_events (ALLEGRO_EVENT *event, GameState *state) {}
+void handle_game_over_input(ALLEGRO_EVENT *event, GameState *state, 
+    struct Player *player, struct GameLevel *level, struct EnemySystem *enemy_system, struct ProjectileSystem *projectile_system) {
+    
+    if (event->type != ALLEGRO_EVENT_KEY_DOWN) return;
+
+    switch (event->keyboard.keycode) {
+        case ALLEGRO_KEY_UP:
+        case ALLEGRO_KEY_DOWN:
+            level->game_over_selection = (level->game_over_selection + 1) % 2; // Alterna entre 0 e 1
+            break;
+
+        case ALLEGRO_KEY_ENTER:
+            if (level->game_over_selection == 0) { // Primeira opção
+                if (level->player_won) {
+                    // MODO FREEPLAY
+                    *state = PLAYING;
+                    // O jogo continua de onde parou, o sistema de inimigos irá gerar um novo chefe.
+                } else {
+                    // REINICIAR
+                    reset_game(player, level, enemy_system, projectile_system);
+                    *state = PLAYING;
+                }
+            } else { // Segunda opção (Sair para o Menu)
+                reset_game(player, level, enemy_system, projectile_system);
+                *state = MENU;
+            }
+            break;
+    }
+}
 
 
 // ---- Funções de Atualização e Renderização ----
@@ -222,7 +250,58 @@ void draw_game(struct Player *player, struct GameLevel *level) {
     }
 }
 
-void draw_game_over (int score) {}
+void draw_game_over_screen(struct Player *player, struct GameLevel *level) {
+    ALLEGRO_COLOR bg_color = al_map_rgba(0, 0, 0, 210);
+    ALLEGRO_COLOR title_color, text_color, highlight_color;
+    const char *title_text;
+    const char *option1_text;
+    
+    ALLEGRO_FONT *title_font = al_load_font("assets/fonts/DirtyWar.otf", GAMEOVER_TITLE_FONT_SIZE, 0);
+    ALLEGRO_FONT *text_font = al_load_font("assets/fonts/DirtyWar.otf", GAMEOVER_TEXT_FONT_SIZE, 0);
+    
+    int display_w = al_get_display_width(al_get_current_display());
+    int display_h = al_get_display_height(al_get_current_display());
+
+    // Configura textos e cores com base na vitória ou derrota
+    if (level->player_won) {
+        title_text = "YOU WON!";
+        option1_text = "Freeplay";
+        title_color = al_map_rgb(255, 215, 0); // Dourado
+        highlight_color = al_map_rgb(173, 255, 47); // Verde claro
+    } else {
+        title_text = "GAME OVER";
+        option1_text = "Reiniciar";
+        title_color = al_map_rgb(200, 0, 0); // Vermelho escuro
+        highlight_color = al_map_rgb(255, 100, 100); // Vermelho claro
+    }
+    text_color = al_map_rgb(220, 220, 220); // Branco acinzentado
+
+    // Desenha o fundo semi-transparente
+    al_draw_filled_rectangle(0, 0, display_w, display_h, bg_color);
+    
+    // Título (VOCÊ VENCEU ou GAME OVER)
+    al_draw_text(title_font, title_color, display_w / 2, display_h * 0.2, ALLEGRO_ALIGN_CENTER, title_text);
+
+    // Estatísticas Finais
+    int minutes = (int)level->game_time / 60;
+    int seconds = (int)level->game_time % 60;
+    al_draw_textf(text_font, text_color, display_w / 2, display_h * 0.45, ALLEGRO_ALIGN_CENTER, "Pontuacao final: %06d", player->score);
+    al_draw_textf(text_font, text_color, display_w / 2, display_h * 0.55, ALLEGRO_ALIGN_CENTER, "Tempo de jogo: %02d:%02d", minutes, seconds);
+
+    // Opções
+    al_draw_text(text_font, 
+                 level->game_over_selection == 0 ? highlight_color : text_color, 
+                 display_w / 2, display_h * 0.75, ALLEGRO_ALIGN_CENTER, 
+                 option1_text);
+                 
+    al_draw_text(text_font, 
+                 level->game_over_selection == 1 ? highlight_color : text_color, 
+                 display_w / 2, display_h * 0.85, ALLEGRO_ALIGN_CENTER, 
+                 "Voltar ao Menu");
+
+    al_destroy_font(title_font);
+    al_destroy_font(text_font);
+}
 
 void draw_pause_menu(struct GameLevel *level) {
     if (!al_is_primitives_addon_initialized()) {

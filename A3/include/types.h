@@ -80,6 +80,9 @@ struct GameLevel {
 
     double game_time; 
     ALLEGRO_FONT *hud_font;
+
+    bool player_won;
+    int game_over_selection;
 };
 
 typedef enum {
