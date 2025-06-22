@@ -1,0 +1,203 @@
+\documentclass[11pt, a4paper]{article}
+
+% --- PACOTES E CONFIGURAÇÕES DO DOCUMENTO ---
+
+% Suporte para caracteres em português (acentos, ç)
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazil]{babel}
+
+% Geometria da página com margens mais agradáveis
+\usepackage[a4paper, margin=2.5cm]{geometry}
+
+% Para customização de cores
+\usepackage{xcolor}
+
+% Para incluir links clicáveis no PDF
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=violet,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    pdftitle={Relatório do Projeto - Shooter Born in Heaven},
+    pdfpagemode=FullScreen,
+}
+
+% Para formatação de blocos de código
+\usepackage{listings}
+\usepackage{courier} % Fonte monoespaçada para o código
+
+% Define cores customizadas para os blocos de código
+\definecolor{codegray}{rgb}{0.1,0.1,0.1}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+
+% Define um estilo para blocos de código
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{codegray},   
+    commentstyle=\color{green},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{gray},
+    stringstyle=\color{codepurple},
+    basicstyle=\footnotesize\ttfamily\color{white},
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+\lstset{style=mystyle}
+
+% Define o espaçamento entre parágrafos em vez de indentação
+\usepackage{parskip}
+
+% --- INÍCIO DO DOCUMENTO ---
+
+\begin{document}
+
+% --- FOLHA DE ROSTO CUSTOMIZADA ---
+\begin{titlepage}
+    \centering % Centraliza todo o conteúdo da página
+    
+    \vspace*{4cm} % Adiciona um espaço no topo da página
+    
+    {\Huge \bfseries Shooter Born in Heaven} % Título principal em negrito e tamanho gigante
+    
+    \vspace{1cm} % Espaço entre o título e o subtítulo
+    
+    {\Large Trabalho 03 - Programação 02} % Subtítulo em tamanho grande
+    
+    \vfill % Empurra o conteúdo seguinte para o meio da página
+    
+    % Bloco com as informações do autor
+    {\large
+    \begin{tabular}{l}
+    \textbf{Autor:} Pietro Comin \\
+    \textbf{GRR:} GRR20241955 \\
+    \end{tabular}
+    }
+    
+    \vfill % Empurra o conteúdo seguinte para a parte de baixo da página
+    
+    % Informações da universidade e data
+    {\large
+    Curso de Bacharelado em Ciência da Computação \\
+    Universidade Federal do Paraná (UFPR) \\[1cm] % Espaço extra antes da data
+    \today
+    }
+    
+\end{titlepage}
+
+% --- RESTANTE DO DOCUMENTO ---
+
+\tableofcontents % Gera o sumário automaticamente
+\newpage
+
+\section{Descrição do Jogo}
+
+\textbf{Shooter Born in Heaven} é um jogo de ação 2D do gênero \textit{Run 'n Gun}, inspirado em clássicos como \textit{Contra} e \textit{Metal Slug}. O jogador assume o papel de um soldado de elite que deve avançar por um cenário urbano hostil, enfrentando ondas de gangsters e culminando em uma batalha intensa contra um poderoso chefe final.
+
+O jogo foi desenvolvido em Linguagem C, utilizando a biblioteca Allegro 5 para a renderização gráfica, gerenciamento de eventos, física e animações.
+
+\section{Como Compilar e Executar}
+
+O projeto utiliza um \texttt{makefile} para facilitar a compilação e a limpeza dos arquivos gerados.
+
+\subsection*{Requisitos}
+\begin{itemize}
+    \item GCC (ou um compilador C compatível)
+    \item Make
+    \item Biblioteca Allegro 5 e seus addons (\texttt{image}, \texttt{font}, \texttt{ttf}, \texttt{primitives}) instalados.
+\end{itemize}
+
+\subsection*{Passos}
+\begin{enumerate}
+    \item Abra um terminal e navegue até o diretório raiz do projeto.
+    
+    \item Para compilar o jogo, execute o comando:
+    \begin{lstlisting}[language=bash]
+make
+    \end{lstlisting}
+    Isso irá gerar o arquivo executável \texttt{main} no diretório raiz.
+    
+    \item Para executar o jogo, utilize o comando:
+    \begin{lstlisting}[language=bash]
+./main
+    \end{lstlisting}
+    
+    \item Para limpar os arquivos compilados (arquivos objeto e o executável), execute:
+    \begin{lstlisting}[language=bash]
+make clean
+    \end{lstlisting}
+\end{enumerate}
+
+\section{Controles do Jogo}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Ação} & \textbf{Teclado Principal} & \textbf{Teclado Alternativo} \\ \hline
+Movimentar & \texttt{A} / \texttt{D} & Seta Esquerda / Seta Direita \\
+Pular & \texttt{W} & Seta Cima \\
+Abaixar & \texttt{S} & Seta Baixo \\
+Correr & \texttt{Shift Esquerdo} & \texttt{Shift Direito} \\
+Atirar & \texttt{Barra de Espaço} & \\
+Recarregar & \texttt{R} & \\
+Pausar & \texttt{P} & \texttt{ESC} \\
+Modo Debug (Hitbox) & \texttt{H} & \\ \hline
+\end{tabular}
+\caption{Tabela de controles do jogo}
+\label{tab:controles}
+\end{table}
+
+\section{Estrutura do Projeto}
+O código foi organizado de forma modular para garantir a separação de responsabilidades e facilitar a manutenção.
+
+\begin{itemize}
+    \item \textbf{\texttt{src/}}: Contém todos os arquivos de código-fonte (\texttt{.c}).
+    \item \textbf{\texttt{include/}}: Contém todos os arquivos de cabeçalho (\texttt{.h}).
+    \item \textbf{\texttt{assets/}}: Contém todos os recursos gráficos (sprites, backgrounds) e fontes.
+    \item \textbf{\texttt{obj/}}: Diretório para os arquivos objeto gerados durante a compilação.
+    \item \textbf{\texttt{makefile}}: Arquivo de compilação.
+\end{itemize}
+
+\section{Funcionalidades Implementadas}
+
+\subsection{Requisitos Mínimos (80/80 pontos)}
+\begin{itemize}
+    \item[\checkmark] \textbf{Jogo Singleplayer:} O jogo é projetado para um único jogador.
+    \item[\checkmark] \textbf{Menu Inicial:} Implementado com opções de "Iniciar Jogo", "Opções" e "Sair".
+    \item[\checkmark] \textbf{Tela de Fim de Jogo:} Implementada, com telas distintas para vitória e derrota.
+    \item[\checkmark] \textbf{Sprites do Personagem:} Todas as animações necessárias foram implementadas (parado, andando, correndo, pulando, abaixando e atirando).
+    \item[\checkmark] \textbf{Mobilidade Geral:} O jogador pode andar, pular, se abaixar e atirar em todas as direções e estados.
+    \item[\checkmark] \textbf{Ataque com Projétil:} O jogador e inimigos disparam projéteis com sprites próprias.
+    \item[\checkmark] \textbf{Sistema de Vida:} Todos os personagens possuem um sistema de pontos de vida.
+    \item[\checkmark] \textbf{Cenário com Rolagem:} O jogo utiliza um background com efeito de scroll (parallax).
+    \item[\checkmark] \textbf{Inimigos e Chefe:} Implementado um inimigo normal com projéteis e um chefe final com IA própria.
+    \item[\checkmark] \textbf{Sistema de Fase:} A fase é estruturada com ondas de inimigos que culminam na batalha contra o chefe.
+\end{itemize}
+
+\subsection{Funcionalidades Extras Implementadas}
+\begin{itemize}
+    \item[\checkmark] \textbf{[2] Inimigo Normal Extra (15/15 pontos):} Além do inimigo que atira, foi implementado um inimigo de ataque corpo a corpo (\texttt{ENEMY\_MELEE}).
+    \item[\checkmark] \textbf{[3] Botão de Pausa (5/5 pontos):} O jogo pode ser pausado a qualquer momento.
+    \item[\checkmark] \textbf{[4] Abaixar e Atirar Abaixado (10/10 pontos):} O jogador pode se abaixar e possui uma animação específica para atirar nesse estado.
+    \item[\checkmark] \textbf{[7] Sistema de Estamina (10/10 pontos):} Implementado sistema de estamina consumido ao correr, com regeneração e HUD.
+\end{itemize}
+
+\subsection{Funcionalidades Adicionais (Não Listadas no Enunciado)}
+\begin{itemize}
+    \item \textbf{Sistema de Recarga de Munição:} O jogador possui munição limitada e precisa recarregar a arma (tecla \texttt{R}), adicionando uma camada tática ao combate.
+    \item \textbf{Sistema de Ondas de Inimigos:} Inimigos surgem em ondas com dificuldade progressiva, criando um ritmo de combate dinâmico.
+    \item \textbf{Modo "Freeplay" Pós-Vitória:} Após vencer, o jogador pode continuar na fase, onde o chefe pode reaparecer para novos desafios.
+    \item \textbf{IA Avançada do Chefe:} O chefe possui múltiplos ataques, um modo "Fúria" com 50\% de vida e um sistema de "Poise" que o torna resistente a atordoamentos.
+    \item \textbf{Modo de Depuração:} A tecla \texttt{H} ativa a visualização de todas as hitboxes, uma ferramenta essencial para o desenvolvimento.
+\end{itemize}
+
+\end{document}
