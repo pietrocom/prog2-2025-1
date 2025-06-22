@@ -39,7 +39,9 @@ void draw_boss_health_bar(struct Boss *boss) {
     int display_w = al_get_display_width(al_get_current_display());
     float bar_margin = 20.0f;
     float bar_height = 25.0f;
-    float bar_width = display_w - (bar_margin * 2);
+    float bar_width = 800.0f; 
+    float bar_x = (display_w - bar_width) / 2;
+    float bar_y = bar_margin;
 
     // Calcula a porcentagem de vida para o preenchimento da barra
     float health_percent = (float)boss->health / (float)boss->max_health;
@@ -58,9 +60,9 @@ void draw_boss_health_bar(struct Boss *boss) {
     }
 
     // Desenha as três camadas da barra: fundo, preenchimento e borda
-    al_draw_filled_rectangle(bar_margin, bar_margin, bar_margin + bar_width, bar_margin + bar_height, al_map_rgb(50, 50, 50));
-    al_draw_filled_rectangle(bar_margin, bar_margin, bar_margin + (bar_width * health_percent), bar_margin + bar_height, fill_color);
-    al_draw_rectangle(bar_margin, bar_margin, bar_margin + bar_width, bar_margin + bar_height, border_color, 2.0f);
+    al_draw_filled_rectangle(bar_x, bar_y, bar_x + bar_width, bar_y + bar_height, al_map_rgb(50, 50, 50));
+    al_draw_filled_rectangle(bar_x, bar_y, bar_x + (bar_width * health_percent), bar_y + bar_height, fill_color);
+    al_draw_rectangle(bar_x, bar_y, bar_x + bar_width, bar_y + bar_height, border_color, 2.0f);
 }
 
 // =================================================
