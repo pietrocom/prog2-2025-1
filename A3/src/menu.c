@@ -50,6 +50,9 @@ void handle_menu_input (struct Menu *menu, GameState *game_state, ALLEGRO_EVENT 
             case MENU_OPTIONS:
                 handle_options_menu_input(menu, event);
                 break;
+
+            case MENU_PAUSE:
+                break;
         }
     }
 }

@@ -43,7 +43,8 @@ void init_player (struct Player * player) {
     player->soldier_type = SOLDIER_2;
 
     // Status
-    player->health = 100;
+    player->max_health = PLAYER_MAX_HEALTH;
+    player->health = PLAYER_MAX_HEALTH;
     player->score = 0;
 
     // Estado

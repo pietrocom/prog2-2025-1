@@ -75,9 +75,11 @@ int main() {
                 handle_pause_input(&event, &game_state, &player, &level, &enemy_system, &projectile_system);
                 break;
             case GAME_OVER:
-                // MUDANÇA: Chama a nova função que lida com os inputs da tela de Game Over
+                // Chama a nova função que lida com os inputs da tela de Game Over
                 handle_game_over_input(&event, &game_state, &player, &level, &enemy_system, &projectile_system);
                 break;
+            case QUIT:
+                break; // Já foi lidado
         }
 
         // --- ATUALIZAÇÃO DE ESTADOS E LÓGICA DO JOGO ---
@@ -126,21 +128,24 @@ int main() {
                 case PLAYING:
                     draw_game(&player, &level);
                     draw_enemies(&enemy_system, &level, &player); 
-                    draw_projectiles(&projectile_system, &level);
+                    draw_projectiles(&projectile_system, &level, &player);
                     draw_hud(&player, &level);
                     break;
 
                 case PAUSED:
                     draw_game(&player, &level);
                     draw_enemies(&enemy_system, &level, &player);
-                    draw_projectiles(&projectile_system, &level);
+                    draw_projectiles(&projectile_system, &level, &player);
                     draw_hud(&player, &level);
                     draw_pause_menu(&level);
                     break;
                     
                 case GAME_OVER:
-                    // MUDANÇA: Chama a nova função de desenho que mostra as estatísticas e opções
+                    // Mostra as estatísticas e opções
                     draw_game_over_screen(&player, &level);
+                    break;
+
+                case QUIT:
                     break;
             }
             al_flip_display();

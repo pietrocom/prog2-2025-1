@@ -38,7 +38,7 @@ void reset_game(struct Player *player, struct GameLevel *level, struct EnemySyst
 void update_game(struct Player *player, struct GameLevel *level, float delta_time);
 void draw_game(struct Player *player, struct GameLevel *level);
 void draw_game_over_screen(struct Player *player, struct GameLevel *level);
-void draw_pause_menu(struct GameLevel *level);
+void draw_pause_menu();
 void draw_hud(struct Player *player, struct GameLevel *level);
 
 #endif

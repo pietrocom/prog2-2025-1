@@ -357,8 +357,11 @@ void enemy_attack(struct Enemy *enemy, struct Player *player, struct GameLevel *
     
     if (enemy->type == ENEMY_MELEE) {
         float player_world_x = player->entity.x + level->scroll_x;
-        float distance = fabs(player_world_x - enemy->entity.x);
-        if (distance <= enemy->attack_range) {
+        float distance_x = fabs(player_world_x - enemy->entity.x);
+        
+        float distance_y = fabs(player->entity.y - enemy->entity.y);
+
+        if (distance_x <= enemy->attack_range && distance_y < (enemy->entity.height * 0.5f)) {
             damage_player(player, enemy->damage);
         }
     }

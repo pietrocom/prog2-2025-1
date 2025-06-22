@@ -13,6 +13,8 @@
 #define MAX_AMMO 20
 #define RELOAD_TIME 2.25f
 
+#define PLAYER_MAX_HEALTH 100
+
 // ---- Constantes de estamina
 
 #define MAX_STAMINA 100.0f
@@ -58,6 +60,7 @@ struct Player {
 
     // Estatísticas
     int health;
+    int max_health;
     int score;
 
     // Fluxo de animações do player

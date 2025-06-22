@@ -55,7 +55,7 @@ void update_projectile_system(struct ProjectileSystem *system, float delta_time,
 }
 
 // Desenha todos os projéteis ativos
-void draw_projectiles(struct ProjectileSystem *system, struct GameLevel *level) {
+void draw_projectiles(struct ProjectileSystem *system, struct GameLevel *level, struct Player *player) {
     for (int i = 0; i < MAX_PROJECTILES; i++) {
         if (system->projectiles[i].is_active) {
             
@@ -93,6 +93,15 @@ void draw_projectiles(struct ProjectileSystem *system, struct GameLevel *level) 
                         color
                     );
                 }
+            }
+
+            if (player->hitbox_show) {
+                al_draw_rectangle(
+                    p->entity.hitbox.x - level->scroll_x,
+                    p->entity.hitbox.y,
+                    p->entity.hitbox.x + p->entity.hitbox.width - level->scroll_x,
+                    p->entity.hitbox.y + p->entity.hitbox.height,
+                    al_map_rgb(255, 0, 0), 1.0f);
             }
         }
     }
@@ -216,19 +225,27 @@ void spawn_boss_projectile(struct ProjectileSystem *system, struct Boss *boss) {
 void check_projectile_collisions(struct ProjectileSystem *system, 
                                struct Player *player, 
                                struct EnemySystem *enemy_system) {
+
+    struct Entity player_world_entity = player->entity;
+    player_world_entity.hitbox.x += player->entity.x - player->entity.hitbox.x; // Centraliza a hitbox no mundo
+    player_world_entity.x += player->entity.x; // Posição X no mundo
+    update_hitbox_position(&player_world_entity, player->facing_right); // Atualiza a hitbox na posição do mundo
+    player_world_entity.hitbox.x = player->entity.hitbox.x + player->entity.x;
+
+
     for (int i = 0; i < MAX_PROJECTILES; i++) {
         if (!system->projectiles[i].is_active) continue;
         
         struct Projectile *p = &system->projectiles[i];
         
-        // Colisão com jogador (apenas projéteis inimigos que não estejam mortos)
+        // Usa a hitbox do jogador no espaço do mundo para a verificação
         if (p->type == PROJECTILE_ENEMY && !is_player_dead(player) && 
-            check_collision(&p->entity, &player->entity)) {
+            check_collision(&p->entity, &player_world_entity)) {
             
             damage_player(player, p->damage);
-            p->is_active = false; // Desativa o projétil
+            p->is_active = false;
             system->active_count--;
-            continue; // Pula para o próximo projétil
+            continue;
         }
         
         // Colisão com inimigos (apenas projéteis do jogador)

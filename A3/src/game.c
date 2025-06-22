@@ -303,7 +303,7 @@ void draw_game_over_screen(struct Player *player, struct GameLevel *level) {
     al_destroy_font(text_font);
 }
 
-void draw_pause_menu(struct GameLevel *level) {
+void draw_pause_menu() {
     if (!al_is_primitives_addon_initialized()) {
         fprintf(stderr, "Primitives addon not initialized!\n");
         exit(1);
@@ -323,8 +323,6 @@ void draw_pause_menu(struct GameLevel *level) {
     int display_h = al_get_display_height(al_get_current_display());
     int box_width = 600;
     int box_height = 400;
-    int box_padding = 20;
-    int text_height = al_get_font_line_height(font);
 
     if (!al_is_primitives_addon_initialized()) {
         fprintf(stderr, "ERRO: Primitives não inicializado no draw!\n");
@@ -358,9 +356,6 @@ void draw_pause_menu(struct GameLevel *level) {
         display_h/2 - 160, 
         ALLEGRO_ALIGN_CENTRE, 
         "JOGO PAUSADO");
-
-    // 4. Opções
-    int y_offset = display_h/2 - box_height/2 + box_padding * 3;
     
     // Opção 1 - Continuar
     al_draw_text(
@@ -425,4 +420,32 @@ void draw_hud(struct Player *player, struct GameLevel *level) {
     al_draw_filled_rectangle(stamina_bar_x, stamina_bar_y, stamina_bar_x + current_stamina_w, stamina_bar_y + stamina_bar_h, stamina_color);
     // Borda da barra
     al_draw_rectangle(stamina_bar_x, stamina_bar_y, stamina_bar_x + stamina_bar_w, stamina_bar_y + stamina_bar_h, al_map_rgb(200, 200, 200), 2);
+
+
+    // Barra da vida do player
+    float health_bar_w = 200;
+    float health_bar_h = 20;
+    float health_bar_x = 20;
+    float health_bar_y = stamina_bar_y + stamina_bar_h + 10; // Posiciona abaixo da estamina
+
+    float health_percent = (float)player->health / player->max_health;
+    if (health_percent < 0) health_percent = 0;
+    float current_health_w = health_bar_w * health_percent;
+
+    // Muda a cor da barra com base na vida restante
+    ALLEGRO_COLOR health_color;
+    if (health_percent > 0.6f) {
+        health_color = al_map_rgb(46, 204, 113); // Verde
+    } else if (health_percent > 0.3f) {
+        health_color = al_map_rgb(241, 196, 15); // Amarelo
+    } else {
+        health_color = al_map_rgb(231, 76, 60);  // Vermelho
+    }
+
+    // Fundo da barra
+    al_draw_filled_rectangle(health_bar_x, health_bar_y, health_bar_x + health_bar_w, health_bar_y + health_bar_h, al_map_rgba(50, 50, 50, 150));
+    // Preenchimento da barra
+    al_draw_filled_rectangle(health_bar_x, health_bar_y, health_bar_x + current_health_w, health_bar_y + health_bar_h, health_color);
+    // Borda da barra
+    al_draw_rectangle(health_bar_x, health_bar_y, health_bar_x + health_bar_w, health_bar_y + health_bar_h, al_map_rgb(200, 200, 200), 2);
 }

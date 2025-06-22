@@ -47,7 +47,7 @@ struct EnemySystem;
 
 void init_projectile_system(struct ProjectileSystem *system);
 void update_projectile_system(struct ProjectileSystem *system, float delta_time, struct Player *player, struct EnemySystem *enemy_system);
-void draw_projectiles(struct ProjectileSystem *system, struct GameLevel *level);
+void draw_projectiles(struct ProjectileSystem *system, struct GameLevel *level, struct Player *player);
 
 // ---- Funções de Controle de Projéteis ----
 
