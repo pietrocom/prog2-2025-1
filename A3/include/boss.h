@@ -11,6 +11,7 @@
 
 #define BOSS_HEALTH 2500
 #define BOSS_PROJECTILE_DAMAGE 25
+#define BOSS_MUZZLE_OFFSET_X 50.0f 
 #define BOSS_PROJECTILE_OFFSET_Y (128 * 0.75f) 
 
 // --- Ataques ---

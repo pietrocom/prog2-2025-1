@@ -60,48 +60,45 @@ void draw_projectiles(struct ProjectileSystem *system, struct GameLevel *level, 
         if (system->projectiles[i].is_active) {
             
             struct Projectile *p = &system->projectiles[i];
-            float draw_x = p->entity.x - level->scroll_x;
-            float draw_y = p->entity.y;
 
+            // --- LÓGICA DE DESENHO CORRIGIDA ---
+
+            // 1. A âncora (p->entity.x, p->entity.y) está no espaço do MUNDO.
+            //    Vamos convertê-la para o espaço da TELA.
+            float anchor_screen_x = p->entity.x - level->scroll_x;
+            float anchor_screen_y = p->entity.y;
+
+            // 2. Com base na âncora (centro-base), calculamos o canto superior esquerdo
+            //    onde a sprite deve ser desenhada.
+            float draw_x = anchor_screen_x - (p->entity.width / 2);
+            float draw_y = anchor_screen_y - p->entity.height;
+            
             if (p->sprite) {
                 float sw = al_get_bitmap_width(p->sprite);
                 float sh = al_get_bitmap_height(p->sprite);
-
-                int flags = (p->entity.vel_x < 0) ? ALLEGRO_FLIP_HORIZONTAL : 0;
+                int flags = (p->entity.vel_x > 0) ? 0 : ALLEGRO_FLIP_HORIZONTAL;
                 
+                // 3. CORREÇÃO: Desenha a sprite usando seu tamanho de entidade (p->entity.width/height),
+                //    NÃO o tamanho da hitbox.
                 al_draw_scaled_bitmap(p->sprite, 
-                                     0, 0, sw, sh,     // Região de origem da sprite
-                                     draw_x, draw_y,   // Posição na tela
-                                     p->entity.hitbox.width, p->entity.hitbox.height, // Tamanho final na tela
-                                     flags);           // Usa a flag calculada aqui
+                                     0, 0, sw, sh,
+                                     draw_x, draw_y,
+                                     p->entity.width,  // CORRIGIDO
+                                     p->entity.height, // CORRIGIDO
+                                     flags);
             } else {
-                // Desenha primitiva 
-                ALLEGRO_COLOR color = p->color;
-                if (p->type == PROJECTILE_PLAYER) {
-                    al_draw_filled_rectangle(
-                        draw_x,
-                        draw_y,
-                        draw_x + PROJECTILE_WIDTH,
-                        draw_y + PROJECTILE_HEIGHT,
-                        color
-                    );
-                } else { // Inimigo
-                    al_draw_filled_circle(
-                        draw_x + PROJECTILE_WIDTH/2,
-                        draw_y + PROJECTILE_HEIGHT/2,
-                        PROJECTILE_WIDTH/2,
-                        color
-                    );
-                }
+                // Lógica de desenho com primitivas (se a sprite falhar)
+                al_draw_filled_rectangle(draw_x, draw_y, draw_x + p->entity.width, draw_y + p->entity.height, al_map_rgb(255,0,255));
             }
 
+            // O desenho da hitbox (para debug) também é ajustado para a tela
             if (player->hitbox_show) {
                 al_draw_rectangle(
-                    p->entity.hitbox.x - level->scroll_x,
+                    p->entity.hitbox.x - level->scroll_x, // Converte x da hitbox para a tela
                     p->entity.hitbox.y,
-                    p->entity.hitbox.x + p->entity.hitbox.width - level->scroll_x,
+                    p->entity.hitbox.x + p->entity.hitbox.width - level->scroll_x, // Converte x final para a tela
                     p->entity.hitbox.y + p->entity.hitbox.height,
-                    al_map_rgb(255, 0, 0), 1.0f);
+                    al_map_rgb(0, 255, 0), 1.0f);
             }
         }
     }
@@ -120,6 +117,7 @@ void spawn_projectile(struct ProjectileSystem *system, float x, float y,
         if (!system->projectiles[i].is_active) {
             struct Projectile *p = &system->projectiles[i];
             
+            // O ponto de âncora (x,y) é o CENTRO DA BASE do projétil.
             p->entity.x = x;
             p->entity.y = y;
             p->entity.vel_x = facing_right ? PROJECTILE_SPEED : -PROJECTILE_SPEED;
@@ -131,33 +129,40 @@ void spawn_projectile(struct ProjectileSystem *system, float x, float y,
             p->damage = damage;
             p->lifetime = PROJECTILE_LIFETIME;
 
+            // Define a sprite
             if (type == PROJECTILE_PLAYER) {
                 p->sprite = system->player_bullet_sprite;
             } else {
                 p->sprite = system->enemy_bullet_sprite;
             }
-
+            
+            // Define o TAMANHO DA SPRITE (para o desenho)
             if (p->sprite) {
-                float scale = 1.0f; // Escala padrão caso não seja definida
-                if (p->type == PROJECTILE_PLAYER) {
-                    scale = PLAYER_BULLET_SCALE;
-                } else { 
-                    scale = ENEMY_BULLET_SCALE;
-                }
-                
-                // Calcula o tamanho da entidade/hitbox usando a escala correta
+                float scale = (type == PROJECTILE_PLAYER) ? PLAYER_BULLET_SCALE : ENEMY_BULLET_SCALE;
                 p->entity.width = al_get_bitmap_width(p->sprite) * scale;
                 p->entity.height = al_get_bitmap_height(p->sprite) * scale;
             } else { 
-                p->entity.width = PROJECTILE_WIDTH;
-                p->entity.height = PROJECTILE_HEIGHT;
+                // Fallback caso a sprite não carregue
+                p->entity.width = 10.0f;
+                p->entity.height = 5.0f;
             }
             
-            p->entity.hitbox.width = p->entity.width;
-            p->entity.hitbox.height = p->entity.height;
-            p->entity.hitbox.offset_x = 0;
-            p->entity.hitbox.offset_y = 0;
+            // --- CONFIGURAÇÃO DA HITBOX ---
+            // A hitbox agora tem seu próprio tamanho, definido pelas novas constantes.
+            if (type == PROJECTILE_PLAYER) {
+                p->entity.hitbox.width = PLAYER_PROJECTILE_HITBOX_W;
+                p->entity.hitbox.height = PLAYER_PROJECTILE_HITBOX_H;
+            } else { // Inimigo ou Chefe
+                p->entity.hitbox.width = ENEMY_PROJECTILE_HITBOX_W;
+                p->entity.hitbox.height = ENEMY_PROJECTILE_HITBOX_H;
+            }
             
+            // Define os deslocamentos (offsets) da hitbox
+            p->entity.hitbox.offset_x = PROJECTILE_HITBOX_OFFSET_X;
+            p->entity.hitbox.offset_y = PROJECTILE_HITBOX_OFFSET_Y;
+            
+            // A função update_hitbox_position agora funciona corretamente, pois
+            // a âncora do projétil foi padronizada para centro-base.
             update_hitbox_position(&p->entity, facing_right);
             
             system->active_count++;
@@ -168,20 +173,18 @@ void spawn_projectile(struct ProjectileSystem *system, float x, float y,
 
 // Cria projétil do jogador
 void spawn_player_projectile(struct ProjectileSystem *system, struct Player *player, struct GameLevel *level) {
-    float player_world_x = player->entity.x;
-    if (level) { // Se o level for passado, considera o scroll
-        player_world_x += level->scroll_x;
-    }
+    float player_world_x = player->entity.x + level->scroll_x;
 
-    float offset_x = player->facing_right ? (player->entity.width / 2) : (-player->entity.width / 2);
-    
-    float vertical_offset = player->is_crouching ? CROUCH_PROJECTILE_OFFSET_Y : STANDING_PROJECTILE_OFFSET_Y;
-    float spawn_y = player->entity.y - vertical_offset;
+    float muzzle_offset_x = player->facing_right ? PLAYER_MUZZLE_OFFSET_X : -PLAYER_MUZZLE_OFFSET_X;
+    float muzzle_offset_y = player->is_crouching ? PLAYER_MUZZLE_OFFSET_Y_CROUCH : PLAYER_MUZZLE_OFFSET_Y_STANDING;
+
+    float muzzle_x = player_world_x + muzzle_offset_x;
+    float muzzle_y = player->entity.y - muzzle_offset_y; 
 
     spawn_projectile(
         system,
-        player_world_x + offset_x,
-        spawn_y, 
+        muzzle_x,
+        muzzle_y, 
         player->facing_right,
         PROJECTILE_PLAYER,
         PROJECTILE_NORMAL,
@@ -191,14 +194,15 @@ void spawn_player_projectile(struct ProjectileSystem *system, struct Player *pla
 
 // Cria projétil do inimigo
 void spawn_enemy_projectile(struct ProjectileSystem *system, struct Enemy *enemy) {
-    float offset_x = enemy->facing_right ? (enemy->entity.width / 2) : (-enemy->entity.width / 2);
+    float muzzle_offset_x = enemy->facing_right ? ENEMY_MUZZLE_OFFSET_X : -ENEMY_MUZZLE_OFFSET_X;
     
-    float spawn_y = enemy->entity.y - ENEMY_PROJECTILE_OFFSET_Y;
+    float muzzle_x = enemy->entity.x + muzzle_offset_x;
+    float muzzle_y = enemy->entity.y - ENEMY_MUZZLE_OFFSET_Y;
     
     spawn_projectile(
         system,
-        enemy->entity.x + offset_x,
-        spawn_y,
+        muzzle_x,
+        muzzle_y,
         enemy->facing_right,
         PROJECTILE_ENEMY,
         PROJECTILE_NORMAL,
@@ -207,16 +211,17 @@ void spawn_enemy_projectile(struct ProjectileSystem *system, struct Enemy *enemy
 }
 
 void spawn_boss_projectile(struct ProjectileSystem *system, struct Boss *boss) {
-    float offset_x = boss->facing_right ? (boss->entity.width / 2) : (-boss->entity.width / 2);
+    float muzzle_offset_x = boss->facing_right ? BOSS_MUZZLE_OFFSET_X : -BOSS_MUZZLE_OFFSET_X;
 
-    float spawn_y = boss->entity.y - BOSS_PROJECTILE_OFFSET_Y;
+    float muzzle_x = boss->entity.x + muzzle_offset_x;
+    float muzzle_y = boss->entity.y - BOSS_PROJECTILE_OFFSET_Y; 
 
     spawn_projectile(
         system,
-        boss->entity.x + offset_x,
-        spawn_y,
+        muzzle_x,
+        muzzle_y,
         boss->facing_right,
-        PROJECTILE_ENEMY, // Ainda é um projétil de inimigo
+        PROJECTILE_ENEMY,
         PROJECTILE_NORMAL,
         boss->projectile_damage
     );
