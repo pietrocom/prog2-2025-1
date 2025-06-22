@@ -1,7 +1,15 @@
+
+// Módulo que contem funções "coringa" utilizadas por outros módulos.
+
 #ifndef UTILS_H
 #define UTILS_H
 
 #include "player.h"
+
+
+// =================================================
+// === PROTÓTIPOS DAS FUNÇÕES ======================
+// =================================================
 
 void init_allegro();
 

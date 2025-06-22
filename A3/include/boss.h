@@ -6,7 +6,7 @@
 #include "projectiles.h"
 
 // =================================================
-// === CONSTANTES DE CONFIGURAÇÃO DO CHEFE ========
+// === CONSTANTES DE CONFIGURAÇÃO DO CHEFE =========
 // =================================================
 
 #define BOSS_HEALTH 2500
@@ -24,8 +24,8 @@
 // O chefe contra-ataca após ser atingido este número de vezes seguidas.
 #define BOSS_POISE_THRESHOLD 3
 
-// --- Temporizadores da IA (AJUSTE: Mais agressivo) ---
-#define BOSS_ATTACK_COOLDOWN 1.2f
+// --- Temporizadores da IA ---
+#define BOSS_ATTACK_COOLDOWN 1.0f
 #define BOSS_LUNGE_PREP_TIME 0.9f
 #define BOSS_LUNGE_DURATION 1.6f
 #define BOSS_SHOOT_DURATION 2.0f
@@ -33,15 +33,16 @@
 #define BOSS_POST_ATTACK_COOLDOWN 0.8f
 #define BOSS_SHOOT_FRAME_DELAY 0.09f
 
-// MODO FÚRIA (AJUSTE: Ainda mais agressivo)
+// --- Modo furia ---
 #define BOSS_ENRAGED_ATTACK_COOLDOWN 0.6f
 #define BOSS_ENRAGED_LUNGE_PREP_TIME 0.5f
 #define BOSS_ENRAGED_SHOOT_COOLDOWN 0.11f
 #define BOSS_ENRAGED_POST_ATTACK_COOLDOWN 0.5f
 
 // --- Outros Timers ---
-#define BOSS_HURT_DURATION 0.35f
+#define BOSS_HURT_DURATION 0.25f
 #define BOSS_DEATH_FADEOUT_TIME 4.0f
+
 
 // =================================================
 // === ESTRUTURAS E ENUMS DO CHEFE =================
@@ -78,7 +79,6 @@ struct Boss {
     bool has_hit_with_lunge;
     bool has_hit_with_punch;
     
-    // NOVO MECANISMO: Contador de postura
     int poise_hits;
     
     bool is_enraged;

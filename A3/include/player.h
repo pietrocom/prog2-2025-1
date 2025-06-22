@@ -3,29 +3,29 @@
 
 #include "types.h"
 
+// =================================================
+// === CONSTANTES DE CONFIGURAÇÃO DO PLAYER ========
+// =================================================
+
+// --- Dimensões do player ---
 #define PLAYER_WIDTH 40
 #define PLAYER_HEIGHT 105
-
 #define PLAYER_SCALE 1.7f
 
+// --- Atributos ---
 #define PLAYER_RUN_SPEED 380.0f
-
 #define MAX_AMMO 20
 #define RELOAD_TIME 2.25f
-
 #define PLAYER_MAX_HEALTH 100
 
 // ---- Constantes de estamina
-
 #define MAX_STAMINA 100.0f
 #define STAMINA_DEPLETION_RATE 25.0f // Pontos de estamina por segundo ao correr
 #define STAMINA_REGEN_RATE 15.0f
 
 // ---- Constantes de ajuste ----
-
 #define PLAYER_HITBOX_OFFSET_X 0.0f  
 #define PLAYER_HITBOX_OFFSET_Y 0.0f  
-
 #define PLAYER_SPRITE_OFFSET_X 0.0f
 #define PLAYER_SPRITE_OFFSET_Y 0.0f
 
@@ -36,14 +36,16 @@
 #define PLAYER_MUZZLE_OFFSET_Y_CROUCH   46.0f
 
 
-// ---- Forward declarations ----
+// =================================================
+// === ESTRUTURAS E ENUMS DO PLAYER ================
+// =================================================
 
+// ---- Forward declarations ----
 struct ProjectileSystem;
 struct GameLevel;
 
 
 // ---- Estruturas de dados básica ----
-
 typedef enum {
     SOLDIER_1,   // Não tem crouch
     SOLDIER_2,
@@ -99,7 +101,9 @@ struct Player {
 };
 
 
-// ---- Funções ----
+// =================================================
+// === PROTÓTIPOS DAS FUNÇÕES ======================
+// =================================================
 
 // Inicialização
 void init_player(struct Player *player);

@@ -4,29 +4,35 @@
 #include "types.h"
 #include "boss.h"
 
+// =================================================
+// === CONSTANTES DE CONFIGURAÇÃO DO INIMIGO =======
+// =================================================
+
+// --- Configurações gerais ---
 #define MAX_ENEMIES 20
 #define MAX_ENEMY_TYPES 3
 #define ENEMY_SPAWN_COOLDOWN 2.0f
+#define DEATH_FADEOUT_DELAY 2.0f
+#define DETECTION_RANGE 950.0f
 
+// --- Formato para plot ---
 #define ENEMY_WIDTH 40
 #define ENEMY_HEIGHT 110
+#define ENEMY_SCALE 1.7f
+#define SPRITE_SIZE 128
 
+// --- Ajustes finos ---
 #define ENEMY_HITBOX_OFFSET_X 0.0f
 #define ENEMY_HITBOX_OFFSET_Y 0.0f 
 #define ENEMY_SPRITE_OFFSET_X 0.0f
 #define ENEMY_SPRITE_OFFSET_Y 0.0f
-
 #define ENEMY_MUZZLE_OFFSET_X 35.0f
 #define ENEMY_MUZZLE_OFFSET_Y 58.0f
 
-#define ENEMY_SCALE 1.7f
 
-#define SPRITE_SIZE 128
-
-#define DEATH_FADEOUT_DELAY 2.0f
-
-#define DETECTION_RANGE 950.0f
-
+// =================================================
+// === ESTRUTURAS E ENUMS DO INIMIGO ===============
+// =================================================
 
 // ---- Forward declarations ----
 struct Player;
@@ -93,7 +99,9 @@ struct EnemySystem {
     int wave_number;
 };
 
-// ---- Funções ----
+// =================================================
+// === PROTÓTIPOS DAS FUNÇÕES ======================
+// =================================================
 
 // Sistema
 void init_enemy_system(struct EnemySystem *system);

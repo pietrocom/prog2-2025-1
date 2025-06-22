@@ -1,3 +1,6 @@
+
+// Módulo que contém estruturas de dados gerais utilizadas pelos outros módulos.
+
 #ifndef TYPES_H
 #define TYPES_H
 
@@ -6,6 +9,9 @@
 #include <allegro5/allegro_image.h>
 #include <stdbool.h>
 
+// =================================================
+// === CONSTANTES DE CONFIGURAÇÃO GERAIS ===========
+// =================================================
 
 // Definições de constantes físicas
 #define PLAYER_JUMP_VEL -1200.0f
@@ -18,8 +24,9 @@
 #define SPRITE_SIZE 128
 
 
-// Estruturas gerais principais
-
+// =================================================
+// === ESTRUTURAS E ENUMS GERAIS ===================
+// =================================================
 
 // ---- Estados do Menu ----
 typedef enum {
@@ -39,12 +46,12 @@ typedef enum {
 
 // ---- Estruturas de Dados ----
 struct Entity {
-    float x, y;          // Posição do canto inferior esquerdo (base do personagem)
+    float x, y;
     float width, height; 
     
     // Sistema de hitbox 
     struct {
-        float x, y;               // Posição do canto inferior esquerdo da hitbox
+        float x, y;
         float width, height;
         float offset_x, offset_y; // Deslocamento relativo à entidade
     } hitbox;

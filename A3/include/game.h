@@ -1,19 +1,29 @@
 #ifndef GAME_H
 #define GAME_H
 
-#define PAUSE_MENU_TITLE_FONT_SIZE 54
-#define PAUSE_MENU_TEXT_FONT_SIZE 24
-
-#define GAMEOVER_TITLE_FONT_SIZE 72
-#define GAMEOVER_TEXT_FONT_SIZE 32
-
-#define BACKGROUND_THRESHOLD 0.4f
-
 #include "types.h"
 #include "player.h"
 #include "enemy.h"
 #include "projectiles.h"
 #include <allegro5/allegro.h>
+
+// =================================================
+// === CONSTANTES DE CONFIGURAÇÃO DO JOGO ==========
+// =================================================
+
+// --- Fontes ---
+#define PAUSE_MENU_TITLE_FONT_SIZE 54
+#define PAUSE_MENU_TEXT_FONT_SIZE 24
+#define GAMEOVER_TITLE_FONT_SIZE 72
+#define GAMEOVER_TEXT_FONT_SIZE 32
+
+// --- Controle do rolling background ---
+#define BACKGROUND_THRESHOLD 0.4f
+
+
+// =================================================
+// === PROTÓTIPOS DAS FUNÇÕES ======================
+// =================================================
 
 // ---- Inicialização ----
 void start_player(struct Player *player, struct GameLevel *level);
