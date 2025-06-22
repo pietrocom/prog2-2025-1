@@ -29,7 +29,7 @@ void init_projectile_system(struct ProjectileSystem *system) {
 
 // Atualiza todos os projéteis ativos
 void update_projectile_system(struct ProjectileSystem *system, float delta_time, 
-                            struct Player *player, struct EnemySystem *enemy_system) {
+                            struct Player *player, struct EnemySystem *enemy_system, struct GameLevel *level) {
     for (int i = 0; i < MAX_PROJECTILES; i++) {
         if (system->projectiles[i].is_active) {
             // Atualiza posição
@@ -51,7 +51,7 @@ void update_projectile_system(struct ProjectileSystem *system, float delta_time,
     }
     
     // Verifica colisões
-    check_projectile_collisions(system, player, enemy_system);
+    check_projectile_collisions(system, player, enemy_system, level);
 }
 
 // Desenha todos os projéteis ativos
@@ -224,52 +224,71 @@ void spawn_boss_projectile(struct ProjectileSystem *system, struct Boss *boss) {
 
 void check_projectile_collisions(struct ProjectileSystem *system, 
                                struct Player *player, 
-                               struct EnemySystem *enemy_system) {
+                               struct EnemySystem *enemy_system, 
+                               struct GameLevel *level) {
 
+    // --- CORREÇÃO INÍCIO ---
+    // Crie uma entidade temporária para o jogador com coordenadas de MUNDO.
     struct Entity player_world_entity = player->entity;
-    player_world_entity.hitbox.x += player->entity.x - player->entity.hitbox.x; // Centraliza a hitbox no mundo
-    player_world_entity.x += player->entity.x; // Posição X no mundo
-    update_hitbox_position(&player_world_entity, player->facing_right); // Atualiza a hitbox na posição do mundo
-    player_world_entity.hitbox.x = player->entity.hitbox.x + player->entity.x;
-
+    // A posição X no mundo é a posição na tela + o deslocamento da câmera.
+    player_world_entity.x = player->entity.x + level->scroll_x;
+    // A posição Y não é afetada pelo scroll neste jogo.
+    player_world_entity.y = player->entity.y;
+    // Recalcule a hitbox para esta posição no mundo.
+    update_hitbox_position(&player_world_entity, player->facing_right);
+    // --- CORREÇÃO FIM ---
 
     for (int i = 0; i < MAX_PROJECTILES; i++) {
         if (!system->projectiles[i].is_active) continue;
         
         struct Projectile *p = &system->projectiles[i];
         
-        // Usa a hitbox do jogador no espaço do mundo para a verificação
-        if (p->type == PROJECTILE_ENEMY && !is_player_dead(player) && 
-            check_collision(&p->entity, &player_world_entity)) {
-            
-            damage_player(player, p->damage);
-            p->is_active = false;
-            system->active_count--;
-            continue;
+        // Colisão de projéteis de INIMIGOS contra o JOGADOR
+        if (p->type == PROJECTILE_ENEMY && !is_player_dead(player)) {
+            // Agora comparamos o projétil (mundo) com a entidade temporária do jogador (mundo)
+            if (check_collision(&p->entity, &player_world_entity)) {
+                damage_player(player, p->damage);
+                p->is_active = false;
+                system->active_count--;
+                continue; // Pula para o próximo projétil
+            }
         }
         
-        // Colisão com inimigos (apenas projéteis do jogador)
+        // Colisão de projéteis do JOGADOR contra INIMIGOS
         if (p->type == PROJECTILE_PLAYER) {
             bool hit_someone = false;
 
             // Loop para inimigos normais
             for (int j = 0; j < MAX_ENEMIES; j++) {
-                if (enemy_system->enemies[j].is_active && !is_enemy_dead(&enemy_system->enemies[j]) &&
-                    check_collision(&p->entity, &enemy_system->enemies[j].entity)) {
-                    
-                    damage_enemy(&enemy_system->enemies[j], p->damage, player);
-                    hit_someone = true;
+                struct Enemy *current_enemy = &enemy_system->enemies[j];
+                if (current_enemy->is_active && !is_enemy_dead(current_enemy)) {
+                    // Esta checagem já estava correta, pois ambos (projétil e inimigo) estão no espaço do mundo.
+                    if (check_collision(&p->entity, &current_enemy->entity)) {
+                        damage_enemy(current_enemy, p->damage, player);
+                        hit_someone = true;
+                        // Se o projétil não for perfurante, paramos aqui
+                        if (p->behavior == PROJECTILE_NORMAL) break;
+                    }
                 }
             }
             
-            if (enemy_system->boss.is_active && !is_boss_dead(&enemy_system->boss) &&
-                check_collision(&p->entity, &enemy_system->boss.entity)) {
-                
-                damage_boss(&enemy_system->boss, p->damage, player);
-                hit_someone = true;
+            // Se o projétil atingiu alguém e não é perfurante, ele é desativado.
+            // Se for perfurante, ele continua, então a checagem do chefe é feita separadamente.
+            if (hit_someone && p->behavior == PROJECTILE_NORMAL) {
+                p->is_active = false;
+                system->active_count--;
+                continue; // Pula para o próximo projétil
             }
 
-            // Se o projétil atingiu alguém e for do tipo normal, ele é destruído.
+            // Colisão com o chefe (só acontece se o projétil não foi destruído acima)
+            if (enemy_system->boss.is_active && !is_boss_dead(&enemy_system->boss)) {
+                 if (check_collision(&p->entity, &enemy_system->boss.entity)) {
+                    damage_boss(&enemy_system->boss, p->damage, player);
+                    hit_someone = true;
+                }
+            }
+
+            // Se o projétil atingiu o chefe (ou um inimigo, no caso de ser perfurante)
             if (hit_someone && p->behavior == PROJECTILE_NORMAL) {
                 p->is_active = false;
                 system->active_count--;

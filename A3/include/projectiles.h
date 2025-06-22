@@ -46,7 +46,7 @@ struct EnemySystem;
 // ---- Funções do Sistema de Projéteis ----
 
 void init_projectile_system(struct ProjectileSystem *system);
-void update_projectile_system(struct ProjectileSystem *system, float delta_time, struct Player *player, struct EnemySystem *enemy_system);
+void update_projectile_system(struct ProjectileSystem *system, float delta_time, struct Player *player, struct EnemySystem *enemy_system, struct GameLevel *level);
 void draw_projectiles(struct ProjectileSystem *system, struct GameLevel *level, struct Player *player);
 
 // ---- Funções de Controle de Projéteis ----
@@ -58,7 +58,7 @@ void spawn_boss_projectile(struct ProjectileSystem *system, struct Boss *boss);
 
 // ---- Funções de Colisão ----
 
-void check_projectile_collisions(struct ProjectileSystem *system, struct Player *player, struct EnemySystem *enemy_system);
+void check_projectile_collisions(struct ProjectileSystem *system, struct Player *player, struct EnemySystem *enemy_system, struct GameLevel *level);
 bool check_projectile_hit(struct Projectile *projectile, struct Entity *target);
 
 // ---- Funções de Limpeza ----
