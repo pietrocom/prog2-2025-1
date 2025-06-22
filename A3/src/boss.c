@@ -168,188 +168,164 @@ void unload_boss_sprites(struct Boss *boss) {
 
 // Executa a lógica de IA e física do chefe a cada quadro.
 void update_boss(struct Boss *boss, struct Player *player, struct GameLevel *level, struct ProjectileSystem *projectile_system, float delta_time) {
+    // Se o chefe não estiver ativo, não faz nada
     if (!boss->is_active) return;
 
-    // Se o chefe foi derrotado, apenas processa seu desaparecimento
+    // A lógica de animação foi movida para o final para garantir que seja executada após a mudança de estado
+
+    // Se o chefe está morto, processa apenas seu desaparecimento e sai
     if (boss->state == BOSS_STATE_DEAD) {
         boss->death_timer -= delta_time;
         if (boss->death_timer <= 0) {
             boss->is_active = false;
         }
-        return; // Nenhuma outra lógica é executada
-    }
-    
-    // --- LÓGICA DE COMBATE (CHEFE VIVO) ---
+    } else { // Caso contrário, executa toda a lógica de combate
+        if (!boss->is_enraged && boss->health < boss->max_health / 2) {
+            boss->is_enraged = true;
+            boss->state = BOSS_STATE_COOLDOWN;
+            boss->state_timer = 1.0f;
+        }
+        if (boss->state != BOSS_STATE_HURT) {
+            boss->poise_hits = 0;
+        }
+        boss->entity.x += boss->entity.vel_x * delta_time;
+        boss->entity.vel_y += GRAVITY * delta_time;
+        boss->entity.y += boss->entity.vel_y * delta_time;
+        if (boss->entity.y > level->ground_level) {
+            boss->entity.y = level->ground_level;
+            boss->entity.vel_y = 0;
+        }
+        float player_world_x = player->entity.x + level->scroll_x;
+        float dx = player_world_x - boss->entity.x;
+        float distance = fabs(dx);
+        if (boss->state != BOSS_STATE_LUNGING && boss->state != BOSS_STATE_HURT && boss->state != BOSS_STATE_PUNCHING) {
+            boss->facing_right = (dx > 0);
+        }
+        boss->state_timer -= delta_time;
+        static float shoot_cooldown = 0;
+        if(shoot_cooldown > 0) shoot_cooldown -= delta_time;
 
-    // Ativa o modo fúria quando a vida do chefe cai abaixo da metade.
-    if (!boss->is_enraged && boss->health < boss->max_health / 2) {
-        boss->is_enraged = true;
-        boss->state = BOSS_STATE_COOLDOWN; // Entra em um pequeno cooldown para a transição.
-        boss->state_timer = 1.0f;
-    }
+        // --- CORREÇÃO: DECLARAÇÃO DA HITBOX DO JOGADOR ---
+        // Criamos a entidade do jogador em coordenadas do mundo aqui, uma vez por quadro
+        struct Entity player_world_entity = player->entity;
+        player_world_entity.x = player->entity.x + level->scroll_x;
+        update_hitbox_position(&player_world_entity, player->facing_right);
+        // ---------------------------------------------------
 
-    // Reseta o contador de "poise" (resistência a stagger) se o chefe não estiver tomando dano
-    if (boss->state != BOSS_STATE_HURT) {
-        boss->poise_hits = 0;
-    }
-    
-    // Aplica física básica: movimento e gravidade
-    boss->entity.x += boss->entity.vel_x * delta_time;
-    boss->entity.vel_y += GRAVITY * delta_time;
-    boss->entity.y += boss->entity.vel_y * delta_time;
-
-    // Colisão simples com o chão
-    if (boss->entity.y > level->ground_level) {
-        boss->entity.y = level->ground_level;
-        boss->entity.vel_y = 0;
-    }
-
-    // Calcula a distância para o jogador e ajusta a direção para qual o chefe está virado
-    float player_world_x = player->entity.x + level->scroll_x;
-    float dx = player_world_x - boss->entity.x;
-    float distance = fabs(dx);
-    if (boss->state != BOSS_STATE_LUNGING && boss->state != BOSS_STATE_HURT && boss->state != BOSS_STATE_PUNCHING) {
-        boss->facing_right = (dx > 0);
-    }
-
-    // Atualiza temporizadores de estado e de ataque
-    boss->state_timer -= delta_time;
-    static float shoot_cooldown = 0;
-    if(shoot_cooldown > 0) shoot_cooldown -= delta_time;
-
-    // --- MÁQUINA DE ESTADOS DA IA ---
-    // Controla o comportamento do chefe
-    switch (boss->state) {
-        // Estado de espera, onde o chefe decide o próximo ataque.
-        case BOSS_STATE_IDLE:
-            boss->entity.vel_x = 0;
-            boss->current_animation = &boss->animations[BOSS_ANIM_IDLE];
-            if (boss->state_timer <= 0) {
-                // Se o jogador estiver muito perto, usa um soco rápido
-                if (distance < BOSS_PUNCH_RANGE) {
-                    boss->state = BOSS_STATE_PUNCHING;
-                    boss->state_timer = BOSS_PUNCH_DURATION;
-                    boss->has_hit_with_punch = false;
-                } else { // Senão, escolhe aleatoriamente entre atirar e avançar
-                    int choice = rand() % 3;
-                    if (choice == 0) {
-                        boss->state = BOSS_STATE_SHOOTING;
-                        boss->state_timer = BOSS_SHOOT_DURATION;
+        switch (boss->state) {
+            case BOSS_STATE_IDLE:
+                boss->entity.vel_x = 0;
+                boss->current_animation = &boss->animations[BOSS_ANIM_IDLE];
+                if (boss->state_timer <= 0) {
+                    if (distance < BOSS_PUNCH_RANGE) {
+                        boss->state = BOSS_STATE_PUNCHING;
+                        boss->state_timer = BOSS_PUNCH_DURATION;
+                        boss->has_hit_with_punch = false;
                     } else {
-                        boss->state = BOSS_STATE_PREPARING_LUNGE;
-                        boss->state_timer = boss->is_enraged ? BOSS_ENRAGED_LUNGE_PREP_TIME : BOSS_LUNGE_PREP_TIME;
+                        int choice = rand() % 3;
+                        if (choice == 0) {
+                            boss->state = BOSS_STATE_SHOOTING;
+                            boss->state_timer = BOSS_SHOOT_DURATION;
+                        } else {
+                            boss->state = BOSS_STATE_PREPARING_LUNGE;
+                            boss->state_timer = boss->is_enraged ? BOSS_ENRAGED_LUNGE_PREP_TIME : BOSS_LUNGE_PREP_TIME;
+                        }
                     }
                 }
-            }
-            break;
-
-        // Estado de recuperação após levar um golpe
-        case BOSS_STATE_HURT:
-            boss->current_animation = &boss->animations[BOSS_ANIM_HURT];
-            if (boss->state_timer <= 0) {
-                boss->state = BOSS_STATE_COOLDOWN; // Entra em um breve cooldown antes de agir novamente.
-                boss->state_timer = 0.5f;
-            }
-            break;
-
-        // Estado de ataque à distância, disparando projéteis em sequência
-        case BOSS_STATE_SHOOTING:
-            boss->current_animation = &boss->animations[BOSS_ANIM_SHOOT];
-            boss->entity.vel_x = 0;
-            if (shoot_cooldown <= 0) {
-                spawn_boss_projectile(projectile_system, boss);
-                // A cadência de tiro aumenta no modo fúria
-                shoot_cooldown = boss->is_enraged ? BOSS_ENRAGED_SHOOT_COOLDOWN : BOSS_SHOOT_COOLDOWN;
-            }
-            if (boss->state_timer <= 0) {
-                boss->state = BOSS_STATE_COOLDOWN;
-                boss->state_timer = boss->is_enraged ? BOSS_ENRAGED_POST_ATTACK_COOLDOWN : BOSS_POST_ATTACK_COOLDOWN;
-            }
-            break;
-
-        // Animação de preparação (taunt) para o avanço, servindo de aviso ao jogador
-        case BOSS_STATE_PREPARING_LUNGE:
-            boss->current_animation = &boss->animations[BOSS_ANIM_TAUNT];
-            boss->entity.vel_x = 0;
-            if (boss->state_timer <= 0) {
-                boss->state = BOSS_STATE_LUNGING;
-                boss->state_timer = BOSS_LUNGE_DURATION;
-                boss->has_hit_with_lunge = false;
-                float current_lunge_speed = boss->is_enraged ? (BOSS_LUNGE_SPEED * 1.2f) : BOSS_LUNGE_SPEED;
-                boss->entity.vel_x = boss->facing_right ? current_lunge_speed : -current_lunge_speed;
-            }
-            break;
-
-        // Estado de avanço rápido (investida) contra o jogador
-        case BOSS_STATE_LUNGING:
-            boss->current_animation = &boss->animations[BOSS_ANIM_RUN];
-            float y_diff = fabs(boss->entity.y - player->entity.y);
-            // Verifica a colisão da investida, mas apenas uma vez por ataque
-            if (!boss->has_hit_with_lunge && y_diff < (player->entity.height * 0.5f)) {
-                struct Entity player_world_hitbox = player->entity;
-                player_world_hitbox.x += level->scroll_x;
-                if(check_collision(&boss->entity, &player_world_hitbox)) {
-                    damage_player(player, boss->lunge_damage);
-                    boss->has_hit_with_lunge = true;
+                break;
+            case BOSS_STATE_HURT:
+                boss->current_animation = &boss->animations[BOSS_ANIM_HURT];
+                if (boss->state_timer <= 0) {
+                    boss->state = BOSS_STATE_COOLDOWN;
+                    boss->state_timer = 0.5f;
                 }
-            }
-            if(boss->state_timer <= 0) {
+                break;
+            case BOSS_STATE_SHOOTING:
+                boss->current_animation = &boss->animations[BOSS_ANIM_SHOOT];
                 boss->entity.vel_x = 0;
-                boss->state = BOSS_STATE_COOLDOWN;
-                boss->state_timer = boss->is_enraged ? BOSS_ENRAGED_POST_ATTACK_COOLDOWN : BOSS_POST_ATTACK_COOLDOWN;
-            }
-            break;
-
-        // Estado de "soco" corpo a corpo
-        case BOSS_STATE_PUNCHING:
-            boss->entity.vel_x = 0;
-            boss->current_animation = &boss->animations[BOSS_ANIM_LUNGE_ATTACK]; 
-            // Causa dano em um frame específico da animação para melhor sincronia visual
-            if (!boss->has_hit_with_punch && boss->current_animation->current_frame == 2) {
-                if (distance < BOSS_PUNCH_RANGE * 1.2f) { // Alcance um pouco maior que o gatilho
-                    damage_player(player, boss->punch_damage);
-                    boss->has_hit_with_punch = true;
+                if (shoot_cooldown <= 0) {
+                    spawn_boss_projectile(projectile_system, boss);
+                    shoot_cooldown = boss->is_enraged ? BOSS_ENRAGED_SHOOT_COOLDOWN : BOSS_SHOOT_COOLDOWN;
                 }
-            }
-            if (boss->state_timer <= 0) {
-                boss->state = BOSS_STATE_COOLDOWN;
-                boss->state_timer = boss->is_enraged ? BOSS_ENRAGED_POST_ATTACK_COOLDOWN : BOSS_POST_ATTACK_COOLDOWN;
-            }
-            break;
+                if (boss->state_timer <= 0) {
+                    boss->state = BOSS_STATE_COOLDOWN;
+                    boss->state_timer = boss->is_enraged ? BOSS_ENRAGED_POST_ATTACK_COOLDOWN : BOSS_POST_ATTACK_COOLDOWN;
+                }
+                break;
+            case BOSS_STATE_PREPARING_LUNGE:
+                boss->current_animation = &boss->animations[BOSS_ANIM_TAUNT];
+                boss->entity.vel_x = 0;
+                if (boss->state_timer <= 0) {
+                    boss->state = BOSS_STATE_LUNGING;
+                    boss->state_timer = BOSS_LUNGE_DURATION;
+                    boss->has_hit_with_lunge = false;
+                    float current_lunge_speed = boss->is_enraged ? (BOSS_LUNGE_SPEED * 1.2f) : BOSS_LUNGE_SPEED;
+                    boss->entity.vel_x = boss->facing_right ? current_lunge_speed : -current_lunge_speed;
+                }
+                break;
+            
+            case BOSS_STATE_LUNGING:
+                boss->current_animation = &boss->animations[BOSS_ANIM_RUN];
+                if (!boss->has_hit_with_lunge) {
+                    if(check_collision(&boss->entity, &player_world_entity)) {
+                        damage_player(player, boss->lunge_damage);
+                        boss->has_hit_with_lunge = true;
+                    }
+                }
+                if(boss->state_timer <= 0) {
+                    boss->entity.vel_x = 0;
+                    boss->state = BOSS_STATE_COOLDOWN;
+                    boss->state_timer = boss->is_enraged ? BOSS_ENRAGED_POST_ATTACK_COOLDOWN : BOSS_POST_ATTACK_COOLDOWN;
+                }
+                break;
 
-        // Pequena pausa após um ataque, antes de voltar ao estado IDLE
-        case BOSS_STATE_COOLDOWN:
-            boss->current_animation = &boss->animations[BOSS_ANIM_IDLE];
-            boss->entity.vel_x = 0;
-            if (boss->state_timer <= 0) {
-                boss->state = BOSS_STATE_IDLE;
-                boss->state_timer = boss->is_enraged ? BOSS_ENRAGED_ATTACK_COOLDOWN : BOSS_ATTACK_COOLDOWN;
-            }
-            break;
+            case BOSS_STATE_PUNCHING:
+                boss->entity.vel_x = 0;
+                boss->current_animation = &boss->animations[BOSS_ANIM_LUNGE_ATTACK]; 
+                
+                if (!boss->has_hit_with_punch && boss->current_animation->current_frame == 2) {
+                    if (distance < BOSS_PUNCH_RANGE) {
+                        damage_player(player, boss->punch_damage);
+                        boss->has_hit_with_punch = true;
+                    }
+                }
 
-        case BOSS_STATE_DEAD:
-            break;
+                // Ao final do ataque, entra em cooldown
+                if (boss->state_timer <= 0) {
+                    boss->state = BOSS_STATE_COOLDOWN;
+                    boss->state_timer = boss->is_enraged ? BOSS_ENRAGED_POST_ATTACK_COOLDOWN : BOSS_POST_ATTACK_COOLDOWN;
+                }
+                break;
+
+            case BOSS_STATE_COOLDOWN:
+                boss->current_animation = &boss->animations[BOSS_ANIM_IDLE];
+                boss->entity.vel_x = 0;
+                if (boss->state_timer <= 0) {
+                    boss->state = BOSS_STATE_IDLE;
+                    boss->state_timer = boss->is_enraged ? BOSS_ENRAGED_ATTACK_COOLDOWN : BOSS_ATTACK_COOLDOWN;
+                }
+                break;
+            case BOSS_STATE_DEAD:
+                break;
+        }
     }
     
     // --- ATUALIZAÇÃO DO FRAME DA ANIMAÇÃO ---
+    // (Esta parte foi movida para o final para ser executada após a mudança de estado)
     if (boss->current_animation && boss->current_animation->frame_count > 0) {
         boss->current_animation->elapsed_time += delta_time;
         if (boss->current_animation->elapsed_time >= boss->current_animation->frame_delay) {
             boss->current_animation->elapsed_time = 0;
-            
-            // Animações que não rodam em loop (como ataque, morte) pausam no último frame
             if (boss->state == BOSS_STATE_HURT || boss->state == BOSS_STATE_PREPARING_LUNGE ||
                 boss->state == BOSS_STATE_PUNCHING || boss->state == BOSS_STATE_DEAD) {
                 if (boss->current_animation->current_frame < boss->current_animation->frame_count - 1) {
                     boss->current_animation->current_frame++;
                 }
-            } else { // Outras animações (parado, correndo) executam em loop
+            } else {
                 boss->current_animation->current_frame = (boss->current_animation->current_frame + 1) % boss->current_animation->frame_count;
             }
         }
     }
-
-    // Atualiza a posição da hitbox com base na posição da entidade
     update_hitbox_position(&boss->entity, boss->facing_right);
 }
 

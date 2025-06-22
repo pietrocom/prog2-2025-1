@@ -106,8 +106,8 @@ int main() {
                     level.game_over_selection = 0;
                 }
                 
-                // Condição de vitória: chefe está morto e sua animação de morte terminou
-                if (enemy_system.boss.is_dead && !enemy_system.boss.is_active && !level.player_won) {
+                // Condição de vitória
+                if (enemy_system.boss.is_dead && enemy_system.boss.is_active && !level.player_won) {
                     game_state = GAME_OVER;
                     level.player_won = true;
                     level.game_over_selection = 0;

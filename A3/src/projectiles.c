@@ -165,7 +165,7 @@ void spawn_player_projectile(struct ProjectileSystem *system, struct Player *pla
     float muzzle_x = player_world_x + muzzle_offset_x;
     float muzzle_y = player->entity.y - muzzle_offset_y; 
 
-    spawn_projectile(system, muzzle_x, muzzle_y, player->facing_right, PROJECTILE_PLAYER, PROJECTILE_NORMAL, 25);
+    spawn_projectile(system, muzzle_x, muzzle_y, player->facing_right, PROJECTILE_PLAYER, PROJECTILE_NORMAL, PLAYER_PROJECTILE_DAMAGE);
 }
 
 // Cria um projétil originado de um inimigo comum
