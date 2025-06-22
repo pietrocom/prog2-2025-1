@@ -235,7 +235,7 @@ void handle_player_input(struct Player *player, ALLEGRO_EVENT *event, struct Gam
             case ALLEGRO_KEY_R:
                 start_reload(player);
                 break;
-            // Tecla de Debug para mostrar/esconder hitboxes e a linha do chão
+            // Tecla para mostrar/esconder hitboxes e a linha do chão
             case ALLEGRO_KEY_H:
                 player->hitbox_show = !player->hitbox_show;
                 level->draw_ground_line = !level->draw_ground_line;

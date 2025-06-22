@@ -410,7 +410,7 @@ void damage_boss(struct Boss *boss, int amount, struct Player *player) {
         return;
     }
 
-    // Mecânica de "Poise": o chefe é atordoado (HURT) pelos primeiros golpes,
+    // Mecânica de "Poise": o chefe é atordoado pelos primeiros golpes,
     // mas após um certo número de acertos seguidos, ele executa um contra-ataque
     boss->poise_hits++;
     if (boss->poise_hits >= BOSS_POISE_THRESHOLD) {
@@ -418,7 +418,7 @@ void damage_boss(struct Boss *boss, int amount, struct Player *player) {
         boss->state = BOSS_STATE_PREPARING_LUNGE; // Inicia um contra-ataque de investida.
         boss->state_timer = boss->is_enraged ? (BOSS_ENRAGED_LUNGE_PREP_TIME * 0.5f) : (BOSS_LUNGE_PREP_TIME * 0.8f);
     } else {
-        // Se o limiar de poise não foi atingido, o chefe apenas entra no estado de "dor"
+        // Se o limiar de poise não foi atingido, o chefe apenas entra no estado hurt
         boss->state = BOSS_STATE_HURT;
         boss->state_timer = BOSS_HURT_DURATION;
         boss->current_animation = &boss->animations[BOSS_ANIM_HURT];
