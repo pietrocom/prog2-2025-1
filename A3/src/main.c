@@ -17,94 +17,96 @@
 #define SCREEN_H 900
 #define FPS 60
 
+// Função principal que inicializa o jogo, executa o loop principal e limpa os recursos ao final
 int main() {
     
+    // --- INICIALIZAÇÃO DO ALLEGRO E DA JANELA ---
     init_allegro();
-
     ALLEGRO_DISPLAY *display = create_display(SCREEN_W, SCREEN_H);
     ALLEGRO_TIMER *timer = al_create_timer(1.0 / FPS);
     ALLEGRO_EVENT_QUEUE *event_queue = al_create_event_queue();
     
+    // Registra as fontes de eventos que o jogo irá escutar
     al_register_event_source(event_queue, al_get_display_event_source(display));
     al_register_event_source(event_queue, al_get_keyboard_event_source());
     al_register_event_source(event_queue, al_get_timer_event_source(timer));
 
-    // Inicializações do jogo
+    // --- INICIALIZAÇÃO DOS SISTEMAS DO JOGO ---
     GameState game_state = MENU;
     struct Player player;
     struct GameLevel level;
     struct EnemySystem enemy_system;
     struct ProjectileSystem projectile_system;
 
-    // Inicializa sistemas
+    // Chama as funções que preparam cada sistema para o início do jogo
     start_level(&level);
     start_player(&player, &level);
     init_enemy_system(&enemy_system);
     init_projectile_system(&projectile_system);
 
-    // Inicializações do menu
+    // Inicializa a estrutura e os recursos do menu
     struct Menu game_menu;
     init_menu(&game_menu);
     load_menu_resources(&game_menu);
 
-    // Controla refresh da tela
-    bool redraw = true;
+    // --- CONTROLE DO LOOP PRINCIPAL ---
+    bool redraw = true; // Flag para controlar quando a tela deve ser redesenhada
     al_start_timer(timer);
 
-    // Loop principal do jogo
+    // O Game Loop executa continuamente até que o estado seja 'QUIT'
     while (true) {
         ALLEGRO_EVENT event;
         al_wait_for_event(event_queue, &event);
 
+        // Condição de saída do loop (fechar janela ou estado QUIT)
         if (game_state == QUIT || event.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
             break; 
         }
 
-        // --- MANIPULAÇÃO DE INPUTS POR ESTADO ---
-        // Este switch cuida apenas da entrada do usuário (teclado, etc.)
+        // --- SEÇÃO DE PROCESSAMENTO DE INPUTS ---
+        // Este switch direciona os eventos de input para a função de tratamento correta,
+        // com base no estado atual do jogo (MENU, PLAYING, etc)
         switch (game_state) {
             case MENU:
                 handle_menu_input(&game_menu, &game_state, &event);
                 break;
             case PLAYING:
+                // Inputs globais do jogo (como pausar) são tratados aqui
                 handle_game_events(&event, &game_state);
-                // O input do jogador é tratado dentro da lógica de atualização do PLAYING
+                // Inputs específicos do jogador são tratados aqui
                 handle_player_input(&player, &event, &level);
                 break;
             case PAUSED:
                 handle_pause_input(&event, &game_state, &player, &level, &enemy_system, &projectile_system);
                 break;
             case GAME_OVER:
-                // Chama a nova função que lida com os inputs da tela de Game Over
                 handle_game_over_input(&event, &game_state, &player, &level, &enemy_system, &projectile_system);
                 break;
             case QUIT:
-                break; // Já foi lidado
+                // A verificação no início do loop cuidará disso
+                break;
         }
 
-        // --- ATUALIZAÇÃO DE ESTADOS E LÓGICA DO JOGO ---
-        // Este switch cuida da lógica de atualização (movimento, IA) e do desenho.
-        // Ele só executa quando o timer dispara um "redraw".
+        // --- SEÇÃO DE ATUALIZAÇÃO DA LÓGICA DO JOGO ---
+        // Este bloco só executa em intervalos fixos definidos pelo FPS do timer
         if (event.type == ALLEGRO_EVENT_TIMER) {
-            redraw = true;
+            redraw = true; // Sinaliza que a tela precisa ser redesenhada
 
             if (game_state == PLAYING) {
-                // Atualiza todas as entidades do jogo
+                // Atualiza a lógica de todos os sistemas do jogo
                 update_player(&player, 1.0/FPS, &level, &projectile_system);
                 update_enemy_system(&enemy_system, &player, &level, &projectile_system, 1.0/FPS);
                 update_projectile_system(&projectile_system, 1.0/FPS, &player, &enemy_system, &level);
                 update_game(&player, &level, 1.0/FPS);
                 
-                // NOVO: Verifica as condições de fim de jogo APÓS as atualizações
-                // GATILHO DE DERROTA
+                // Verifica as condições de fim de jogo após todas as atualizações
                 if (is_player_dead(&player)) {
                     game_state = GAME_OVER;
                     level.player_won = false;
                     level.game_over_selection = 0;
                 }
                 
-                // GATILHO DE VITÓRIA: Ocorre se o chefe está morto e sua animação de morte terminou
-                // A flag level.player_won impede que a tela de vitória seja re-acionada no modo freeplay
+                // Condição de vitória: chefe está morto e sua animação de morte terminou
                 if (enemy_system.boss.is_dead && !enemy_system.boss.is_active && !level.player_won) {
                     game_state = GAME_OVER;
                     level.player_won = true;
@@ -113,9 +115,11 @@ int main() {
             }
         }
         
-        // --- DESENHO NA TELA ---
+        // --- SEÇÃO DE RENDERIZAÇÃO ---
+        // Este bloco só executa se a lógica do jogo foi atualizada, evitando redesenhos desnecessários
         if (redraw) {
             redraw = false;
+            // O switch decide o que desenhar com base no estado do jogo
             switch (game_state) {
                 case MENU:
                     if (game_menu.current_state == MENU_MAIN) {
@@ -133,26 +137,28 @@ int main() {
                     break;
 
                 case PAUSED:
+                    // Desenha o jogo congelado no fundo e o menu de pausa por cima
                     draw_game(&player, &level);
                     draw_enemies(&enemy_system, &level, &player);
                     draw_projectiles(&projectile_system, &level, &player);
                     draw_hud(&player, &level);
-                    draw_pause_menu(&level);
+                    draw_pause_menu(); // A função foi alterada para não precisar de 'level'
                     break;
                     
                 case GAME_OVER:
-                    // Mostra as estatísticas e opções
                     draw_game_over_screen(&player, &level);
                     break;
 
                 case QUIT:
                     break;
             }
+            // Exibe na tela tudo o que foi desenhado no buffer
             al_flip_display();
         }
     }
 
-    // Limpeza
+    // --- SEÇÃO DE LIMPEZA DE MEMÓRIA ---
+    // Libera todos os recursos alocados ao final do programa para evitar vazamentos de memória
     destroy_player(&player);
     destroy_level(&level);
     destroy_enemy_system(&enemy_system);

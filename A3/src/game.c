@@ -14,17 +14,18 @@
 
 // ---- Funções de Inicialização ----
 
+// Configura o estado inicial do jogador e o posiciona no cenário
 void start_player(struct Player *player, struct GameLevel *level) {
     init_player(player);
     load_player_sprites(player);
     
-    // Posição inicial 
     player->entity.x = 100.0f;
     player->entity.y = level->ground_level;
     
     update_hitbox_position(&player->entity, player->facing_right);
 }
 
+// Carrega os recursos do nível e define suas propriedades iniciais
 void start_level(struct GameLevel *level) {
     level->background = al_load_bitmap("assets/background/Street_Background/PNG/City2/Bright/City2.png");
     if (!level->background) {
@@ -36,13 +37,13 @@ void start_level(struct GameLevel *level) {
     int bg_height = al_get_bitmap_height(level->background);
     
     level->ground_level = screen_h - GROUND_LEVEL; 
+    // Calcula a escala do background para que ele preencha a altura da tela
     level->background_scale = (float)screen_h / (float)bg_height;
     level->scroll_x = 0.0f;
     level->enemy_count = 0;
     level->boss_active = false;
     level->game_time = 0.0; 
 
-    // Carrega a fonte para o HUD
     level->hud_font = al_load_font("assets/fonts/DirtyWar.otf", 36, 0);
     if (!level->hud_font) {
         fprintf(stderr, "Falha ao carregar a fonte do HUD!\n");
@@ -52,10 +53,12 @@ void start_level(struct GameLevel *level) {
 
 // ---- Funções de Limpeza ----
 
+// Libera os recursos do jogador, como suas sprites
 void destroy_player(struct Player *player) {
     unload_player_sprites(player);
 }
 
+// Libera os recursos do nível, como o bitmap de fundo e a fonte
 void destroy_level(struct GameLevel *level) {
     if (level->background) {
         al_destroy_bitmap(level->background);
@@ -68,17 +71,16 @@ void destroy_level(struct GameLevel *level) {
 
 // ---- Funções de Controle do Jogo ----
 
+// Processa eventos de teclado globais durante o jogo, como pausar ou sair
 void handle_game_events(ALLEGRO_EVENT *event, GameState *state) {
     if (event->type == ALLEGRO_EVENT_KEY_DOWN) {
         switch (event->keyboard.keycode) {
-            case ALLEGRO_KEY_ESCAPE:   // Entrará na condição abaixo
+            case ALLEGRO_KEY_ESCAPE:
             case ALLEGRO_KEY_P:
                 toggle_pause(state);
                 break;
                 
-            case ALLEGRO_EVENT_DISPLAY_CLOSE:
-                *state = QUIT;
-                break;
+            // A captura do evento de fechar a janela é feita no loop principal
         }
     }
 }
@@ -86,16 +88,18 @@ void handle_game_events(ALLEGRO_EVENT *event, GameState *state) {
 
 // ---- Funções de Controle de Pausa ----
 
+// Alterna o estado do jogo entre 'PLAYING' e 'PAUSED'
 void toggle_pause(GameState *current_state) {
     if (*current_state == PLAYING) {
         *current_state = PAUSED;
-        // adicionar lógica adicional (pausar música)
+        // Futuramente, pode-se adicionar lógica para pausar a música aqui
     } 
     else if (*current_state == PAUSED) {
         *current_state = PLAYING;
     }
 }
 
+// Processa os comandos do jogador enquanto o jogo está pausado
 void handle_pause_input(ALLEGRO_EVENT *event, GameState *state, 
     struct Player *player, struct GameLevel *level, struct EnemySystem *enemy_system, struct ProjectileSystem *projectile_system) {
 
@@ -105,13 +109,11 @@ void handle_pause_input(ALLEGRO_EVENT *event, GameState *state,
             case ALLEGRO_KEY_P:
                 toggle_pause(state);
                 break;
-                
-            case ALLEGRO_KEY_M:
-                break;
             
+            // Tecla 'Q' para sair da partida atual e voltar ao menu principal
             case ALLEGRO_KEY_Q:
                 reset_game(player, level, enemy_system, projectile_system);
-                *state = MENU;  // Volta ao menu
+                *state = MENU;
                 break;
         }
     }
@@ -120,6 +122,7 @@ void handle_pause_input(ALLEGRO_EVENT *event, GameState *state,
 
 // ---- Funções de Controle de Game Over ----
 
+// Processa os comandos do jogador na tela de Fim de Jogo
 void handle_game_over_input(ALLEGRO_EVENT *event, GameState *state, 
     struct Player *player, struct GameLevel *level, struct EnemySystem *enemy_system, struct ProjectileSystem *projectile_system) {
     
@@ -128,21 +131,21 @@ void handle_game_over_input(ALLEGRO_EVENT *event, GameState *state,
     switch (event->keyboard.keycode) {
         case ALLEGRO_KEY_UP:
         case ALLEGRO_KEY_DOWN:
-            level->game_over_selection = (level->game_over_selection + 1) % 2; // Alterna entre 0 e 1
+            // Alterna a seleção entre as duas opções (0 e 1)
+            level->game_over_selection = (level->game_over_selection + 1) % 2;
             break;
 
         case ALLEGRO_KEY_ENTER:
-            if (level->game_over_selection == 0) { // Primeira opção
+            // Ação da primeira opção
+            if (level->game_over_selection == 0) {
+                // Se o jogador venceu, a opção é "Freeplay" e o jogo continua
                 if (level->player_won) {
-                    // MODO FREEPLAY
                     *state = PLAYING;
-                    // O jogo continua de onde parou, o sistema de inimigos irá gerar um novo chefe.
-                } else {
-                    // REINICIAR
+                } else { // Se perdeu, a opção é "Reiniciar"
                     reset_game(player, level, enemy_system, projectile_system);
                     *state = PLAYING;
                 }
-            } else { // Segunda opção (Sair para o Menu)
+            } else { // Ação da segunda opção: "Voltar ao Menu"
                 reset_game(player, level, enemy_system, projectile_system);
                 *state = MENU;
             }
@@ -153,6 +156,7 @@ void handle_game_over_input(ALLEGRO_EVENT *event, GameState *state,
 
 // ---- Funções de Atualização e Renderização ----
 
+// Reseta completamente o estado do jogo para seus valores iniciais
 void reset_game(struct Player *player, struct GameLevel *level, struct EnemySystem *enemy_system, struct ProjectileSystem *projectile_system) {
     printf("Reiniciando o jogo por completo...\n");
 
@@ -160,79 +164,71 @@ void reset_game(struct Player *player, struct GameLevel *level, struct EnemySyst
     init_player(player);
     player->entity.x = 100.0f;
     
-    // Reinicializa o level
-    int screen_h = al_get_display_height(al_get_current_display());
-    int bg_height = al_get_bitmap_height(level->background);
-    
-    level->ground_level = screen_h - GROUND_LEVEL; 
-    player->entity.y = level->ground_level; // Posição do jogador depende do ground_level
-    level->background_scale = (float)screen_h / (float)bg_height;
+    // Reinicializa o nível
+    level->ground_level = al_get_display_height(al_get_current_display()) - GROUND_LEVEL; 
+    player->entity.y = level->ground_level;
     level->scroll_x = 0.0f;
-    level->enemy_count = 0;
     level->boss_active = false;
-    level->game_time = 0.0; // Reinicia o tempo de jogo
+    level->game_time = 0.0;
 
-    // Reinicializa o sistema de inimigos
+    // Reinicializa os sistemas de inimigos e projéteis
     destroy_enemy_system(enemy_system);
     init_enemy_system(enemy_system);
-
-    init_projectile_system(projectile_system);
+    clear_projectiles(projectile_system);
 }
 
-// Tanto o jogador quanto o background vao se mover
-// dependendo da posição do jogador na tela
+// Atualiza a lógica de câmera (scrolling) com base na posição do jogador
 void update_game(struct Player *player, struct GameLevel *level, float delta_time) {
     level->game_time += delta_time;
 
     float screen_width = al_get_display_width(al_get_current_display());
     
+    // Define as "bordas invisíveis" que ativam o scroll da câmera
     float left_threshold = screen_width * (1 - BACKGROUND_THRESHOLD); 
     float right_threshold = screen_width * BACKGROUND_THRESHOLD;
-
-    float player_screen_pos = player->entity.x;
     
     float move_delta = player->entity.vel_x * delta_time;
 
-    // Movimento para a direita (esta parte já estava correta)
+    // Movimento para a direita
     if (player->entity.vel_x > 0) {
-        if (player_screen_pos > right_threshold) {
+        // Se o jogador ultrapassa a borda direita, a câmera se move em vez do jogador
+        if (player->entity.x > right_threshold) {
             level->scroll_x += move_delta;
-        } else {
+        } else { // Caso contrário, o jogador se move na tela
             player->entity.x += move_delta;
         }
     }
     // Movimento para a esquerda
     else if (player->entity.vel_x < 0) {
-        if (player_screen_pos < left_threshold && level->scroll_x > 0) {
+        // Se o jogador ultrapassa a borda esquerda e a câmera não está no início, a câmera se move
+        if (player->entity.x < left_threshold && level->scroll_x > 0) {
             level->scroll_x += move_delta;
-            // Garante que o scroll não ultrapasse o limite 0 neste mesmo quadro
+            // Garante que o scroll não fique negativo
             if (level->scroll_x < 0) {
                 level->scroll_x = 0;
             }
-        } else {
-            // Se a câmera estiver no limite (ou o jogador fora da zona de scroll),
-            // movemos o próprio jogador na tela.
+        } else { // Caso contrário, o jogador se move na tela
             player->entity.x += move_delta;
         }
     }
 
-    // Limites para o jogador não sair da tela
+    // Impede que o jogador saia dos limites da tela
     if (player->entity.x < 0) player->entity.x = 0;
     if (player->entity.x + player->entity.width > screen_width) player->entity.x = screen_width - player->entity.width;
 }
 
 
-// Relativiza a posição do jogador na tela
+// Desenha o cenário de fundo com efeito de rolagem e o jogador
 void draw_game(struct Player *player, struct GameLevel *level) {
     int screen_w = al_get_display_width(al_get_current_display());
     int screen_h = al_get_display_height(al_get_current_display());
     int bg_width = al_get_bitmap_width(level->background);
     float scaled_bg_width = bg_width * level->background_scale;
     
+    // Usa o operador de módulo (fmod) para criar um efeito de loop infinito no background
     float bg_offset = fmod(level->scroll_x, scaled_bg_width);
     
-
-    // Desenha o background repetido
+    // Desenha cópias do background lado a lado para preencher a tela e dar a impressão de continuidade
     for (int i = -1; i <= (screen_w / scaled_bg_width) + 1; i++) {
         al_draw_scaled_bitmap(level->background,
             0, 0, bg_width, al_get_bitmap_height(level->background),
@@ -240,9 +236,8 @@ void draw_game(struct Player *player, struct GameLevel *level) {
             0);
     }
     
-    // A posição do player (player->entity.x) já é sua posição na tela.
-    // A função update_game cuida de mover o scroll ou o player.
-    // Então, podemos simplesmente desenhar o player em sua posição atual.
+    // Como a função update_game já lida com o movimento do jogador na tela,
+    // basta desenhá-lo em sua posição atual.
     draw_player(player);
     
     if (level->draw_ground_line) {
@@ -250,6 +245,7 @@ void draw_game(struct Player *player, struct GameLevel *level) {
     }
 }
 
+// Desenha a tela de Fim de Jogo, mostrando estatísticas e opções
 void draw_game_over_screen(struct Player *player, struct GameLevel *level) {
     ALLEGRO_COLOR bg_color = al_map_rgba(0, 0, 0, 210);
     ALLEGRO_COLOR title_color, text_color, highlight_color;
@@ -262,33 +258,32 @@ void draw_game_over_screen(struct Player *player, struct GameLevel *level) {
     int display_w = al_get_display_width(al_get_current_display());
     int display_h = al_get_display_height(al_get_current_display());
 
-    // Configura textos e cores com base na vitória ou derrota
+    // Configura textos e cores com base no resultado do jogo (vitória ou derrota)
     if (level->player_won) {
         title_text = "YOU WON!";
         option1_text = "Freeplay";
-        title_color = al_map_rgb(255, 215, 0); // Dourado
-        highlight_color = al_map_rgb(173, 255, 47); // Verde claro
+        title_color = al_map_rgb(255, 215, 0);
+        highlight_color = al_map_rgb(173, 255, 47);
     } else {
         title_text = "GAME OVER";
         option1_text = "Reiniciar";
-        title_color = al_map_rgb(200, 0, 0); // Vermelho escuro
-        highlight_color = al_map_rgb(255, 100, 100); // Vermelho claro
+        title_color = al_map_rgb(200, 0, 0);
+        highlight_color = al_map_rgb(255, 100, 100);
     }
-    text_color = al_map_rgb(220, 220, 220); // Branco acinzentado
+    text_color = al_map_rgb(220, 220, 220);
 
-    // Desenha o fundo semi-transparente
+    // Desenha um fundo escuro semi-transparente para focar nos textos
     al_draw_filled_rectangle(0, 0, display_w, display_h, bg_color);
     
-    // Título (VOCÊ VENCEU ou GAME OVER)
     al_draw_text(title_font, title_color, display_w / 2, display_h * 0.2, ALLEGRO_ALIGN_CENTER, title_text);
 
-    // Estatísticas Finais
+    // Apresenta as estatísticas finais da partida
     int minutes = (int)level->game_time / 60;
     int seconds = (int)level->game_time % 60;
     al_draw_textf(text_font, text_color, display_w / 2, display_h * 0.45, ALLEGRO_ALIGN_CENTER, "Pontuacao final: %06d", player->score);
     al_draw_textf(text_font, text_color, display_w / 2, display_h * 0.55, ALLEGRO_ALIGN_CENTER, "Tempo de jogo: %02d:%02d", minutes, seconds);
 
-    // Opções
+    // Desenha as opções, destacando a que está selecionada
     al_draw_text(text_font, 
                  level->game_over_selection == 0 ? highlight_color : text_color, 
                  display_w / 2, display_h * 0.75, ALLEGRO_ALIGN_CENTER, 
@@ -303,85 +298,51 @@ void draw_game_over_screen(struct Player *player, struct GameLevel *level) {
     al_destroy_font(text_font);
 }
 
+// Desenha a interface do menu de pausa sobre o jogo
 void draw_pause_menu() {
-    if (!al_is_primitives_addon_initialized()) {
-        fprintf(stderr, "Primitives addon not initialized!\n");
-        exit(1);
-    }
-
-    // Configurações
-    ALLEGRO_COLOR bg_color = al_map_rgba(0, 0, 0, 200);  // Fundo semi-transparente
-    ALLEGRO_COLOR box_color = al_map_rgba(70, 70, 90, 220);  // Cor das caixas de texto
+    // Configurações de cores e fontes para o menu de pausa
+    ALLEGRO_COLOR bg_color = al_map_rgba(0, 0, 0, 200);
+    ALLEGRO_COLOR box_color = al_map_rgba(70, 70, 90, 220);
     ALLEGRO_COLOR text_color = al_map_rgb(255, 255, 255);
-    ALLEGRO_COLOR highlight_color = al_map_rgb(180, 180, 255);  // Cor de destaque
+    ALLEGRO_COLOR highlight_color = al_map_rgb(180, 180, 255);
     
     ALLEGRO_FONT *font = al_load_font("assets/fonts/DirtyWar.otf", PAUSE_MENU_TEXT_FONT_SIZE, 0);
     ALLEGRO_FONT *title_font = al_load_font("assets/fonts/DirtyWar.otf", PAUSE_MENU_TITLE_FONT_SIZE, 0);
     
-    // Dimensões
     int display_w = al_get_display_width(al_get_current_display());
     int display_h = al_get_display_height(al_get_current_display());
     int box_width = 600;
     int box_height = 400;
 
-    if (!al_is_primitives_addon_initialized()) {
-        fprintf(stderr, "ERRO: Primitives não inicializado no draw!\n");
-        exit(1);
-    }
-
-    // 1. Desenha overlay escuro
+    // 1. Desenha um overlay escuro para diminuir o brilho do fundo
     al_draw_filled_rectangle(0, 0, display_w, display_h, bg_color);
 
-    // 2. Caixa principal centralizada
+    // 2. Desenha a caixa principal do menu no centro da tela
     al_draw_filled_rounded_rectangle(
-        display_w/2 - box_width/2, 
-        display_h/2 - box_height/2,
-        display_w/2 + box_width/2,
-        display_h/2 + box_height/2,
+        display_w/2 - box_width/2, display_h/2 - box_height/2,
+        display_w/2 + box_width/2, display_h/2 + box_height/2,
         10, 10, box_color);
     
-    // Borda da caixa principal
     al_draw_rounded_rectangle(
-        display_w/2 - box_width/2, 
-        display_h/2 - box_height/2,
-        display_w/2 + box_width/2,
-        display_h/2 + box_height/2,
+        display_w/2 - box_width/2, display_h/2 - box_height/2,
+        display_w/2 + box_width/2, display_h/2 + box_height/2,
         10, 10, highlight_color, 3);
 
-    // 3. Título
-    al_draw_text(
-        title_font, 
-        highlight_color, 
-        display_w/2, 
-        display_h/2 - 160, 
-        ALLEGRO_ALIGN_CENTRE, 
-        "JOGO PAUSADO");
-    
-    // Opção 1 - Continuar
-    al_draw_text(
-        font, 
-        text_color, 
-        display_w/2, 
-        display_h/2 + 35, 
-        ALLEGRO_ALIGN_CENTRE, 
-        "''P'' Continuar");
-    
-    // Opção 2 - Voltar ao menu
-    al_draw_text(
-        font, 
-        text_color, 
-        display_w/2, 
-        display_h/2, 
-        ALLEGRO_ALIGN_CENTRE, 
-        "''Q'' Voltar ao menu");
+    // 3. Título e opções do menu
+    al_draw_text(title_font, highlight_color, display_w/2, display_h/2 - 160, ALLEGRO_ALIGN_CENTRE, "JOGO PAUSADO");
+    al_draw_text(font, text_color, display_w/2, display_h/2 + 35, ALLEGRO_ALIGN_CENTRE, "''P'' Continuar");
+    al_draw_text(font, text_color, display_w/2, display_h/2, ALLEGRO_ALIGN_CENTRE, "''Q'' Voltar ao menu");
 
-    // 5. Limpeza
+    // Libera as fontes carregadas apenas para esta função
     al_destroy_font(font);
+    al_destroy_font(title_font);
 }
 
+// Desenha a interface de informações (HUD) na tela
 void draw_hud(struct Player *player, struct GameLevel *level) {
     if (!level->hud_font) return;
 
+    // Converte o tempo de jogo para minutos e segundos
     int total_seconds = (int)level->game_time;
     int minutes = total_seconds / 60;
     int seconds = total_seconds % 60;
@@ -392,47 +353,36 @@ void draw_hud(struct Player *player, struct GameLevel *level) {
 
     int screen_w = al_get_display_width(al_get_current_display());
 
-    // Score
+    // Elementos do HUD: Pontuação e Tempo
     al_draw_textf(level->hud_font, text_color, 20, 10, ALLEGRO_ALIGN_LEFT, "SCORE: %06d", player->score);
-                  
-    // Tempo
     al_draw_textf(level->hud_font, text_color, screen_w - 20, 10, ALLEGRO_ALIGN_RIGHT, "TIME: %02d:%02d", minutes, seconds);
 
-    // Munição
+    // Elemento do HUD: Munição
     if(player->is_reloading) {
          al_draw_text(level->hud_font, ammo_color, 20, 50, ALLEGRO_ALIGN_LEFT, "RECARREGANDO...");
     } else {
         al_draw_textf(level->hud_font, ammo_color, 20, 50, ALLEGRO_ALIGN_LEFT, "MUNICAO: %02d / %d", player->current_ammo, player->max_ammo);
     }
     
-    // Barra de Estamina
+    // Elemento do HUD: Barra de Estamina
     float stamina_bar_w = 200;
     float stamina_bar_h = 20;
     float stamina_bar_x = 20;
-    float stamina_bar_y = 90; // abaixo da munição
-    
+    float stamina_bar_y = 90;
     float stamina_percent = player->stamina / player->max_stamina;
-    float current_stamina_w = stamina_bar_w * stamina_percent;
-
-    // Fundo da barra
     al_draw_filled_rectangle(stamina_bar_x, stamina_bar_y, stamina_bar_x + stamina_bar_w, stamina_bar_y + stamina_bar_h, al_map_rgba(50, 50, 50, 150));
-    // Preenchimento da barra
-    al_draw_filled_rectangle(stamina_bar_x, stamina_bar_y, stamina_bar_x + current_stamina_w, stamina_bar_y + stamina_bar_h, stamina_color);
-    // Borda da barra
+    al_draw_filled_rectangle(stamina_bar_x, stamina_bar_y, stamina_bar_x + (stamina_bar_w * stamina_percent), stamina_bar_y + stamina_bar_h, stamina_color);
     al_draw_rectangle(stamina_bar_x, stamina_bar_y, stamina_bar_x + stamina_bar_w, stamina_bar_y + stamina_bar_h, al_map_rgb(200, 200, 200), 2);
 
-
-    // Barra da vida do player
+    // Elemento do HUD: Barra de Vida
     float health_bar_w = 200;
     float health_bar_h = 20;
     float health_bar_x = 20;
-    float health_bar_y = stamina_bar_y + stamina_bar_h + 10; // Posiciona abaixo da estamina
-
+    float health_bar_y = stamina_bar_y + stamina_bar_h + 10;
     float health_percent = (float)player->health / player->max_health;
     if (health_percent < 0) health_percent = 0;
-    float current_health_w = health_bar_w * health_percent;
-
-    // Muda a cor da barra com base na vida restante
+    
+    // A cor da barra de vida muda de acordo com a vida restante do jogador
     ALLEGRO_COLOR health_color;
     if (health_percent > 0.6f) {
         health_color = al_map_rgb(46, 204, 113); // Verde
@@ -442,10 +392,7 @@ void draw_hud(struct Player *player, struct GameLevel *level) {
         health_color = al_map_rgb(231, 76, 60);  // Vermelho
     }
 
-    // Fundo da barra
     al_draw_filled_rectangle(health_bar_x, health_bar_y, health_bar_x + health_bar_w, health_bar_y + health_bar_h, al_map_rgba(50, 50, 50, 150));
-    // Preenchimento da barra
-    al_draw_filled_rectangle(health_bar_x, health_bar_y, health_bar_x + current_health_w, health_bar_y + health_bar_h, health_color);
-    // Borda da barra
+    al_draw_filled_rectangle(health_bar_x, health_bar_y, health_bar_x + (health_bar_w * health_percent), health_bar_y + health_bar_h, health_color);
     al_draw_rectangle(health_bar_x, health_bar_y, health_bar_x + health_bar_w, health_bar_y + health_bar_h, al_map_rgb(200, 200, 200), 2);
 }

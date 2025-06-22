@@ -10,6 +10,7 @@
 
 // ---- Funções Auxiliares ----
 
+// Define a escala de renderização da sprite do jogador
 void set_player_scale(struct Player *player, float scale) {
     if (scale <= 0) {
         fprintf(stderr, "Invalid scale value: %f\n", scale);
@@ -21,33 +22,29 @@ void set_player_scale(struct Player *player, float scale) {
 
 // ---- Inicialização ----
 
+// Inicializa a estrutura do jogador com todos os seus valores e estados padrão
 void init_player (struct Player * player) {
-    // Entidade
+    // Entidade e física
     player->entity.x = 0;
     player->entity.y = 0;
     player->entity.width = PLAYER_WIDTH;
     player->entity.height = PLAYER_HEIGHT;
-
     player->entity.hitbox.width = PLAYER_WIDTH; 
     player->entity.hitbox.height = PLAYER_HEIGHT; 
     player->entity.hitbox.offset_x = PLAYER_HITBOX_OFFSET_X; 
     player->entity.hitbox.offset_y = PLAYER_HITBOX_OFFSET_Y;
-
     player->entity.vel_x = 0;
     player->entity.vel_y = 0;
 
-    // Bitmap sera carregado em load_player_sprites
     player->scale = 1.0f;
+    player->soldier_type = SOLDIER_2; // Define o tipo de soldado padrão
 
-    // Vai carregar o soldado correto (padrão é o 2)
-    player->soldier_type = SOLDIER_2;
-
-    // Status
+    // Atributos de combate
     player->max_health = PLAYER_MAX_HEALTH;
     player->health = PLAYER_MAX_HEALTH;
     player->score = 0;
 
-    // Estado
+    // Flags de estado inicial
     player->is_jumping = false;
     player->is_crouching = false;
     player->is_shooting = false;
@@ -55,49 +52,40 @@ void init_player (struct Player * player) {
     player->hitbox_show = false;
     player->is_running = false;
 
-    // Estamina
+    // Sistema de estamina
     player->stamina = MAX_STAMINA;
     player->max_stamina = MAX_STAMINA;
 
-    // Disparos
+    // Sistema de disparos e recarga
     player->shoot_cooldown = PLAYER_PROJECTILE_COOLDOWN;
     player->current_shoot_cooldown = 0;
-
-    // Reload
     player->max_ammo = MAX_AMMO;
     player->current_ammo = MAX_AMMO;
     player->is_reloading = false;
     player->current_reload_time = 0.0f;
 
-    // Inicializa animações
+    // Configuração inicial das animações (zerando timers e frames)
     player->idle.frame_delay = 0.1f;
     player->idle.elapsed_time = 0;
     player->idle.current_frame = 0;
-    
     player->walking.frame_delay = 0.1f;
     player->walking.elapsed_time = 0;
     player->walking.current_frame = 0;
-    
     player->running.frame_delay = 0.08f;
     player->running.elapsed_time = 0;
     player->running.current_frame = 0;
-    
     player->jumping.frame_delay = 0.1f;
     player->jumping.elapsed_time = 0;
     player->jumping.current_frame = 0;
-    
     player->shooting.frame_delay = 0.1f;
     player->shooting.elapsed_time = 0;
     player->shooting.current_frame = 0;
-
     player->reloading.frame_delay = 0.22f;
     player->reloading.elapsed_time = 0;
     player->reloading.current_frame = 0;
-    
     player->crouching.frame_delay = 0.1f;
     player->crouching.elapsed_time = 0;
     player->crouching.current_frame = 0;
-    
     player->crouch_shot.frame_delay = 0.1f;
     player->crouch_shot.elapsed_time = 0;
     player->crouch_shot.current_frame = 0;
@@ -105,6 +93,7 @@ void init_player (struct Player * player) {
     player->current_animation = &player->idle;
 }
 
+// Carrega todas as folhas de sprites do jogador e as associa às suas respectivas animações
 void load_player_sprites(struct Player *player) {
     const char* soldier_folders[] = {
         "assets/soldier_sprites/Soldier_1/",
@@ -113,20 +102,14 @@ void load_player_sprites(struct Player *player) {
     };
 
     const char* animation_files[] = {
-        "Idle.png",    // 0
-        "Walk.png",    // 1
-        "Run.png",     // 2
-        "Jump.png",    // 3
-        "Shot_1.png",  // 4
-        "Recharge.png",// 5
-        "Crouch.png",  // 6 (opcional)
-        "Crouch_Shot.png" // 7 (opcional)
+        "Idle.png", "Walk.png", "Run.png", "Jump.png", "Shot_1.png", 
+        "Recharge.png", "Crouch.png", "Crouch_Shot.png"
     };
 
     SoldierType type = player->soldier_type;
     char full_path[256];
 
-    // Carrega cada animação
+    // Carrega as animações básicas que todos os soldados possuem
     for (int i = 0; i < 6; i++) { // Idle, Walk, Run, Jump, Shoot, Reload
         snprintf(full_path, sizeof(full_path), "%s%s", soldier_folders[type], animation_files[i]);
         
@@ -146,29 +129,28 @@ void load_player_sprites(struct Player *player) {
         }
     }
 
-    // Carrega animações opcionais (crouch)
+    // Carrega animações opcionais, como a de se agachar
     if (soldier_supports_crouch(type)) {
-        // Crouch
         snprintf(full_path, sizeof(full_path), "%s%s", soldier_folders[type], animation_files[6]);
         split_spritesheet(full_path, SPRITE_SIZE, SPRITE_SIZE,
                          player->crouching.frames, &player->crouching.frame_count);
 
-        // Crouch Shot (se existir)
         snprintf(full_path, sizeof(full_path), "%s%s", soldier_folders[type], animation_files[7]);
         if (file_exists(full_path)) {
             split_spritesheet(full_path, SPRITE_SIZE, SPRITE_SIZE,
                             player->crouch_shot.frames, &player->crouch_shot.frame_count);
         } else {
-            // Fallback: usa animação normal de tiro
+            // Se não houver uma animação de tiro agachado, usa a de tiro normal como alternativa
             player->crouch_shot = player->shooting;
         }
     } else {
-        // Soldier 1 não tem crouch, usa fallbacks
+        // Para soldados que não se agacham, as animações de agachar apontam para outras animações
         player->crouching = player->idle;
         player->crouch_shot = player->shooting;
     }
 }
 
+// Libera da memória todas as sprites carregadas para o jogador
 void unload_player_sprites(struct Player *player) {
     struct Animation* all_animations[] = {
         &player->idle, &player->walking, &player->running,
@@ -177,10 +159,10 @@ void unload_player_sprites(struct Player *player) {
     };
     int num_animations = sizeof(all_animations) / sizeof(all_animations[0]);
 
-    // Lista para rastrear ponteiros já liberados e evitar "double free"
+    // Estratégia para evitar erros de "double free" caso animações compartilhem os mesmos bitmaps
     ALLEGRO_BITMAP* freed_pointers[MAX_FRAMES * num_animations];
     int freed_count = 0;
-    for(int i = 0; i < MAX_FRAMES * num_animations; i++) freed_pointers[i] = NULL;
+    memset(freed_pointers, 0, sizeof(freed_pointers));
 
     for (int anim_idx = 0; anim_idx < num_animations; anim_idx++) {
         struct Animation* anim = all_animations[anim_idx];
@@ -210,7 +192,9 @@ void unload_player_sprites(struct Player *player) {
 
 // ---- Controles ----
 
+// Processa os inputs do teclado para controlar as ações do jogador
 void handle_player_input(struct Player *player, ALLEGRO_EVENT *event, struct GameLevel *level) {
+    // Lógica para quando uma tecla é pressionada
     if (event->type == ALLEGRO_EVENT_KEY_DOWN) {
         switch (event->keyboard.keycode) {
             case ALLEGRO_KEY_LSHIFT:
@@ -251,12 +235,14 @@ void handle_player_input(struct Player *player, ALLEGRO_EVENT *event, struct Gam
             case ALLEGRO_KEY_R:
                 start_reload(player);
                 break;
+            // Tecla de Debug para mostrar/esconder hitboxes e a linha do chão
             case ALLEGRO_KEY_H:
                 player->hitbox_show = !player->hitbox_show;
                 level->draw_ground_line = !level->draw_ground_line;
                 break;
         }
     } 
+    // Lógica para quando uma tecla é solta
     else if (event->type == ALLEGRO_EVENT_KEY_UP) {
         switch (event->keyboard.keycode) {
             case ALLEGRO_KEY_LSHIFT:
@@ -286,33 +272,26 @@ void handle_player_input(struct Player *player, ALLEGRO_EVENT *event, struct Gam
     }
 }
 
+// Atualiza a lógica, física e animações do jogador a cada quadro
 void update_player(struct Player *player, float delta_time, struct GameLevel *level, struct ProjectileSystem *projectile_system) {
-    if (!player || !level) {
-        fprintf(stderr, "Invalid player or level in update_player\n");
-        return;
-    }
+    if (!player || !level) return;
 
+    // --- Lógica de Movimento e Velocidade ---
     player->is_moving = (fabs(player->entity.vel_x) > 0.1f);
-
     if (player->is_moving) {
-        float target_speed;
-        if (player->is_running && player->stamina > 0 && !player->is_crouching) {
-            target_speed = PLAYER_RUN_SPEED;
-        } else {
-            target_speed = PLAYER_MOVE_SPEED;
-        }
+        float target_speed = (player->is_running && player->stamina > 0 && !player->is_crouching) 
+                           ? PLAYER_RUN_SPEED 
+                           : PLAYER_MOVE_SPEED;
         
-        // Aplica a velocidade correta à direção atual
         player->entity.vel_x = (player->entity.vel_x > 0) ? target_speed : -target_speed;
     }
 
     // --- Lógica de Estamina ---
-    // Gasta estamina se estiver correndo E se movendo
     if (player->is_running && player->is_moving && !player->is_crouching) {
         player->stamina -= STAMINA_DEPLETION_RATE * delta_time;
         if (player->stamina <= 0) {
             player->stamina = 0;
-            player->is_running = false; // Força a parada da corrida quando a estamina acaba
+            player->is_running = false; // Força a parada da corrida
         }
     } else {
         // Regenera estamina se não estiver correndo
@@ -324,51 +303,43 @@ void update_player(struct Player *player, float delta_time, struct GameLevel *le
         }
     }
 
-    // Lógica de recarga
+    // --- Lógica de Recarga ---
     if (player->is_reloading) {
         player->current_reload_time -= delta_time;
         if (player->current_reload_time <= 0) {
-            // Terminou de recarregar
             player->is_reloading = false;
             player->current_ammo = player->max_ammo;
             player->current_animation = &player->idle;
-            printf("Recarga completa!\n");
         }
     }
 
-    // Aplica gravidade e atualiza posição Y
+    // --- Física e Colisão ---
     player->entity.vel_y += GRAVITY * delta_time;
     player->entity.y += player->entity.vel_y * delta_time;
-    
-    // Checa colisão com o chão ANTES de atualizar a hitbox
     handle_player_ground_collision(player, level);
 
-    // Lógica de hitbox caso esteja agachado
-    if (player->is_crouching) {
-        player->entity.hitbox.height = PLAYER_CROUCH_HEIGHT;
-    } else {
-        player->entity.hitbox.height = PLAYER_HEIGHT;
-    }
-    // Atualiza a posição da hitbox com base na posição final da entidade
+    // Ajusta a altura da hitbox se o jogador estiver agachado
+    player->entity.hitbox.height = player->is_crouching ? PLAYER_CROUCH_HEIGHT : PLAYER_HEIGHT;
     update_hitbox_position(&player->entity, player->facing_right);
 
-    // Lógica dos disparos
+    // --- Lógica de Disparos ---
     if (player->current_shoot_cooldown > 0) {
         player->current_shoot_cooldown -= delta_time;
     }
 
-    // Condições para atirar: quer atirar, cooldown zerado, TEM MUNIÇÃO e NÃO ESTÁ RECARREGANDO
+    // Verifica todas as condições para poder atirar
     if (player->is_shooting && player->current_shoot_cooldown <= 0 && player->current_ammo > 0 && !player->is_reloading) {
         spawn_player_projectile(projectile_system, player, level);
         player->current_shoot_cooldown = PLAYER_PROJECTILE_COOLDOWN;
         player->current_ammo--; 
-
+        // Inicia a recarga automaticamente se a munição acabar
         if (player->current_ammo <= 0) {
             start_reload(player);
         }
     }
 
-    // Maquina de estados para animações
+    // --- Máquina de Estados de Animação ---
+    // Define a animação correta com base no estado atual do jogador, em ordem de prioridade
     if (player->is_reloading) {
         player->current_animation = &player->reloading;
     } else if (player->is_crouching) {
@@ -389,104 +360,90 @@ void update_player(struct Player *player, float delta_time, struct GameLevel *le
         if (player->current_animation->elapsed_time >= player->current_animation->frame_delay) {
             player->current_animation->elapsed_time = 0;
             player->current_animation->current_frame = 
-                (player->current_animation->current_frame + 1) % 
-                player->current_animation->frame_count;
+                (player->current_animation->current_frame + 1) % player->current_animation->frame_count;
         }
     }
 }
 
+// Verifica e corrige a posição do jogador para que ele não caia através do chão
 void handle_player_ground_collision(struct Player *player, struct GameLevel *level) {
-    // Se a base do jogador (entity.y) passou do nível do chão
     if (player->entity.y > level->ground_level) {
-        player->entity.y = level->ground_level; // Corrige a posição
-        player->entity.vel_y = 0;
-        player->is_jumping = false;
+        player->entity.y = level->ground_level; // Reposiciona no chão
+        player->entity.vel_y = 0;               // Zera a velocidade vertical
+        player->is_jumping = false;             // Sai do estado de pulo
     }
 }
 
 
 // ---- Estado do Jogador ----
 
+// Verifica se a vida do jogador chegou a zero ou menos
 bool is_player_dead(struct Player *player) {
-    if (!player) {
-        fprintf(stderr, "Invalid player in is_player_dead\n");
-        return false;
-    }
+    if (!player) return false;
     return player->health <= 0;
 }
 
+// Reduz a vida do jogador em uma determinada quantidade
 void damage_player(struct Player *player, int amount) {
-    if (!player) {
-        fprintf(stderr, "Invalid player in damage_player\n");
-        return;
-    }
+    if (!player) return;
     player->health -= amount;
+    // Impede que a vida fique com um valor negativo
     if (player->health < 0) {
-        player->health = 0; // Não deixa a vida ficar negativa
+        player->health = 0;
     }
 }
 
+// Inicia o processo de recarga de munição
 void start_reload(struct Player *player) {
-    // Não recarrega se já estiver recarregando ou se o pente estiver cheio
+    // Impede a recarga se já estiver recarregando ou com o pente cheio
     if (player->is_reloading || player->current_ammo == player->max_ammo) {
         return;
     }
-    printf("Recarregando!\n");
+
     player->is_reloading = true;
     player->current_reload_time = RELOAD_TIME;
-    player->current_animation = &player->reloading; // Troca para a animação de recarga
+    player->current_animation = &player->reloading;
 }
 
 
 // ---- Renderização ----
 
+// Desenha a sprite de animação atual do jogador na tela
 void draw_player(struct Player *player) {
-    if (!player || !player->current_animation || 
-        player->current_animation->current_frame < 0 ||
-        player->current_animation->current_frame >= player->current_animation->frame_count) {
-        return;
-    }
+    if (!player || !player->current_animation || player->current_animation->frame_count <= 0) return;
 
     ALLEGRO_BITMAP *frame = player->current_animation->frames[player->current_animation->current_frame];
     if (!frame) return;
 
-    // Define a escala do jogador
     set_player_scale(player, PLAYER_SCALE);
 
-    // 1. Pega as dimensões do sprite e aplica a escala
+    // Calcula as dimensões e a posição para desenhar a sprite
     float sprite_w = al_get_bitmap_width(frame);
     float sprite_h = al_get_bitmap_height(frame);
     float scaled_w = sprite_w * player->scale;
     float scaled_h = sprite_h * player->scale;
 
-    // 2. Calcula a posição do canto superior esquerdo (draw_x, draw_y) para desenhar o sprite,
-    //    baseado no ponto de âncora (entity.x, entity.y) que é o CENTRO da BASE.
+    // Calcula a posição do canto superior esquerdo (draw_x, draw_y) a partir da âncora (centro-base)
     float final_offset_x = player->facing_right ? PLAYER_SPRITE_OFFSET_X : -PLAYER_SPRITE_OFFSET_X;
     float draw_x = player->entity.x - (scaled_w / 2) + final_offset_x;
     float draw_y = player->entity.y - scaled_h;
 
-    // 3. Define se o sprite deve ser espelhado
+    // Espelha a sprite horizontalmente se o jogador estiver virado para a esquerda
     int flags = player->facing_right ? 0 : ALLEGRO_FLIP_HORIZONTAL;
 
-    // 4. Desenha o bitmap
-    al_draw_scaled_bitmap(
-        frame,
-        0, 0,          // Origem x, y no bitmap do frame
-        sprite_w, sprite_h, // Dimensões da origem
-        draw_x, draw_y,     // Posição x, y na tela (canto superior esquerdo)
-        scaled_w, scaled_h, // Largura e altura final na tela
-        flags
-    );
+    al_draw_scaled_bitmap(frame, 0, 0, sprite_w, sprite_h, draw_x, draw_y, scaled_w, scaled_h, flags);
 
-    // O desenho da hitbox (opcional) também foi atualizado
-    if (player->hitbox_show)
-        show_player_hitbox(player); 
+    // Desenha a hitbox se a flag de debug estiver ativa
+    if (player->hitbox_show) {
+        show_player_hitbox(player);
+    }
 }
 
+// Desenha a hitbox e o ponto de âncora do jogador para fins de debug
 void show_player_hitbox(struct Player *player) {
     if (!player) return;
 
-    // Desenha o retângulo da hitbox
+    // O retângulo vermelho representa a área de colisão (hitbox)
     al_draw_rectangle(
         player->entity.hitbox.x,
         player->entity.hitbox.y,
@@ -494,7 +451,7 @@ void show_player_hitbox(struct Player *player) {
         player->entity.hitbox.y + player->entity.hitbox.height,
         al_map_rgb(255, 0, 0), 2.0f);
     
-    // Desenha um círculo no ponto de âncora para fácil visualização
+    // O círculo verde representa o ponto de âncora (x,y) da entidade
     al_draw_filled_circle(
         player->entity.x, 
         player->entity.y, 
