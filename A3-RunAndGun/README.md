@@ -1,6 +1,3 @@
-#### 🎮 **README para `A3-RunAndGun/`**
-
-```markdown
 # A3: Shooter Born in Heaven (Jogo Run 'n Gun)
 
 **Disciplina:** Programação 2
@@ -40,17 +37,18 @@ O projeto utiliza um `makefile` para facilitar todo o processo.
 
 ## ⌨️ Controles do Jogo
 
-| Ação                      | Teclado Principal         | Teclado Alternativo         |
-| ------------------------- | ------------------------- | --------------------------- |
-| **Movimentar** | `A` / `D`                 | Seta Esquerda / Seta Direita|
-| **Pular** | `W`                       | Seta Cima                   |
-| **Abaixar** | `S`                       | Seta Baixo                  |
-| **Correr** | `Shift Esquerdo`          | -                           |
-| **Atirar** | `Barra de Espaço`         | `Shift Direito`             |
-| **Recarregar** | `R`                       | -                           |
-| **Pausar** | `P`                       | -                           |
-| **Modo Debug (Hitbox)** | `H`                       | -                           |
-| **Sair / Voltar** | `ESC`                     | `ESC`                       |
+| Ação                      | Teclado Principal         | Teclado Alternativo          |
+| ------------------------- | ------------------------- | ---------------------------- |
+| **Movimentar** | `A` / `D`                 | Seta Esquerda / Seta Direita |
+| **Pular** | `W`                       | Seta Cima                    |
+| **Abaixar** | `S`                       | Seta Baixo                   |
+| **Correr** | `Shift Esquerdo`          | -                            |
+| **Atirar** | `Barra de Espaço`         | `Shift Direito`              |
+| **Recarregar** | `R`                       | -                            |
+| **Pausar** | `P`                       | -                            |
+| **Modo Debug (Hitbox)** | `H`                       | -                            |
+| **Sair / Voltar** | `ESC`                     | `ESC`                        |
+
 
 ## ✨ Funcionalidades Implementadas
 
