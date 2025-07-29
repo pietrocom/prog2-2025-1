@@ -1,4 +1,4 @@
-#### 🎮 **README para `A3-Jogo-RunAndGun/` (Seu projeto de destaque!)**
+#### 🎮 **README para `A3-RunAndGun/`**
 
 ```markdown
 # A3: Shooter Born in Heaven (Jogo Run 'n Gun)
