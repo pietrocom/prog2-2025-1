@@ -2,23 +2,24 @@
 
 **Author:** Pietro Comin
 **GRR:** GRR20241955
-**Instituição:** Universidade Federal do Paraná (UFPR)
+**Institution:** Universidade Federal do Paraná (UFPR)
 
-## 📖 Sobre a Disciplina
+## 📖 About the Course
 
-Programação 2 é uma disciplina fundamental do curso de Ciência da Computação que aprofunda os conhecimentos na linguagem C. O foco está na implementação de estruturas de dados complexas, manipulação de memória, modularização de código, e no desenvolvimento de projetos de software de maior escala, desde ferramentas de linha de comando a jogos digitais.
+Programming 2 is a fundamental course in the Computer Science curriculum that deepens knowledge in the C language. The focus is on implementing complex data structures, memory management, code modularization, and developing larger-scale software projects, ranging from command-line tools to digital games.
 
-Este repositório contém todos os projetos práticos desenvolvidos ao longo do semestre, demonstrando a evolução e aplicação dos conceitos aprendidos.
+This repository contains all the practical projects developed throughout the semester, demonstrating the evolution and application of the concepts learned.
 
-## 🚀 Projetos Desenvolvidos
+## 🚀 Developed Projects
 
-Abaixo está a lista de todos os trabalhos realizados, com uma breve descrição e as tecnologias/conceitos chave abordados em cada um.
+Below is the list of all the assignments completed, with a brief description and the key technologies/concepts covered in each.
 
-| Projeto                                                | Descrição                                                                                                  | Conceitos / Tecnologias Chave                               |
-| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| **[A0 - Fila de Notícias](./A0-Jornal-Prioritario/)** | Um simulador de redação de jornal que utiliza filas com prioridade para gerenciar "breaking news" e notícias comuns. | `C`, `Structs`, `Listas Ligadas`, `TAD`, `Alocação Dinâmica`    |
-| **[A1/A2 - Arquivador VINAc](./A1-A2-Arquivador-VINAc/)** | Um arquivador de arquivos (`tar-like`) com suporte a compressão, extração e manipulação de membros.        | `C`, `Manipulação de Arquivos Binários`, `Ponteiros`, `Makefile`|
-| **[A3 - Jogo "Shooter Born in Heaven"](./A3-Jogo-RunAndGun/)** | **(Projeto Destaque)** Um jogo 2D completo do gênero *Run 'n Gun*, inspirado em clássicos como Metal Slug.    | `C`, `Allegro 5`, `Lógica de Jogos`, `Sprites`, `Física 2D`   |
-| **[A4 - IA do Chefe](./A4-Jogo-BossAI/)** | Uma melhoria incremental no jogo A3, adicionando um comportamento dinâmico à inteligência artificial do chefe. | `C`, `Allegro 5`, `Game State Management`, `Refatoração`    |
+| Project                                                     | Description                                                                                                   | Key Concepts / Technologies                               |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| **[A0 - News Queue](./A0-Jornal-Prioritario/)** | A newsroom simulator that uses priority queues to manage "breaking news" and regular news.                    | `C`, `Structs`, `Linked Lists`, `ADT`, `Dynamic Allocation` |
+| **[A1/A2 - VINAc Archiver](./A1-A2-Arquivador-VINAc/)** | A `tar-like` file archiver with support for member compression, extraction, and manipulation.                 | `C`, `Binary File Handling`, `Pointers`, `Makefile`         |
+| **[A3 - "Shooter Born in Heaven" Game](./A3-Jogo-RunAndGun/)** | **(Featured Project)** A complete 2D game in the *Run 'n Gun* genre, inspired by classics like Metal Slug.      | `C`, `Allegro 5`, `Game Logic`, `Sprites`, `2D Physics`     |
+| **[A4 - Boss AI](./A4-Jogo-BossAI/)** | An incremental improvement on the A3 game, adding dynamic behavior to the boss's artificial intelligence. | `C`, `Allegro 5`, `Game State Management`, `Refactoring`    |
 
 ---
+```eof
