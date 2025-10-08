@@ -1,32 +1,32 @@
-# A0: Simulador de Redação de Jornal
+# A0: Newsroom Simulator
 
-**Disciplina:** Programação 2
-**Período:** 2025/1
-**Autor:** Pietro Comin (GRR20241955)
+**Course:** Programming 2
+**Term:** 2025/1
+**Author:** Pietro Comin (GRR20241955)
 
-## 📰 Sobre o Projeto
+## 📰 About the Project
 
-Este projeto consiste na implementação de um sistema para gerenciar o fluxo de notícias em uma redação de jornal. O programa simula a chegada de notícias e a montagem de edições, utilizando um sistema de prioridades para diferenciar "breaking news" (urgentes) de notícias comuns.
+This project consists of implementing a system to manage the flow of news in a newsroom. The program simulates the arrival of news and the assembly of editions, using a priority system to differentiate "breaking news" (urgent) from regular news.
 
-O objetivo foi aplicar conceitos de Tipos Abstratos de Dados (TADs) e manipulação de listas ligadas em C para criar uma estrutura de dados funcional.
+The objective was to apply concepts of Abstract Data Types (ADTs) and linked list manipulation in C to create a functional data structure.
 
-## ✔️ Funcionalidades
+## ✔️ Features
 
-O sistema é baseado em duas filas principais, uma para cada nível de prioridade:
+The system is based on two main queues, one for each priority level:
 
-* **Cadastro de Notícias:** O usuário pode inserir o título e o texto de uma nova notícia, definindo sua prioridade (0 para breaking news, 1 para normal).
-* **Filas de Prioridade:** As notícias são inseridas na fila correspondente à sua prioridade.
-* **Seleção para Edição:** Ao "fechar uma edição", o sistema seleciona as notícias de maior prioridade disponíveis (breaking news sempre antes das normais).
-* **Ciclo de Vida da Notícia:** As notícias "envelhecem" a cada edição e são descartadas automaticamente após 3 dias (edições) para manter o conteúdo relevante.
+* **News Registration:** The user can input the title and text of a new story, defining its priority (0 for breaking news, 1 for normal).
+* **Priority Queues:** News items are inserted into the queue corresponding to their priority.
+* **Selection for Edition:** When "closing an edition," the system selects the highest priority news available (breaking news always comes before regular news).
+* **News Lifecycle:** News items "age" with each edition and are automatically discarded after 3 days (editions) to keep the content relevant.
 
-## 🛠️ Tecnologias Utilizadas
+## 🛠️ Technologies Used
 
-* **Linguagem:** C
-* **Estrutura de Dados:** O sistema foi implementado utilizando **duas filas baseadas em listas ligadas**, uma para cada nível de prioridade, para garantir a ordem de chegada (FIFO) dentro de cada categoria.
+* **Language:** C
+* **Data Structure:** The system was implemented using **two queues based on linked lists**, one for each priority level, to ensure the arrival order (FIFO) within each category.
 
-## 🚀 Como Compilar e Executar
+## 🚀 How to Compile and Run
 
-O projeto pode ser compilado diretamente com o GCC. Navegue até a pasta do projeto e execute:
+The project can be compiled directly with GCC. Navigate to the project folder and run:
 
 ```bash
 gcc -o jornal_sim *.c -lm
