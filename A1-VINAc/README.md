@@ -1,35 +1,35 @@
-# VINAc – Arquivador com Suporte à Compressão
+# VINAc – Archiver with Compression Support
 
-## Autor
-- Pietro Comin  
-- GRR20241955  
-- Contato: [pietro.comin@ufpr.br](mailto:pietro.comin@ufpr.br)
-- Número de linhas: 1989
-
----
-
-## Descrição
-
-O **VINAc** é um arquivador com suporte à compressão baseado em linha de comando, semelhante a ferramentas como `tar`, `zip` ou `rar`. Seu objetivo é permitir o arquivamento de múltiplos arquivos em um único container (`.vc`) com opção de compressão individual usando o algoritmo LZ.  
-
-A estrutura do arquivo `.vc` contém uma área de diretório com todas as informações de metadados necessárias para a manipulação dos membros armazenados.
+## Author
+- Pietro Comin
+- GRR20241955
+- Contact: [pietro.comin@ufpr.br](mailto:pietro.comin@ufpr.br)
+- Line count: 1989
 
 ---
 
-## Funcionalidades
+## Description
 
-O programa `vinac` aceita as seguintes opções de execução:
+**VINAc** is a command-line archiver with compression support, similar to tools like `tar`, `zip`, or `rar`. Its purpose is to allow the archiving of multiple files into a single container (`.vc`) with the option of individual compression using the LZ algorithm.
 
-- `-ip` ou `-p` : insere membros sem compressão  
-- `-ic` ou `-i` : insere membros com compressão (LZ)  
-- `-m membro` : move um membro dentro do archive  
-- `-x` : extrai membros (ou todos)  
-- `-r` : remove membros do archive  
-- `-c` : lista o conteúdo do archive  
+The `.vc` file structure contains a directory area with all the necessary metadata information for manipulating the stored members.
 
 ---
 
-## Estrutura do Projeto
+## Features
+
+The `vinac` program accepts the following execution options:
+
+- `-ip` or `-p`: inserts members without compression
+- `-ic` or `-i`: inserts members with compression (LZ)
+- `-m member`: moves a member within the archive
+- `-x`: extracts members (or all)
+- `-r`: removes members from the archive
+- `-c`: lists the archive's contents
+
+---
+
+## Project Structure
 
 ```
 A1/
@@ -68,15 +68,15 @@ A1/
 
 ---
 
-## Compilação
+## Compilation
 
-Para compilar o projeto, utilize:
+To compile the project, use:
 
 ```bash
 make
 ```
 
-Para limpar os arquivos gerados:
+To clean the generated files:
 
 ```bash
 make clean
@@ -84,69 +84,70 @@ make clean
 
 ---
 
-## Estruturas de Dados e Algoritmos
+## Data Structures and Algorithms
 
-### Estruturas de Dados
+### Data Structures
 
 #### `struct arquivo`
 
-Contém os metadados de cada membro do archive:
+Contains the metadata of each archive member:
 
-- `nome`  
+- `name`  
 - `UID`  
-- `tamanho original`  
-- `tamanho comprimido`  
-- `ordem`  
-- `offset no arquivo`  
-- `data de modificação`  
+- `original size`  
+- `compressed size`  
+- `order`  
+- `file offset`  
+- `modification date`  
 
 #### `struct diretorio`
 
-Gerencia todos os membros do archive como um vetor de ponteiros para `arquivo`.
+Manages all archive members as a vector of pointers to `arquivo`.
 
 ---
 
-## Modularização e Funções Relevantes
+## Modularization and Relevant Functions
 
-A manipulação de arquivos variáveis (em tamanho e posição) foi um dos maiores desafios do projeto. Para contornar isso, desenvolvi funções utilitárias modulares que permitiram abstrair a lógica de movimentação de dados com segurança:
+Handling variable-sized (and variably positioned) files was one of the biggest challenges of the project.  
+To address this, I developed modular utility functions that safely abstracted the logic of data movement:
 
 ```c
-int move(...)                 // Move um bloco dentro do arquivo
-int move_sequencial(...)      // Move membros em sequência, evitando sobrescrita
-int insere_membro_arq(...)    // Insere dados de um membro no archive
-int comprime_arquivo(...)     // Comprime membro com LZ e atualiza metadados
-int descomprime_arquivo(...) // Descomprime membro e restaura seu conteúdo
+int move(...)                 // Moves a block within the file
+int move_sequencial(...)      // Moves members sequentially, preventing overwrites
+int insere_membro_arq(...)    // Inserts member data into the archive
+int comprime_arquivo(...)     // Compresses a member with LZ and updates metadata
+int descomprime_arquivo(...)  // Decompresses a member and restores its content
 ```
 
-Essas funções foram fundamentais para garantir consistência e evitar sobrescrita indesejada de bytes durante operações como inserção, movimentação e remoção.
+These functions were essential to ensure consistency and prevent unwanted byte overwriting during operations such as insertion, movement, and removal.
 
 ---
 
-## Decisões de Implementação
+## Implementation Decisions
 
-- A compressão LZ foi usada conforme exigido. Se o resultado da compressão não reduzir o tamanho, o membro é armazenado sem compressão.  
-- A manipulação da área de diretório foi feita totalmente em memória RAM para facilitar o gerenciamento dos metadados.  
-- Todos os dados dos membros são manipulados diretamente em disco, conforme restrição do enunciado.  
-- As operações foram fortemente modularizadas para facilitar testes e manutenção.  
-
----
-
-## Dificuldades Encontradas
-
-- **Gerenciamento de deslocamentos:** mover blocos binários com offsets distintos sem sobrescrever dados foi desafiador. A criação das funções `move()` e `move_sequencial()` foi essencial.  
-- **Compressão seletiva:** adaptar a lógica para armazenar membros comprimidos apenas quando vantajoso; exigiu lógica condicional detalhada no momento da inserção.  
-- **Atualização de offsets:** cada operação (remoção, movimentação, inserção) exigia atualização precisa de todos os campos de offset e ordem no diretório. Movimentações podem apenas ocorrer de membro em membro, evitando buffers muito grandes.
-- **Manter atomicidade:** como só se pode manipular um membro por vez, houve um esforço para otimizar leitura/escrita sem arquivos temporários ou buffers desnecessários.  
+- LZ compression was used as required. If the compression result does not reduce the size, the member is stored without compression.  
+- The directory area was fully managed in RAM to facilitate metadata handling.  
+- All member data is handled directly on disk, as stated in the assignment requirements.  
+- Operations were heavily modularized to facilitate testing and maintenance.  
 
 ---
 
-## Bugs Conhecidos
+## Difficulties Encountered
 
-- Warning do Valgrind sobre bytes não inicializados. Foram feitas diversas sessões de debug sem sucesso. Pesquisas mostraram que talvez o erro seja inofensivo.
-- Ainda não há verificação extensiva para desempenho em compressões muito grandes ou contendo caracteres inválidos.  
+- **Offset management:** moving binary blocks with distinct offsets without overwriting data was challenging. The creation of the `move()` and `move_sequential()` functions was essential.  
+- **Selective compression:** adapting the logic to store compressed members only when advantageous required detailed conditional logic during insertion.  
+- **Offset updates:** each operation (removal, movement, insertion) required precise updating of all offset and order fields in the directory. Movements can only occur from member to member, avoiding large buffers.  
+- **Maintaining atomicity:** since only one member can be handled at a time, efforts were made to optimize read/write operations without temporary files or unnecessary buffers.  
 
 ---
 
-## Contato
+## Known Bugs
 
-Para dúvidas ou sugestões, entre em contato pelo e-mail: [pietro.comin@ufpr.br](mailto:pietro.comin@ufpr.br)
+- Valgrind warning about uninitialized bytes. Several debugging sessions were performed without success. Research suggests the issue may be harmless.  
+- There is still no extensive verification for performance with very large compressions or files containing invalid characters.  
+
+---
+
+## Contact
+
+For questions or suggestions, please contact: [pietro.comin@ufpr.br](mailto:pietro.comin@ufpr.br)
