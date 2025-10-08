@@ -1,6 +1,6 @@
-# Meus Projetos de Programação 2 (IBM/BCC - 2025/1)
+# Programming 2 Projects (IBM/BCC - 2025/1)
 
-**Autor:** Pietro Comin
+**Author:** Pietro Comin
 **GRR:** GRR20241955
 **Instituição:** Universidade Federal do Paraná (UFPR)
 
