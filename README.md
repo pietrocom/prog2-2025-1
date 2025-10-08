@@ -1,8 +1,10 @@
 # Programming 2 Projects (IBM/BCC - 2025/1)
 
+```
 **Author:** Pietro Comin
 **GRR:** GRR20241955
 **Institution:** Universidade Federal do Paraná (UFPR)
+```
 
 ## 📖 About the Course
 
@@ -22,4 +24,4 @@ Below is the list of all the assignments completed, with a brief description and
 | **[A4 - Boss AI](./A4-Jogo-BossAI/)** | An incremental improvement on the A3 game, adding dynamic behavior to the boss's artificial intelligence. | `C`, `Allegro 5`, `Game State Management`, `Refactoring`    |
 
 ---
-```eof
+
