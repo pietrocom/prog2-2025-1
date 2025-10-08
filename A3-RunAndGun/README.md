@@ -1,83 +1,84 @@
-# A3: Shooter Born in Heaven (Jogo Run 'n Gun)
+# A3: Shooter Born in Heaven (Run 'n Gun Game)
 
-**Disciplina:** Programação 2
-**Período:** 2025/1
-**Autor:** Pietro Comin (GRR20241955)
+**Course:** Programming 2  
+**Term:** 2025/1  
+**Author:** Pietro Comin (GRR20241955)
 
 > [!WARNING]
-> **Este foi o projeto mais desafiador e gratificante do semestre, com mais de 50 horas de desenvolvimento dedicadas.** O resultado é um jogo de ação 2D funcional do gênero *run 'n gun*, inspirado em clássicos como *Contra* e *Metal Slug*.
+> **This was the most challenging and rewarding project of the semester, with over 50 hours of dedicated development.**  
+> The result is a fully functional 2D *run 'n gun* action game inspired by classics like *Contra* and *Metal Slug*.
 
-## 🕹️ Descrição do Jogo
+## 🕹️ Game Description
 
-**Shooter Born in Heaven** é um jogo de ação 2D desenvolvido em Linguagem C com a biblioteca Allegro 5. O jogador assume o papel de um soldado de elite que deve avançar por um cenário urbano hostil, enfrentando ondas de gangsters e culminando em uma batalha intensa contra um poderoso chefe final.
+**Shooter Born in Heaven** is a 2D action game developed in C using the Allegro 5 library. The player takes on the role of an elite soldier who must advance through a hostile urban environment, facing waves of gangsters and culminating in an intense battle against a powerful final boss.
 
-## 🚀 Como Compilar e Executar
+## 🚀 How to Compile and Run
 
-O projeto utiliza um `makefile` para facilitar todo o processo.
+The project uses a `makefile` to simplify the entire process.
 
-**Requisitos:**
-* GCC (ou um compilador C compatível)
+**Requirements:**
+* GCC (or any compatible C compiler)
 * Make
-* Biblioteca Allegro 5 e seus addons (image, font, ttf, primitives)
+* Allegro 5 library and its addons (image, font, ttf, primitives)
 
-**Passos:**
-1.  Abra um terminal na raiz do projeto.
-2.  Compile o jogo:
+**Steps:**
+1. Open a terminal in the project root.
+2. Compile the game:
     ```bash
     make
     ```
-3.  Execute o jogo:
+3. Run the game:
     ```bash
     make run
     ```
-4.  Para limpar os arquivos gerados:
+4. Clean generated files:
     ```bash
     make clean
     ```
 
-## ⌨️ Controles do Jogo
+## ⌨️ Game Controls
 
-| Ação                      | Teclado Principal         | Teclado Alternativo          |
-| ------------------------- | ------------------------- | ---------------------------- |
-| **Movimentar** | `A` / `D`                 | Seta Esquerda / Seta Direita |
-| **Pular** | `W`                       | Seta Cima                    |
-| **Abaixar** | `S`                       | Seta Baixo                   |
-| **Correr** | `Shift Esquerdo`          | -                            |
-| **Atirar** | `Barra de Espaço`         | `Shift Direito`              |
-| **Recarregar** | `R`                       | -                            |
-| **Pausar** | `P`                       | -                            |
-| **Modo Debug (Hitbox)** | `H`                       | -                            |
-| **Sair / Voltar** | `ESC`                     | `ESC`                        |
+| Action                     | Main Key                 | Alternative Key             |
+| --------------------------- | ------------------------ | --------------------------- |
+| **Move**                    | `A` / `D`                | Left Arrow / Right Arrow    |
+| **Jump**                    | `W`                      | Up Arrow                    |
+| **Crouch**                  | `S`                      | Down Arrow                  |
+| **Run**                     | `Left Shift`             | -                           |
+| **Shoot**                   | `Spacebar`               | `Right Shift`               |
+| **Reload**                  | `R`                      | -                           |
+| **Pause**                   | `P`                      | -                           |
+| **Debug Mode (Hitbox)**     | `H`                      | -                           |
+| **Exit / Back**             | `ESC`                    | `ESC`                       |
 
+## ✨ Implemented Features
 
-## ✨ Funcionalidades Implementadas
+The game not only met all the minimum requirements but also included several extra features that enhanced the overall experience.
 
-O jogo não apenas cumpriu todos os requisitos mínimos, mas também incluiu diversas funcionalidades extras que enriqueceram a experiência.
+### Minimum Requirements (80/80 points)
+* **Menus and Screens:** Main menu (Start, Options, Exit) and victory/defeat screens.  
+* **Character and Animations:** Sprites and animations for all states (idle, walking, running, jumping, crouching, shooting).  
+* **Full Mobility:** The player can walk, jump, crouch, and shoot in all directions and states.  
+* **Combat:** Health system and projectile-based attacks for both player and enemies.  
+* **Environment:** Background with side-scrolling (parallax) effect.  
+* **Enemies:** A standard enemy (shooter) and a final boss with its own AI.  
+* **Stage Structure:** Waves of enemies leading up to the boss fight.  
 
-### Requisitos Mínimos (80/80 pontos)
-* **Menus e Telas:** Menu inicial (Iniciar, Opções, Sair) e telas de vitória/derrota.
-* **Personagem e Animações:** Sprites e animações para todos os estados (parado, andando, correndo, pulando, abaixado, atirando).
-* **Mobilidade Total:** O jogador pode andar, pular, se abaixar e atirar em todas as direções e estados.
-* **Combate:** Sistema de vida, ataque com projéteis para jogador e inimigos.
-* **Cenário:** Background com efeito de rolagem lateral (parallax).
-* **Inimigos:** Um inimigo comum (atirador) e um chefe final com IA própria.
-* **Estrutura de Fase:** Ondas de inimigos que levam à batalha contra o chefe.
+### Extra Features (from the Assignment)
+* **[15 pts] Additional Common Enemy:** Implemented a melee-type enemy (`ENEMY_MELEE`).  
+* **[10 pts] Crouch and Shoot While Crouched:** The player can defend and attack while crouched.  
+* **[10 pts] Stamina System:** Running consumes stamina, which regenerates over time.  
+* **[5 pts] Pause Button:** The game can be paused at any time.  
 
-### Funcionalidades Extras (do Enunciado)
-* **[15 pts] Inimigo Normal Extra:** Implementado um inimigo de ataque corpo a corpo (`ENEMY_MELEE`).
-* **[10 pts] Abaixar e Atirar Abaixado:** O jogador pode se defender e atacar de uma posição abaixada.
-* **[10 pts] Sistema de Estamina:** Correr consome uma barra de estamina, que se regenera com o tempo.
-* **[5 pts] Botão de Pausa:** O jogo pode ser pausado a qualquer momento.
+### Additional Features (Beyond the Assignment)
+* **Ammo Reload System:** The player has limited ammo and must reload (`R`), adding a tactical element to combat.  
+* **Enemy Wave System:** Enemies spawn in waves with increasing difficulty.  
+* **Advanced Boss AI:** The boss features multiple attack patterns, a “Rage Mode” triggered at 50% health, and a “Poise” system making it resistant to stun.  
+* **Post-Victory “Freeplay” Mode:** After winning, the player can continue playing the stage, and the boss can respawn for new challenges.  
+* **Debug Mode:** The `H` key toggles hitbox visualization — an essential tool for development and balancing.
 
-### Funcionalidades Adicionais (Além do Enunciado)
-* **Sistema de Recarga de Munição:** O jogador tem munição limitada e precisa recarregar (`R`), adicionando uma camada tática ao combate.
-* **Sistema de Ondas de Inimigos:** Inimigos surgem em ondas com dificuldade progressiva.
-* **IA Avançada do Chefe:** O chefe possui múltiplos padrões de ataque, um modo "Fúria" ativado com 50% de vida e um sistema de "Poise" que o torna resistente a atordoamentos.
-* **Modo "Freeplay" Pós-Vitória:** Após vencer, o jogador pode continuar na fase, e o chefe pode reaparecer para novos desafios.
-* **Modo de Depuração:** A tecla `H` ativa a visualização de todas as *hitboxes*, ferramenta essencial para o desenvolvimento e balanceamento.
+## 📂 Project Structure
 
-## 📂 Estrutura do Projeto
-O código foi organizado de forma modular para garantir a separação de responsabilidades.
-* `src/`: Contém todos os arquivos de código-fonte (.c).
-* `include/`: Contém todos os arquivos de cabeçalho (.h).
-* `assets/`: Contém todos os recursos gráficos (sprites, backgrounds) e fontes.
+The code was organized modularly to ensure proper separation of responsibilities.  
+* `src/`: Contains all source files (.c).  
+* `include/`: Contains all header files (.h).  
+* `assets/`: Contains all graphical resources (sprites, backgrounds) and fonts.  
